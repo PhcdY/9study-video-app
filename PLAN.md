@@ -1,6 +1,6 @@
 # App làm video cho cộng tác viên — Kế hoạch
 
-> Trạng thái: Mốc 0 và phần lớn Mốc 1 xong trên máy dev; cả hai chờ thử trên máy ảo sạch. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
+> Trạng thái: Mốc 2 (làm video trong app) xong phần chính trên máy dev, còn thử thật luồng làm video mới. Mốc 0–1 chờ thử trên máy ảo sạch. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
 > Tên tạm của app: **9Study Video** (đổi sau).
 
 ---
@@ -342,7 +342,26 @@ Code thử nằm ở `spikes/` (`codex-probe.mjs`, `moc0-test.ps1`, `studio-prob
 
 Bài thử: `npm test` (13 bài: luật thư mục, chọn bản, tiến trình git/npm, `.env`, che key, trích tham số). Chưa có bài thử chạy thật các bước tải/cài (cần mạng, làm trên máy ảo).
 
-### Mốc 2, 3: chia việc chi tiết khi xong mốc 1, dựa trên kết quả mốc 0.
+### Mốc 2 — làm video (chia việc 20/11/2026)
+
+Quy ước repo video cần bám (đọc từ `AGENTS.md` bản 3): kịch bản `src/videos/<slug>/script.json`; mã composition lấy từ `id="…"` trong `src/videos/<slug>/Video.tsx` (có thể khác slug); storyboard `<OUTPUT_DIR hoặc out>/_lam-viec/<id>/storyboard/index.html`; audio `public/audio/<slug>/manifest.json`; thành phẩm `<OUTPUT_DIR hoặc out>/<Môn>/Lớp <lop>/<chuong>/<bai>/<id>.mp4` (thiếu lop/chuong/bai thì ở `_lam-viec/<id>/`). Skill: `$viet-kich-ban` → `$dung-video` (nháp + storyboard) → `$tao-audio` → `$dung-video` (hoàn thiện).
+
+- [x] **ProjectService** (`project.ts`, `videos.ts`): quét `src/videos/*/script.json`, tách bài của người dùng với video mẫu (`git ls-files`), suy ra bước từ file có sẵn, theo dõi thư mục để tự cập nhật. Thử thật trên repo thử: 22 video mẫu, `tiem-can` ra đúng bước Duyệt hình.
+- [x] **CodexSession** (`codex/session.ts`): một app-server cho dự án, mỗi video một thread (lưu ở `threads.json`), mở lại thì nối thread cũ và hiện lại lịch sử (đã thử: tắt app mở lại vẫn thấy cuộc trò chuyện), luồng chữ, gom lệnh thành dòng trạng thái, dừng lượt, thu gọn khi bấm nút sang bước mới, gắn video mới vào slug khi `script.json` xuất hiện.
+- [x] **Thẻ xin quyền** (`codex/approvals.ts`): bóc lệnh khỏi `powershell -Command`, việc quen thuộc hiện tên ("Cho phép AI kiểm tra kịch bản"), tạo giọng đọc hiện "tốn credit", lệnh lạ hiện nguyên văn. Nút "Luôn cho phép việc này" (`acceptForSession`, không có cho việc tốn credit hay lệnh lạ). Đã thử thật: thẻ hiện, đồng ý thì lệnh chạy bằng Python đóng gói, "luôn cho phép" thì lần sau không hỏi lại.
+- [x] **Màn Video của tôi**: "Làm tiếp", bảng bài (tìm, lọc môn), video mẫu gập riêng, chân trang ghi bản bộ công cụ và nơi lưu video.
+- [x] **Form Làm video mới**: 3 phần như thiết kế, danh sách thẻ bài học đọc từ `references/<môn>/lop-<lớp>/`, nhớ lựa chọn; ghép câu lệnh `$viet-kich-ban` (có bài thử) và gửi kèm mục skill để Codex chắc chắn đọc đúng skill.
+- [x] **Màn một video**: thanh 3 bước, chat (Markdown + công thức KaTeX), nút gợi ý theo bước, thẻ xin quyền, nút Dừng; tab Kịch bản (bảng, có công thức), Storyboard (trang HTML của skill, mở qua `app-file://`), Xem chuyển động, Nghe thử (từng câu mp3), Thành phẩm (phát MP4, mở thư mục).
+- [x] **StudioService** (`studio.ts`): bật `npm run dev` ở cổng trống, mở thẳng composition của video (`/<id>`), tắt sạch khi thoát. Đã thử: Studio hiện đủ trong khung.
+- [x] Giao thức `app-file://` chỉ cho mở file trong thư mục dự án và nơi lưu video.
+- [x] App tự đánh dấu thư mục bộ công cụ là "tin cậy" trong cấu hình Codex riêng (để nạp `.codex/`, vd agent học sinh ảo). Nhật ký che email tài khoản.
+- [ ] **Chưa thử thật luồng "Làm video mới"** (gửi form → AI trình Bảng nội dung → viết `script.json` → gắn slug) và các nút chuyển bước. Cần tài khoản ChatGPT có đủ lượt.
+- [ ] **Sandbox chưa chuẩn bị thì AI tự coi là chỉ được đọc**: khi được nhờ đọc file, AI trả lời "không đọc được" thay vì xin quyền; phải bảo chạy lệnh cụ thể thì mới hiện thẻ. Bước 4 của màn cài đặt (chuẩn bị sandbox) là cách sửa; **cần xác nhận trên máy thật** rằng sau bước đó AI tự đọc/sửa file được.
+- [ ] Ước tính credit trên thẻ tạo giọng đọc (`vivibe_tts.py --estimate`), nút "Đọc sai" ở tab Nghe thử, ảnh đầu storyboard làm hình thu nhỏ: để Mốc 3.
+
+Cách thử tự động đã dùng (để làm lại khi cần): chạy app với `NINESTUDY_USER_DATA=<thư mục thử>` và `--remote-debugging-port=9222`, rồi điều khiển giao diện qua Chrome DevTools Protocol (chạy JS, bấm, chụp màn hình). Thư mục thử có `settings.json` trỏ tới repo thử của Mốc 0, không đụng cài đặt thật.
+
+### Mốc 3: chia việc chi tiết khi xong mốc 2.
 
 ---
 
