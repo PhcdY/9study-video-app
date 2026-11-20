@@ -12,3 +12,9 @@ resources/runtimes/
 spikes/output/
 .env
 .claude/
+
+# Tai ve luc build, khong commit
+.cache/
+# Kieu sinh tu `codex app-server generate-ts` (npm run gen:codex, chay sau npm install)
+src/main/services/codex/protocol/
+.eslintcache
