@@ -2,16 +2,17 @@
 // Cau lenh viet tieng Viet vi skill trong repo video viet tieng Viet; skill duoc goi bang ten `$<skill>`.
 import type { ChipId, NewVideoInput, SubjectId, VideoStage } from './video'
 
-export const SUBJECTS: { id: SubjectId; name: string }[] = [
-  { id: 'toan', name: 'Toán' },
-  { id: 'ly', name: 'Vật lý' },
-  { id: 'hoa', name: 'Hóa học' },
-  { id: 'sinh', name: 'Sinh học' },
-  { id: 'su', name: 'Lịch sử' },
-  { id: 'dia', name: 'Địa lý' },
-  { id: 'van', name: 'Ngữ văn' },
-  { id: 'ktpl', name: 'GDKT & PL' },
-  { id: 'anh', name: 'Tiếng Anh' }
+/** name: ten day du; short: ten ngan cho nut chon (theo thiet ke). */
+export const SUBJECTS: { id: SubjectId; name: string; short: string }[] = [
+  { id: 'toan', name: 'Toán', short: 'Toán' },
+  { id: 'ly', name: 'Vật lý', short: 'Lý' },
+  { id: 'hoa', name: 'Hóa học', short: 'Hóa' },
+  { id: 'sinh', name: 'Sinh học', short: 'Sinh' },
+  { id: 'su', name: 'Lịch sử', short: 'Sử' },
+  { id: 'dia', name: 'Địa lý', short: 'Địa' },
+  { id: 'van', name: 'Ngữ văn', short: 'Văn' },
+  { id: 'ktpl', name: 'GDKT & PL', short: 'KTPL' },
+  { id: 'anh', name: 'Tiếng Anh', short: 'Tiếng Anh' }
 ]
 
 export function subjectName(id: string | undefined): string {

@@ -373,9 +373,16 @@ export const copy = {
       hocSinhAo: 'Học sinh ảo đang đọc thử',
       lamViec: 'Đang làm việc'
     } satisfies Record<StatusLabel, string>,
-    statusDone: (label: string, n: number) =>
-      n > 1 ? `${label} · xong ${n} việc` : `${label} · xong`,
-    statusFailed: (label: string) => `${label} · có việc chưa chạy được`,
+    // "Đang kiểm tra kịch bản" -> "Đã kiểm tra kịch bản"; "Học sinh ảo đang đọc thử" -> "... đã đọc thử"
+    statusDone: (label: string, n: number) => {
+      const done =
+        label === 'Đang làm việc'
+          ? 'Đã làm xong'
+          : label.replace(/^Đang /, 'Đã ').replace(/ đang /, ' đã ')
+      return n > 1 ? `${done} (${n} việc)` : done
+    },
+    statusFailed: (label: string) =>
+      `${label.replace(/^Đang /, '').replace(/^./, (c) => c.toUpperCase())}: có việc chưa chạy được`,
     approval: {
       congCu: 'AI muốn dùng công cụ của bộ công cụ',
       taoGiong: 'Tạo giọng đọc cho bài',

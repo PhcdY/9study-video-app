@@ -43,7 +43,7 @@ function App(): React.JSX.Element {
       onClick={() => setRoute(name === 'home' ? { name: 'home' } : { name: 'settings' })}
       aria-current={current?.name === name ? 'page' : undefined}
       className={cn(
-        'cursor-pointer px-2.5 text-sm',
+        'flex cursor-pointer items-center px-2.5 text-sm',
         current?.name === name
           ? 'font-bold text-navy shadow-[inset_0_-2px_0_var(--color-cham)]'
           : 'font-semibold text-phu hover:text-navy'
@@ -55,35 +55,46 @@ function App(): React.JSX.Element {
 
   return (
     <div className={cn('flex flex-col', fullHeight ? 'h-full' : 'min-h-full')}>
-      <header className="box-border flex h-14 shrink-0 items-center gap-6 border-b border-vien bg-white px-6">
-        <span className="text-[17px] font-extrabold">
-          {copy.appName} <span className="text-cham">{copy.appNameAccent}</span>
-        </span>
-        {snap && !snap.allDone && (
-          <span className="-ml-3 text-sm text-phu">· {copy.setupTitle}</span>
-        )}
-        {ready && (
-          <nav aria-label="Chính" className="flex flex-grow items-stretch self-stretch">
-            {navItem('home', copy.nav.videos)}
-            {navItem('settings', copy.settings.nav)}
-          </nav>
-        )}
-        <div className="ml-auto flex items-center gap-3">
-          {update && (
-            <div className="flex items-center gap-3 rounded-lg border border-vien px-3 py-1.5 text-sm">
-              <b>{copy.updateReady(update)}</b>
-              <button
-                type="button"
-                className="flex cursor-pointer items-center gap-1 font-bold text-cham"
-                onClick={() => void api.invoke('app:restartToUpdate')}
-              >
-                <RefreshCw aria-hidden className="size-4" /> {copy.restartToUpdate}
-              </button>
+      {/* Man lam video co thanh rieng (theo thiet ke), khong co thanh dau chung */}
+      {!fullHeight && (
+        <header className="sticky top-0 z-30 shrink-0 border-b border-vien bg-white">
+          <div
+            className={cn(
+              'box-border flex h-14 items-center gap-7',
+              // Cai dat lan dau: thanh trai het chieu ngang; cac man khac: thang hang voi noi dung (1180)
+              ready ? 'mx-auto w-full max-w-[1180px] px-8' : 'px-6'
+            )}
+          >
+            <span className="text-base font-extrabold tracking-[-0.01em]">
+              {copy.appName} <span className="text-cham">{copy.appNameAccent}</span>
+              {snap && !snap.allDone && (
+                <span className="ml-2 text-sm font-normal text-phu">· {copy.setupTitle}</span>
+              )}
+            </span>
+            {ready && (
+              <nav aria-label="Chính" className="flex items-stretch gap-1 self-stretch">
+                {navItem('home', copy.nav.videos)}
+                {navItem('settings', copy.settings.nav)}
+              </nav>
+            )}
+            <div className="ml-auto flex items-center gap-3">
+              {update && (
+                <div className="flex items-center gap-3 rounded-[10px] border border-vien px-3 py-1.5 text-sm">
+                  <b>{copy.updateReady(update)}</b>
+                  <button
+                    type="button"
+                    className="flex cursor-pointer items-center gap-1 font-bold text-cham"
+                    onClick={() => void api.invoke('app:restartToUpdate')}
+                  >
+                    <RefreshCw aria-hidden className="size-4" /> {copy.restartToUpdate}
+                  </button>
+                </div>
+              )}
+              {ready && <UsagePill onClick={() => setRoute({ name: 'settings' })} />}
             </div>
-          )}
-          {ready && <UsagePill onClick={() => setRoute({ name: 'settings' })} />}
-        </div>
-      </header>
+          </div>
+        </header>
+      )}
 
       {current?.name === 'home' && version && (
         <UpdateBanner info={version} onOpen={() => setShowUpdate(true)} />

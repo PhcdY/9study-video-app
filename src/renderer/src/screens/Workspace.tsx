@@ -6,6 +6,7 @@ import { useChat, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { ChatPanel } from '@/components/workspace/ChatPanel'
+import { UsagePill } from '@/components/UsagePill'
 import {
   AudioTab,
   FinalTab,
@@ -67,6 +68,7 @@ export function WorkspaceScreen({
           </span>
         </div>
         <StageBar stage={stage} />
+        <UsagePill />
       </div>
 
       <div className="flex min-h-0 flex-1">
@@ -77,7 +79,7 @@ export function WorkspaceScreen({
         >
           <div
             role="tablist"
-            className="flex flex-wrap gap-1 self-start rounded-lg border border-vien bg-white p-1"
+            className="no-scrollbar flex max-w-full shrink-0 gap-1 self-start overflow-x-auto rounded-lg border border-vien bg-white p-1"
           >
             {TABS.map((t) => (
               <button
@@ -87,7 +89,7 @@ export function WorkspaceScreen({
                 aria-selected={tab === t}
                 onClick={() => setPicked({ tab: t, stage })}
                 className={cn(
-                  'h-9 cursor-pointer rounded-lg px-3.5 text-sm',
+                  'h-9 shrink-0 cursor-pointer rounded-lg px-3.5 text-sm whitespace-nowrap',
                   tab === t
                     ? 'bg-cham-nhat font-bold text-cham'
                     : 'font-semibold text-phu hover:text-navy'
@@ -128,8 +130,12 @@ function StageBar({ stage }: { stage: VideoStage }): React.JSX.Element {
               i > at && 'border border-vien bg-white font-semibold text-phu'
             )}
           >
-            {i < at ? <Check aria-hidden className="size-4" strokeWidth={2.4} /> : `${i + 1} ·`}
-            {copy.stage[s]}
+            {i < at ? (
+              <Check aria-hidden className="size-4" strokeWidth={2.4} />
+            ) : (
+              <span>{i + 1} ·</span>
+            )}
+            <span>{copy.stage[s]}</span>
           </span>
         </li>
       ))}

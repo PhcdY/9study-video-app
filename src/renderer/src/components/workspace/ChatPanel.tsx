@@ -48,7 +48,10 @@ export function ChatPanel({
   return (
     <section
       aria-label={c.label}
-      style={wide ? undefined : { width }}
+      style={
+        // Luon chua it nhat 700px cho phan ket qua ben phai (day tab khong bi cat)
+        wide ? undefined : { width: Math.min(width, Math.max(MIN_W, window.innerWidth - 700)) }
+      }
       className={cn(
         'relative flex min-h-0 shrink-0 flex-col bg-white',
         wide ? 'mx-auto w-full max-w-[900px] flex-1 border-x border-vien' : 'border-r border-vien'

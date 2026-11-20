@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { ArrowRight, Check, Film, Plus, Search } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Film, Plus, Search } from 'lucide-react'
 import type { VideoInfo, VideoStage } from '../../../shared/video'
 import { SUBJECTS, subjectName } from '../../../shared/prompt'
 import { useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Card, Eyebrow, Page } from '@/components/ui/layout'
 
 const STAGES: VideoStage[] = ['kichBan', 'duyetHinh', 'giongDoc']
 
@@ -42,13 +43,11 @@ export function HomeScreen({
   const latest = own[0]
 
   return (
-    <main className="mx-auto box-border flex w-full max-w-[1180px] flex-1 flex-col gap-8 p-8">
+    <Page className="gap-8">
       {latest && (
         <section aria-labelledby="lam-tiep" className="flex flex-col gap-3">
-          <h2 id="lam-tiep" className="m-0 text-[13px] font-bold tracking-wider text-phu uppercase">
-            {copy.home.continueTitle}
-          </h2>
-          <div className="flex flex-wrap items-center gap-5 rounded-xl border border-vien bg-white p-4">
+          <Eyebrow id="lam-tiep">{copy.home.continueTitle}</Eyebrow>
+          <Card className="flex flex-wrap items-center gap-5 p-4">
             <Thumb v={latest} large />
             <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-2.5">
               <div className="flex flex-col gap-0.5">
@@ -56,7 +55,7 @@ export function HomeScreen({
                 <button
                   type="button"
                   onClick={() => onOpen(latest.slug)}
-                  className="cursor-pointer p-0 text-left text-xl font-bold text-navy hover:text-cham"
+                  className="cursor-pointer p-0 text-left text-xl leading-snug font-bold text-navy hover:text-cham"
                 >
                   {latest.title}
                 </button>
@@ -70,60 +69,62 @@ export function HomeScreen({
               </Button>
               <span className="text-xs text-phu">{copy.home.updatedAt(latest.updatedAt)}</span>
             </div>
-          </div>
+          </Card>
         </section>
       )}
 
       <section aria-labelledby="tat-ca" className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-2.5">
-          <h2
-            id="tat-ca"
-            className="m-0 flex-grow text-[13px] font-bold tracking-wider text-phu uppercase"
-          >
-            {copy.home.allTitle(own.length)}
-          </h2>
-          <label className="box-border flex h-[38px] w-[220px] items-center gap-2 rounded-lg border border-vien-dam bg-white px-3">
-            <Search aria-hidden className="size-4 text-phu" />
-            <span className="sr-only">{copy.home.search}</span>
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={copy.home.search}
-              className="min-w-0 flex-grow border-none bg-transparent text-sm outline-none"
-            />
-          </label>
-          <label className="sr-only" htmlFor="loc-mon">
-            {copy.home.allSubjects}
-          </label>
-          <select
-            id="loc-mon"
-            value={mon}
-            onChange={(e) => setMon(e.target.value)}
-            className="h-[38px] rounded-lg border border-vien-dam bg-white px-2.5 text-sm font-medium"
-          >
-            <option value="">{copy.home.allSubjects}</option>
-            {SUBJECTS.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-          <Button size="md" onClick={onNew}>
-            <Plus aria-hidden className="size-4" /> {copy.home.newVideo}
-          </Button>
+        <div className="flex min-h-[38px] flex-wrap items-center gap-2.5">
+          <div className="flex-grow">
+            <Eyebrow id="tat-ca">{copy.home.allTitle(own.length)}</Eyebrow>
+          </div>
+          {/* Chua co bai thi khong can tim / loc; nut Lam video moi nam o o trong ben duoi */}
+          {own.length > 0 && (
+            <>
+              <label className="box-border flex h-[38px] w-[220px] items-center gap-2 rounded-lg border border-vien-dam bg-white px-3 focus-within:border-cham">
+                <Search aria-hidden className="size-4 shrink-0 text-phu" />
+                <span className="sr-only">{copy.home.search}</span>
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder={copy.home.search}
+                  className="min-w-0 flex-grow border-none bg-transparent text-sm outline-none placeholder:text-mo"
+                />
+              </label>
+              <label className="sr-only" htmlFor="loc-mon">
+                {copy.home.allSubjects}
+              </label>
+              <select
+                id="loc-mon"
+                value={mon}
+                onChange={(e) => setMon(e.target.value)}
+                className="h-[38px] cursor-pointer rounded-lg border border-vien-dam bg-white px-2.5 text-sm font-medium outline-none focus:border-cham"
+              >
+                <option value="">{copy.home.allSubjects}</option>
+                {SUBJECTS.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <Button variant="outline" size="sm" className="h-[38px] rounded-lg" onClick={onNew}>
+                <Plus aria-hidden className="size-4" /> {copy.home.newVideo}
+              </Button>
+            </>
+          )}
         </div>
 
         {own.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-vien-dam bg-white px-8 py-12 text-center">
-            <Film aria-hidden className="size-8 text-mo" />
+          <Card className="flex flex-col items-center gap-3 border-dashed border-vien-dam px-8 py-14 text-center">
+            <Film aria-hidden className="size-9 text-mo" strokeWidth={1.6} />
             <div className="text-lg font-bold">{copy.home.emptyTitle}</div>
-            <p className="m-0 max-w-[460px] text-[15px] leading-relaxed text-phu">
+            <p className="m-0 max-w-[440px] text-[15px] leading-relaxed text-phu">
               {copy.home.emptyDesc}
             </p>
-            <Button onClick={onNew}>
+            <Button size="md" className="mt-2" onClick={onNew}>
               <Plus aria-hidden className="size-4" /> {copy.home.newVideo}
             </Button>
-          </div>
+          </Card>
         ) : (
           <VideoTable videos={shown} onOpen={onOpen} />
         )}
@@ -131,9 +132,15 @@ export function HomeScreen({
 
       {samples.length > 0 && (
         <details className="group rounded-xl border border-vien bg-white">
-          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-semibold text-phu">
-            {copy.home.samplesTitle(samples.length)}
-            <span className="ml-2 font-normal">{copy.home.samplesHint}</span>
+          <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <Eyebrow>{copy.home.samplesTitle(samples.length)}</Eyebrow>
+              <span className="text-[13px] text-phu">{copy.home.samplesHint}</span>
+            </div>
+            <ChevronDown
+              aria-hidden
+              className="size-5 shrink-0 text-phu transition-transform group-open:rotate-180"
+            />
           </summary>
           <div className="border-t border-vien">
             <VideoTable videos={samples} onOpen={onOpen} flat />
@@ -147,7 +154,7 @@ export function HomeScreen({
           {snap.outputDir && <span>{copy.home.savedAt(snap.outputDir)}</span>}
         </footer>
       )}
-    </main>
+    </Page>
   )
 }
 

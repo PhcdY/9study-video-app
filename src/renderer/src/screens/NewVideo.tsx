@@ -6,6 +6,18 @@ import { api, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import {
+  Card as UiCard,
+  CardTitle,
+  Eyebrow,
+  Hint,
+  Input,
+  Page,
+  PageTitle,
+  PathText,
+  Pill,
+  Textarea
+} from '@/components/ui/layout'
 
 const t = copy.newVideo
 const MEMORY_KEY = 'lam-video-moi'
@@ -88,17 +100,17 @@ export function NewVideoScreen({
   }
 
   return (
-    <main className="mx-auto box-border flex w-full max-w-[1180px] flex-1 flex-wrap items-start gap-8 p-8">
+    <Page className="flex-row flex-wrap items-start gap-8">
       <div className="flex min-w-0 flex-[999_1_620px] flex-col gap-5">
         <div className="flex flex-col gap-1">
           <button
             type="button"
             onClick={onCancel}
-            className="flex w-fit cursor-pointer items-center gap-1 p-0 text-sm font-semibold text-phu hover:text-cham"
+            className="flex h-10 w-fit cursor-pointer items-center gap-1.5 p-0 text-[15px] font-semibold text-cham hover:text-cham-dam"
           >
             <ChevronLeft aria-hidden className="size-4" /> {t.back}
           </button>
-          <h1 className="m-0 text-[28px] font-extrabold">{t.title}</h1>
+          <PageTitle>{t.title}</PageTitle>
         </div>
 
         {/* 1. Video ve bai nao */}
@@ -107,7 +119,7 @@ export function NewVideoScreen({
             <div className="flex flex-wrap gap-2">
               {SUBJECTS.map((s) => (
                 <Pill key={s.id} on={v.subject === s.id} onClick={() => pickSubject(s.id)}>
-                  {s.name}
+                  {s.short}
                 </Pill>
               ))}
             </div>
@@ -116,9 +128,9 @@ export function NewVideoScreen({
             <Field label={t.lop}>
               <div className="flex gap-2">
                 {([10, 11, 12] as const).map((l) => (
-                  <Pill key={l} on={v.lop === l} onClick={() => set('lop', l)}>
+                  <LopButton key={l} on={v.lop === l} onClick={() => set('lop', l)}>
                     {l}
-                  </Pill>
+                  </LopButton>
                 ))}
               </div>
             </Field>
@@ -154,7 +166,7 @@ export function NewVideoScreen({
                     setV((o) => ({ ...o, bai: l?.title ?? '', lessonFile: l?.file }))
                     setError('')
                   }}
-                  className="h-12 rounded-lg border border-vien-dam bg-white px-3 text-[15px]"
+                  className="h-12 cursor-pointer rounded-lg border-[1.5px] border-vien-dam bg-white px-3.5 text-base outline-none focus:border-cham"
                 >
                   <option value="">{t.baiPick}</option>
                   {lessons.map((l) => (
@@ -172,7 +184,7 @@ export function NewVideoScreen({
                 />
               )}
               {v.bai && (
-                <Hint tone={v.lessonFile ? 'ok' : 'plain'}>
+                <Hint tone={v.lessonFile ? 'ok' : 'muted'}>
                   {v.lessonFile ? t.hasCard : t.noCard}
                 </Hint>
               )}
@@ -261,6 +273,7 @@ export function NewVideoScreen({
                   {EXAMS.map((e) => (
                     <Pill
                       key={e}
+                      size="sm"
                       on={v.exams.includes(e)}
                       onClick={() =>
                         set(
@@ -287,7 +300,7 @@ export function NewVideoScreen({
                 <select
                   value={v.videoTruoc ?? ''}
                   onChange={(e) => set('videoTruoc', e.target.value || undefined)}
-                  className="h-11 rounded-lg border border-vien-dam bg-white px-3 text-[15px]"
+                  className="h-11 cursor-pointer rounded-lg border-[1.5px] border-vien-dam bg-white px-3 text-[15px] outline-none focus:border-cham"
                 >
                   <option value="">{t.videoTruocNone}</option>
                   {videos?.videos
@@ -305,7 +318,12 @@ export function NewVideoScreen({
               <Field label={t.moDau}>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(t.moDauOpts) as (keyof typeof t.moDauOpts)[]).map((k) => (
-                    <Pill key={k} on={(v.moDau ?? 'aiChon') === k} onClick={() => set('moDau', k)}>
+                    <Pill
+                      size="sm"
+                      key={k}
+                      on={(v.moDau ?? 'aiChon') === k}
+                      onClick={() => set('moDau', k)}
+                    >
                       {t.moDauOpts[k]}
                     </Pill>
                   ))}
@@ -320,7 +338,12 @@ export function NewVideoScreen({
               <Field label={t.doDai}>
                 <div className="flex flex-wrap gap-2">
                   {(Object.keys(t.doDaiOpts) as (keyof typeof t.doDaiOpts)[]).map((k) => (
-                    <Pill key={k} on={(v.doDai ?? 'ai') === k} onClick={() => set('doDai', k)}>
+                    <Pill
+                      size="sm"
+                      key={k}
+                      on={(v.doDai ?? 'ai') === k}
+                      onClick={() => set('doDai', k)}
+                    >
                       {t.doDaiOpts[k]}
                     </Pill>
                   ))}
@@ -347,9 +370,7 @@ export function NewVideoScreen({
                 {(v.attachments ?? []).map((f) => (
                   <div key={f} className="flex items-center gap-2 text-sm">
                     <FileText aria-hidden className="size-4 text-phu" />
-                    <span className="min-w-0 flex-1 truncate font-mono" title={f}>
-                      {f}
-                    </span>
+                    <PathText className="min-w-0 flex-1">{f}</PathText>
                     <button
                       type="button"
                       aria-label="Bỏ tệp này"
@@ -385,14 +406,14 @@ export function NewVideoScreen({
           <Button disabled={busy} onClick={() => void submit()}>
             {t.submit}
           </Button>
-          <Button variant="ghost" size="md" onClick={onCancel}>
+          <Button variant="outline" onClick={onCancel}>
             {t.cancel}
           </Button>
           <span className="text-[13px] text-phu">{t.remember}</span>
         </div>
       </div>
 
-      <aside className="sticky top-6 flex max-w-[340px] flex-[1_1_280px] flex-col gap-3 rounded-xl border border-vien bg-white p-5">
+      <aside className="sticky top-20 flex max-w-[340px] flex-[1_1_280px] flex-col gap-3 rounded-xl border border-vien bg-white p-5">
         <div className="text-base font-bold">{t.whatNext}</div>
         <ol className="m-0 flex list-none flex-col gap-3 p-0">
           {t.whatNextSteps.map((s, i) => (
@@ -404,7 +425,7 @@ export function NewVideoScreen({
         </ol>
         <p className="m-0 text-[13px] leading-normal text-phu">{t.whatNextNote}</p>
       </aside>
-    </main>
+    </Page>
   )
 }
 
@@ -433,14 +454,14 @@ function Card({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <section className="flex flex-col gap-5 rounded-xl border border-vien bg-white px-6 py-5">
+    <UiCard className="flex flex-col gap-6 px-7 py-6">
       <div className="flex flex-wrap items-center gap-3">
         <StepNo n={n} />
-        <h2 className="m-0 text-lg font-bold">{title}</h2>
+        <CardTitle>{title}</CardTitle>
         {aside && <span className="text-[13px] text-phu">{aside}</span>}
       </div>
       {children}
-    </section>
+    </UiCard>
   )
 }
 
@@ -453,7 +474,7 @@ function Group({
 }): React.JSX.Element {
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-[13px] font-bold tracking-wider text-phu uppercase">{title}</div>
+      <Eyebrow>{title}</Eyebrow>
       {children}
     </div>
   )
@@ -469,29 +490,16 @@ function Field({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <div className="flex min-w-0 flex-col gap-1.5">
-      <div className="text-sm font-semibold">{label}</div>
+    <div className="flex min-w-0 flex-col gap-2.5">
+      <div className="text-[15px] font-bold">{label}</div>
       {children}
       {hint && <Hint>{hint}</Hint>}
     </div>
   )
 }
 
-function Hint({
-  children,
-  tone = 'plain'
-}: {
-  children: React.ReactNode
-  tone?: 'plain' | 'ok'
-}): React.JSX.Element {
-  return (
-    <div className={cn('text-[13px] leading-normal', tone === 'ok' ? 'text-xong' : 'text-phu')}>
-      {children}
-    </div>
-  )
-}
-
-function Pill({
+/** Nut chon lop: vuong 56 x 40 (theo thiet ke). */
+function LopButton({
   on,
   onClick,
   children
@@ -506,10 +514,10 @@ function Pill({
       aria-pressed={on}
       onClick={onClick}
       className={cn(
-        'h-10 cursor-pointer rounded-lg border px-3.5 text-sm font-semibold',
+        'h-10 w-14 cursor-pointer rounded-[10px] border-[1.5px] text-[15px]',
         on
-          ? 'border-cham bg-cham-nhat text-cham'
-          : 'border-vien-dam bg-white text-navy hover:bg-nen'
+          ? 'border-cham bg-cham-nhat font-bold text-cham'
+          : 'border-vien-dam bg-white font-semibold text-navy hover:bg-nen'
       )}
     >
       {children}
@@ -517,6 +525,7 @@ function Pill({
   )
 }
 
+/** O chon co nut tron + ten + mo ta ngan (loai video). */
 function Choice({
   on,
   onClick,
@@ -529,18 +538,24 @@ function Choice({
   hint: string
 }): React.JSX.Element {
   return (
-    <button
-      type="button"
-      aria-pressed={on}
-      onClick={onClick}
+    <label
       className={cn(
-        'flex cursor-pointer flex-col items-start rounded-lg border px-4 py-2 text-left',
+        'flex cursor-pointer items-center gap-2.5 rounded-lg border-[1.5px] px-3.5 py-2.5',
         on ? 'border-cham bg-cham-nhat' : 'border-vien-dam bg-white hover:bg-nen'
       )}
     >
-      <span className={cn('text-sm font-bold', on ? 'text-cham' : 'text-navy')}>{title}</span>
-      <span className="text-xs text-phu">{hint}</span>
-    </button>
+      <input
+        type="radio"
+        name="loai-video"
+        checked={on}
+        onChange={onClick}
+        className="size-4 accent-cham"
+      />
+      <span className="flex flex-col">
+        <span className={cn('text-[15px] font-bold', on ? 'text-cham' : 'text-navy')}>{title}</span>
+        <span className="text-[13px] text-phu">{hint}</span>
+      </span>
+    </label>
   )
 }
 
@@ -554,11 +569,10 @@ function TextInput({
   placeholder?: string
 }): React.JSX.Element {
   return (
-    <input
+    <Input
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="h-11 rounded-lg border border-vien-dam bg-white px-3 text-[15px] outline-none focus:border-cham"
     />
   )
 }
@@ -570,12 +584,5 @@ function TextArea({
   value?: string
   onChange: (v: string) => void
 }): React.JSX.Element {
-  return (
-    <textarea
-      rows={2}
-      value={value ?? ''}
-      onChange={(e) => onChange(e.target.value)}
-      className="resize-y rounded-lg border border-vien-dam bg-white px-3 py-2 text-[15px] leading-normal outline-none focus:border-cham"
-    />
-  )
+  return <Textarea value={value ?? ''} onChange={(e) => onChange(e.target.value)} />
 }

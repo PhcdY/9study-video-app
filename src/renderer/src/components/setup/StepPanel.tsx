@@ -206,7 +206,7 @@ function ExistingRepoHint({ dir }: { dir: string }): React.JSX.Element {
     <div className="flex flex-wrap items-center gap-3 rounded-[10px] border border-xong/25 bg-xong-nen px-4 py-3.5">
       <CheckCircle2 aria-hidden className="size-5 shrink-0 text-xong" />
       <div className="min-w-0 flex-1 text-[15px]">
-        <b>{t.existingTitle}</b> <span className="font-mono text-sm">{dir}</span>
+        <b>{t.existingTitle}</b> <span className="text-sm text-phu">{dir}</span>
       </div>
       <Button variant="outline" size="md" onClick={() => run('thuMuc', { dir })}>
         {t.useExisting}
@@ -273,7 +273,7 @@ function ProjectFolderStep({
               checked={chosen === r.dir}
               onChange={() => setChosen(r.dir)}
             />
-            <span className="min-w-0 flex-1 truncate font-mono text-[15px]" title={r.dir}>
+            <span className="min-w-0 flex-1 truncate text-[15px] font-semibold" title={r.dir}>
               {r.dir}
             </span>
             <span className={`text-[13px] font-semibold ${r.ready ? 'text-xong' : 'text-credit'}`}>
@@ -315,7 +315,7 @@ function FolderStep({
         <div className="text-sm font-semibold text-phu">{labels.fieldLabel}</div>
         <div className="flex flex-wrap items-center gap-2">
           <div
-            className="min-w-0 flex-1 truncate rounded-lg border border-vien-dam bg-nen px-4 py-3 font-mono text-[15px]"
+            className="min-w-0 flex-1 truncate rounded-lg border-[1.5px] border-vien-dam bg-nen px-4 py-3 text-[15px]"
             title={dir}
           >
             {dir}

@@ -181,7 +181,7 @@ export function FinalTab({ video }: { video?: VideoInfo }): React.JSX.Element {
         <Button variant="outline" size="md" onClick={() => void api.invoke('shell:showItem', mp4)}>
           <FolderOpen aria-hidden className="size-4" /> {w.openFolder}
         </Button>
-        <span className="min-w-0 truncate font-mono text-xs text-phu" title={mp4}>
+        <span className="min-w-0 truncate text-[13px] text-phu" title={mp4}>
           {mp4}
         </span>
       </div>
