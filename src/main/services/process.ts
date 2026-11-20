@@ -1,5 +1,5 @@
 // Chay tien trinh con, doc tung dong, va tat sach ca cay tien trinh khi thoat app.
-import { spawn, execFileSync, type ChildProcess } from 'node:child_process'
+import { spawn, execFile, execFileSync, type ChildProcess } from 'node:child_process'
 import log, { redact } from '../log'
 
 const live = new Set<ChildProcess>()
@@ -106,4 +106,32 @@ export function killTree(pid: number | undefined): void {
 export function killAll(): void {
   for (const c of live) killTree(c.pid)
   live.clear()
+}
+
+/**
+ * Tat cac tien trinh chay tu `exePath` ma tien trinh cha da chet (mo coi), vd Codex con lai
+ * khi app bi tat ngang lan truoc. Khong dung toi tien trinh co cha con song (cua app khac dang chay).
+ */
+export function killOrphans(exePath: string): Promise<number> {
+  const script = [
+    `$exe = '${exePath.replace(/'/g, "''")}'`,
+    '$all = Get-CimInstance Win32_Process',
+    '$alive = @{}; foreach ($p in $all) { $alive[[int]$p.ProcessId] = $true }',
+    '$n = 0',
+    'foreach ($p in $all) { if ($p.ExecutablePath -eq $exe -and -not $alive[[int]$p.ParentProcessId]) { taskkill /PID $p.ProcessId /T /F | Out-Null; $n++ } }',
+    '$n'
+  ].join('; ')
+  return new Promise((resolve) => {
+    execFile(
+      'powershell.exe',
+      ['-NoProfile', '-NonInteractive', '-Command', script],
+      { windowsHide: true },
+      (err, stdout) => {
+        const n = Number(String(stdout).trim()) || 0
+        if (err) log.warn(`[don dep] loi: ${String(err)}`)
+        else if (n) log.info(`[don dep] da tat ${n} tien trinh mo coi`)
+        resolve(n)
+      }
+    )
+  })
 }

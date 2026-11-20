@@ -1,5 +1,6 @@
 // Ket noi toi `codex app-server` (JSON-RPC, moi dong mot thong diep qua stdio).
 // Chi dung ham khong "experimental" (kieu sinh bang `npm run gen:codex`, khong co --experimental).
+import { app } from 'electron'
 import { EventEmitter } from 'node:events'
 import { createInterface } from 'node:readline'
 import type { ChildProcess } from 'node:child_process'
@@ -66,7 +67,7 @@ export class CodexClient extends EventEmitter {
       const rl = createInterface({ input: child.stdout! })
       rl.on('line', (line) => this.onLine(line))
       await this.request('initialize', {
-        clientInfo: { name: '9study_video', title: '9Study Video', version: '0.1.0' },
+        clientInfo: { name: '9study_video', title: '9Study Video', version: app.getVersion() },
         capabilities: null
       })
       this.send({ method: 'initialized' })

@@ -4,11 +4,14 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import log from './log'
 import { handle, broadcast, pickFolder } from './ipc'
 import { SetupService } from './services/setup'
-import { killAll } from './services/process'
+import { killAll, killOrphans } from './services/process'
+import { exe } from './services/runtime'
 import { reopenLoginPage, stopAccountClient } from './services/codex/account'
 import { restartToUpdate, startUpdater } from './services/updater'
 
-if (!app.requestSingleInstanceLock()) app.quit()
+// Chi chay mot ban: ban mo sau chi dua cua so ban dang chay len truoc roi thoat, khong lam gi them
+const gotLock = app.requestSingleInstanceLock()
+if (!gotLock) app.quit()
 
 const setup = new SetupService()
 setup.on('changed', (snap) => broadcast('setup:changed', snap))
@@ -73,9 +76,12 @@ app.on('second-instance', () => {
 })
 
 app.whenReady().then(() => {
+  if (!gotLock) return
   electronApp.setAppUserModelId('vn.9study.video')
   log.info(`[app] khoi dong ${app.getVersion()}, dong goi: ${app.isPackaged}`)
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+  // Lan truoc app bi tat ngang (treo, mat dien) thi Codex co the con chay ngam: don truoc
+  void killOrphans(exe.codex())
   registerIpc()
   createWindow()
   startUpdater()
