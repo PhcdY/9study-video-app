@@ -1,6 +1,6 @@
 # App làm video cho cộng tác viên — Kế hoạch
 
-> Trạng thái: Mốc 2 (làm video trong app) xong phần chính trên máy dev, còn thử thật luồng làm video mới. Mốc 0–1 chờ thử trên máy ảo sạch. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
+> Trạng thái: Mốc 1–3 xong trên máy dev (bản 0.1.3), chờ người dùng thử trên máy mình và máy ảo sạch, rồi Mốc 4 (CTV dùng thử). Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
 > Tên tạm của app: **9Study Video** (đổi sau).
 
 ---
@@ -361,9 +361,19 @@ Quy ước repo video cần bám (đọc từ `AGENTS.md` bản 3): kịch bản
 
 Cách thử tự động đã dùng (để làm lại khi cần): chạy app với `NINESTUDY_USER_DATA=<thư mục thử>` và `--remote-debugging-port=9222`, rồi điều khiển giao diện qua Chrome DevTools Protocol (chạy JS, bấm, chụp màn hình). Thư mục thử có `settings.json` trỏ tới repo thử của Mốc 0, không đụng cài đặt thật.
 
-### Mốc 3: chia việc chi tiết khi xong mốc 2.
+### Mốc 3 — hoàn thiện (chia việc 20/11/2026)
 
----
+- [x] **VersionService** (`version.ts`): bản đang dùng / bản mới nhất / có gì mới đọc từ `CHANGELOG.md` của bản mới; đổi bản tầng 1 khi sạch (`git switch --detach refs/tags/<N>`, `npm install` khi `package-lock.json` đổi); tầng 2 mở cuộc trò chuyện `$phien-ban`; đọc `app-compat.json` của bản mới để chặn khi cần app mới hơn. Bài thử: đọc CHANGELOG (cả bản thật), xét an toàn, so sánh phiên bản.
+  - Thử thật tầng 1: repo thử lùi về bản 2 → dải thông báo "Bản 3 đã sẵn sàng" → Cập nhật → lên bản 3.
+  - Thử thật tầng 2: repo thử ở bản 2 + sửa `src/Root.tsx` → hộp cập nhật đổi nút thành "Nhờ AI cập nhật" → AI theo skill `phien-ban` cất tạm chỗ sửa, lên bản 3, trả lại chỗ sửa, giữ bản sao lưu, chạy lint.
+- [x] **Dải thông báo + hộp Cập nhật** theo thiết kế (bản cũ → mới, ngày phát hành, tóm tắt, có gì mới, sửa lỗi, nhóm môn khác, "bài của bạn được giữ nguyên").
+- [x] **Thanh lượt ChatGPT** ở thanh đầu (`account/rateLimits/read`, cửa sổ dùng nhiều nhất), đổi màu khi dưới 20%, cập nhật sau mỗi lượt AI.
+- [x] **Gửi báo lỗi**: zip trên Desktop gồm nhật ký (che bí mật lại lần nữa khi đóng gói), `settings.json`, `threads.json`, `thong-tin.txt` (bản app, Windows, ổ trống, trạng thái thư mục dự án). Sửa lỗi thật: Desktop trong OneDrive có tên tiếng Việt làm `tar.exe` hỏng → nén ở thư mục tạm không dấu rồi Node chép ra.
+- [x] **Màn Cài đặt tối giản**: thư mục dự án, nơi lưu video (mở, đổi), key Vivibe (thêm/đổi, kiểm tra trước khi lưu), tài khoản ChatGPT + lượt (đăng xuất có xác nhận), phiên bản bộ công cụ và app, chạy lại kiểm tra máy, gửi báo lỗi.
+- [x] **Đánh bóng**: khung chat kéo rộng 340–900px (nhớ độ rộng); thẻ tạo giọng đọc hiện "khoảng N câu · M ký tự" (chạy `vivibe_tts.py --estimate`, không tốn credit).
+- [ ] Icon app (cần ảnh logo 9Study).
+- [ ] Nút "Đọc sai" ở tab Nghe thử, ảnh thu nhỏ storyboard ở danh sách video.
+- [ ] Nội dung bộ công cụ: mục "Cần làm sau khi cập nhật" của bản 2 (chuyển sang Codex, đọc `docs/HUONG_DAN_CODEX.md`) bị AI nhắc lại khi cập nhật trong app — không còn đúng với người dùng app; nên sửa trong CHANGELOG của repo video.
 
 ## 8. Rủi ro và cách giảm
 

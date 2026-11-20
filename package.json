@@ -1,7 +1,7 @@
 {
   "name": "9study-video",
   "productName": "9Study Video",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "App Windows giup cong tac vien lam video giai thich ban chat bang bo cong cu 9Study",
   "main": "./out/main/index.js",
   "author": "9Study",
