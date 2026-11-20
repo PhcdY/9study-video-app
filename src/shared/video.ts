@@ -88,6 +88,8 @@ export type ChatItem =
       command?: string
       /** Viec quen thuoc cua bo cong cu (title = 'congCu') */
       label?: StatusLabel
+      /** Tao giong doc: so cau va so ky tu se gui (che do uoc tinh) */
+      estimate?: { lines: number; chars: number }
       reason?: string
       costly: boolean
       state: 'pending' | 'accepted' | 'acceptedForSession' | 'declined'

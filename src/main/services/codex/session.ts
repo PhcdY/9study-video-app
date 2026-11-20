@@ -14,7 +14,7 @@ import type { TurnStartResponse } from './protocol/v2/TurnStartResponse'
 import type { UserInput } from './protocol/v2/UserInput'
 import { CodexClient } from './client'
 import { trustProject } from '../runtime'
-import { describeApproval, statusLabelFor } from './approvals'
+import { describeApproval, estimateVoice, statusLabelFor } from './approvals'
 import log from '../../log'
 
 const SANDBOX = 'workspace-write' as const
@@ -52,7 +52,11 @@ function saveThread(projectDir: string, key: string, threadId: string): void {
   renameSync(storeFile() + '.tmp', storeFile())
 }
 export function slugsWithChat(projectDir: string): Set<string> {
-  return new Set(Object.keys(readStore()[projectDir] ?? {}).filter((k) => !k.startsWith('moi-')))
+  return new Set(
+    Object.keys(readStore()[projectDir] ?? {}).filter(
+      (k) => !k.startsWith('moi-') && !k.startsWith('he-')
+    )
+  )
 }
 
 /** Doi loi tho cua Codex ra ma loi cho giao dien. */
@@ -155,7 +159,8 @@ export class CodexSession extends EventEmitter {
         waiting: new Map(),
         loaded: false
       }
-      if (!key.startsWith('moi-')) chat.slug = key
+      // moi-: video moi chua co slug; he-: cuoc tro chuyen cua app (vd doi phien ban), khong gan video
+      if (!key.startsWith('moi-') && !key.startsWith('he-')) chat.slug = key
       this.chats.set(key, chat)
     }
     return chat
@@ -331,6 +336,15 @@ export class CodexSession extends EventEmitter {
     }
     chat.items.push(card)
     this.emitNow(chat)
+    // Tao giong doc ton credit: chay thu che do uoc tinh de hien so cau va so ky tu
+    if (card.kind === 'approval' && card.costly && p.command) {
+      void estimateVoice(this.projectDir, p.command).then((est) => {
+        if (est && card.kind === 'approval') {
+          card.estimate = est
+          this.emitNow(chat)
+        }
+      })
+    }
     return new Promise((resolve) => {
       chat.waiting.set(card.id, (decision) => {
         chat.waiting.delete(card.id)
@@ -349,7 +363,7 @@ export class CodexSession extends EventEmitter {
 
   /** Video moi: sau moi luot, tim thu muc video vua tao de gan cuoc tro chuyen vao slug. */
   private bindSlug(chat: Chat): void {
-    if (chat.slug || !chat.threadId) return
+    if (chat.slug || !chat.threadId || !chat.key.startsWith('moi-')) return
     const root = path.join(this.projectDir, 'src', 'videos')
     if (!existsSync(root)) return
     const taken = slugsWithChat(this.projectDir)

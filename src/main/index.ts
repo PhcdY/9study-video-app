@@ -6,7 +6,10 @@ import { handle, broadcast, pickFiles, pickFolder } from './ipc'
 import { SetupService } from './services/setup'
 import { killAll, killOrphans } from './services/process'
 import { exe } from './services/runtime'
-import { reopenLoginPage, stopAccountClient } from './services/codex/account'
+import { logout, readUsage, reopenLoginPage, stopAccountClient } from './services/codex/account'
+import { VersionService } from './services/version'
+import { makeBugReport } from './services/report'
+import { getSettings } from './services/settings'
 import { restartToUpdate, startUpdater } from './services/updater'
 import { VideosService } from './services/videos'
 import { handleFileScheme, isInside, registerFileScheme } from './services/files-protocol'
@@ -25,6 +28,10 @@ setup.on('changed', (snap) => broadcast('setup:changed', snap))
 const videos = new VideosService()
 videos.on('changed', (snap) => broadcast('videos:changed', snap))
 videos.on('chat', (state) => broadcast('chat:changed', state))
+// Sau moi luot AI: doc lai luot ChatGPT con lai
+videos.on('turnDone', () => void readUsage().then((u) => broadcast('usage:changed', u)))
+const versions = new VersionService(() => getSettings().projectDir ?? '')
+let lastVersion: string | undefined
 
 let mainWindow: BrowserWindow | null = null
 
@@ -103,6 +110,41 @@ function registerIpc(): void {
     if (videos.allowedRoots().some((r) => isInside(p, r))) shell.showItemInFolder(p)
   })
   handle('dialog:pickFiles', () => pickFiles())
+  handle('shell:openPath', (p) => {
+    if (videos.allowedRoots().some((r) => isInside(p, r))) void shell.openPath(p)
+  })
+  handle('version:get', async () => {
+    const info = await versions.info()
+    lastVersion = info.current ?? info.base
+    return info
+  })
+  handle('version:update', async (target) => {
+    const res = await versions.update(
+      target,
+      (p) => broadcast('version:progress', p),
+      () => videos.handoffUpdate(target)
+    )
+    if (res.ok) {
+      lastVersion = res.version
+      videos.toolkitChanged()
+    }
+    return res
+  })
+  handle('account:usage', () => readUsage())
+  handle('account:logout', async () => {
+    await logout()
+    await setup.refresh()
+  })
+  handle('app:bugReport', async () => {
+    try {
+      const zip = await makeBugReport({ 'Bo cong cu': lastVersion ?? '?' })
+      shell.showItemInFolder(zip)
+      return zip
+    } catch (e) {
+      log.error(`[bao loi] ${String(e)}`)
+      return null
+    }
+  })
 }
 
 app.on('second-instance', () => {

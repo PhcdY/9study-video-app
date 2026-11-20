@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { ChatState, VideosSnapshot } from '../../../shared/video'
+import type { Usage, VersionInfo } from '../../../shared/app'
 import { createMockApi } from './mock-api'
 
 // Ngoai Electron (xem giao dien trong trinh duyet khi phat trien) thi dung du lieu gia
@@ -54,4 +55,29 @@ export function useChat(key: string): ChatState | null {
 /** Duong dan file tren may -> URL de giao dien mo (phan loi chi cho mo trong thu muc du an / noi luu video). */
 export function fileUrl(p: string, bust?: number): string {
   return `app-file://f/${encodeURIComponent(p)}${bust ? `?v=${bust}` : ''}`
+}
+
+/** Luot ChatGPT con lai; cap nhat sau moi luot AI. */
+export function useUsage(): Usage | null {
+  const [u, setU] = useState<Usage | null>(null)
+  useEffect(() => {
+    const off = api.on('usage:changed', setU)
+    void api.invoke('account:usage').then(setU)
+    return off
+  }, [])
+  return u
+}
+
+/** Phien ban bo cong cu (hoi GitHub mot lan khi mo man). */
+export function useVersion(): [VersionInfo | null, () => void] {
+  const [v, setV] = useState<VersionInfo | null>(null)
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    let alive = true
+    void api.invoke('version:get').then((x) => alive && setV(x))
+    return () => {
+      alive = false
+    }
+  }, [n])
+  return [v, () => setN((x) => x + 1)]
 }

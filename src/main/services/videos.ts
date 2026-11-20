@@ -117,7 +117,10 @@ export class VideosService extends EventEmitter {
       this.session = new CodexSession(dir)
       this.dirOfSession = dir
       this.session.on('changed', (s) => this.emit('chat', s))
-      this.session.on('turnDone', () => this.changedSoon())
+      this.session.on('turnDone', () => {
+        this.changedSoon()
+        this.emit('turnDone')
+      })
     }
     return this.session
   }
@@ -133,6 +136,25 @@ export class VideosService extends EventEmitter {
     await s.open(key)
     if (STAGE_CHANGING_CHIPS.includes(chip)) await s.compact(key)
     await s.send(key, chipPrompt(chip, slug))
+  }
+
+  /** Doi ban khi co file bo cong cu bi sua: nho skill phien-ban lam, giu bai cua nguoi dung. */
+  handoffUpdate(target: string): string {
+    const key = 'he-phien-ban'
+    void this.chat().send(
+      key,
+      `$phien-ban
+Cập nhật bộ công cụ lên bản ${target}. Giữ nguyên bài và các góp ý tôi đã dạy AI. Nếu có chỗ phải chọn thì hỏi tôi bằng lời dễ hiểu.`
+    )
+    return key
+  }
+
+  /** Bo cong cu vua doi ban: doc lai danh sach video, ban, va bat lai Studio khi can. */
+  toolkitChanged(): void {
+    this.samples = undefined
+    this.studio?.stop()
+    this.studio = undefined
+    this.changedSoon()
   }
 
   studioUrl(): Promise<string> {

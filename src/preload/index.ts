@@ -22,13 +22,21 @@ const INVOKE: InvokeChannel[] = [
   'chat:approve',
   'studio:start',
   'shell:showItem',
-  'dialog:pickFiles'
+  'dialog:pickFiles',
+  'shell:openPath',
+  'version:get',
+  'version:update',
+  'account:usage',
+  'account:logout',
+  'app:bugReport'
 ]
 const EVENTS: EventChannel[] = [
   'setup:changed',
   'app:updateReady',
   'videos:changed',
-  'chat:changed'
+  'chat:changed',
+  'version:progress',
+  'usage:changed'
 ]
 
 const api: Api = {

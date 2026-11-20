@@ -414,5 +414,97 @@ export const copy = {
       xuatVideo: 'Xuất video',
       xuatLaiVideo: 'Xuất lại video'
     } satisfies Record<ChipId, string>
-  }
+  },
+
+  // ---------- Moc 3 ----------
+  usage: {
+    pill: (n: number) => `Lượt AI còn ${n}%`,
+    resets: (ms: number) => {
+      const d = new Date(ms)
+      const same = d.toDateString() === new Date().toDateString()
+      const t = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      return same ? `làm mới lúc ${t}` : `làm mới ${t} ngày ${d.toLocaleDateString('vi-VN')}`
+    },
+    low: 'Sắp hết lượt ChatGPT. Làm nốt việc đang dở, việc mới để sau giờ làm mới.'
+  },
+  version: {
+    banner: (v: string) => `Bản ${v} đã sẵn sàng.`,
+    bannerAction: 'Xem và cập nhật',
+    dismiss: 'Ẩn thông báo',
+    dialogTitle: 'Cập nhật bộ công cụ',
+    fromTo: (from: string, to: string) => `Bản ${from} → Bản ${to}`,
+    released: (d?: string) => {
+      const m = d && /^(\d{4})-(\d{2})-(\d{2})$/.exec(d)
+      return d ? ` · phát hành ${m ? `${m[3]}/${m[2]}/${m[1]}` : d}` : ''
+    },
+    whatsNew: 'Có gì mới',
+    fixes: 'Sửa lỗi',
+    moreGroups: (n: number) => `và thay đổi riêng của ${n} môn`,
+    kept: 'Bài của bạn được giữ nguyên:',
+    keptDesc: 'các video đang làm và góp ý bạn đã dạy AI. Video đã xuất không bị đụng tới.',
+    needAi:
+      'Bạn đã dạy AI sửa một số file của bộ công cụ (hoặc đang dùng bản thử nghiệm). Để giữ an toàn bài của bạn, AI sẽ cùng bạn cập nhật trong một cuộc trò chuyện.',
+    needApp: (v: string) => `Bản mới cần app 9Study Video ${v} trở lên. Hãy cập nhật app trước.`,
+    later: 'Để sau',
+    update: 'Cập nhật, khoảng 1 phút',
+    updateWithAi: 'Nhờ AI cập nhật',
+    updating: 'Đang cập nhật…',
+    steps: { doiBan: 'Chuyển sang bản mới', caiThuVien: 'Cài thêm thư viện (nếu cần)' },
+    done: (v: string) => `Đã lên bản ${v}.`,
+    close: 'Đóng',
+    errors: {
+      mang: 'Không kết nối được mạng. Kiểm tra wifi rồi thử lại.',
+      canAppMoi: 'Bản mới cần app mới hơn. Hãy cập nhật app trước.',
+      khongRo: 'Cập nhật chưa xong. Bài của bạn vẫn nguyên. Bấm Thử lại, hoặc nhờ AI cập nhật.'
+    },
+    current: (v?: string, branch?: string) =>
+      branch ? `Bản thử nghiệm (${branch})` : v ? `Bản ${v}` : 'Chưa rõ bản',
+    upToDate: 'Đang dùng bản mới nhất.',
+    hasNew: (v: string) => `Đã có bản ${v}.`,
+    offline: 'Chưa kiểm tra được bản mới (chưa có mạng).'
+  },
+  assistant: {
+    phienBan: 'Cập nhật bộ công cụ cùng AI',
+    phienBanSub: 'AI giữ nguyên bài của bạn khi đổi bản'
+  },
+  settings: {
+    nav: 'Cài đặt',
+    title: 'Cài đặt',
+    folders: 'Thư mục',
+    project: 'Thư mục dự án',
+    projectDesc: 'Bộ công cụ và các bài bạn đang làm.',
+    output: 'Nơi lưu video thành phẩm',
+    outputDrive: 'Google Drive · tự đồng bộ lên mạng',
+    open: 'Mở thư mục',
+    change: 'Đổi',
+    voice: 'Giọng đọc Vivibe',
+    key: 'Key Vivibe',
+    keyNone: 'Chưa có key. Thêm để tạo giọng đọc.',
+    keyLocal: 'Chỉ lưu trên máy bạn, không gửi đi đâu khác.',
+    changeKey: 'Đổi key',
+    addKey: 'Thêm key',
+    save: 'Kiểm tra và lưu',
+    cancel: 'Huỷ',
+    ai: 'Trợ lý AI',
+    signedIn: (email: string, plan?: string) =>
+      `Đã đăng nhập ChatGPT${plan ? ` · gói ${plan}` : ''}${email ? ` · ${email}` : ''}`,
+    logout: 'Đăng xuất',
+    logoutConfirm: 'Đăng xuất khỏi ChatGPT? Muốn dùng trợ lý AI lại thì phải đăng nhập lại.',
+    versions: 'Phiên bản',
+    toolkit: 'Bộ công cụ làm video',
+    appName: (v: string) => `App 9Study Video · ${v}`,
+    viewUpdate: 'Xem bản mới',
+    support: 'Hỗ trợ',
+    recheck: 'Chạy lại kiểm tra máy',
+    rechecking: 'Đang kiểm tra…',
+    bugReport: 'Gửi báo lỗi',
+    bugReportDesc:
+      '"Gửi báo lỗi" gom nhật ký thành một file trên Desktop để bạn gửi cho người phụ trách. Key và mật khẩu không nằm trong đó.',
+    bugReportDone: (p: string) => `Đã tạo ${p}. Gửi file này cho người phụ trách.`,
+    bugReportFail: 'Chưa tạo được file báo lỗi. Thử lại sau ít phút.',
+    working: 'Đang làm…'
+  },
+  chatResize: 'Kéo để đổi độ rộng khung chat',
+  estimate: (lines: number, chars: number) =>
+    `Khoảng ${lines.toLocaleString('vi-VN')} câu · ${chars.toLocaleString('vi-VN')} ký tự (credit Vivibe tính theo số ký tự)`
 }

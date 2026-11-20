@@ -1,5 +1,7 @@
 // Dich lenh AI chay sang ma nhan tieng Viet (giao dien doi ma -> cau trong copy.ts). Ham thuan, co bai thu.
 import type { ApprovalTitle, StatusLabel } from '../../../shared/video'
+import { childEnv, exe } from '../runtime'
+import { run } from '../process'
 
 /**
  * Codex tren Windows boc lenh trong powershell: `"C:\...\powershell.exe" -Command 'py scripts/x.py a'`.
@@ -58,4 +60,37 @@ export function describeApproval(rawCommand: string, reason?: string | null): Ap
   if (reason && /network|mạng|internet/i.test(reason))
     return { title: 'mang', costly: false, command: c }
   return { title: 'lenhLa', costly: false, command: c }
+}
+
+/** Tach dong lenh thanh tham so (ton trong dau ngoac kep / don). */
+export function splitArgs(cmd: string): string[] {
+  const out: string[] = []
+  const re = /"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+)/g
+  let m: RegExpExecArray | null
+  while ((m = re.exec(cmd))) out.push(m[1] ?? m[2] ?? m[3])
+  return out
+}
+
+/** Doc dong tom tat cua vivibe_tts.py: "... · 49 dòng cần tạo · tổng 3640 ký tự (...)". */
+export function parseVoiceEstimate(text: string): { lines: number; chars: number } | null {
+  const m = /(\d+)\s+dòng cần tạo[\s\S]*?tổng\s+(\d+)\s+ký tự/.exec(text)
+  return m ? { lines: Number(m[1]), chars: Number(m[2]) } : null
+}
+
+/** Chay lai lenh tao giong doc o che do --estimate (khong goi API, khong ton credit). */
+export async function estimateVoice(
+  projectDir: string,
+  rawCommand: string
+): Promise<{ lines: number; chars: number } | null> {
+  const argv = splitArgs(unwrapCommand(rawCommand))
+  const i = argv.findIndex((a) => /vivibe_tts\.py$/.test(a))
+  if (i < 0) return null
+  const out: string[] = []
+  const res = await run(exe.py(), [...argv.slice(i), '--estimate'], {
+    cwd: projectDir,
+    env: childEnv(projectDir),
+    onLine: (l) => out.push(l),
+    signal: AbortSignal.timeout(60_000)
+  })
+  return res.code === 0 ? parseVoiceEstimate(out.join('\n')) : null
 }

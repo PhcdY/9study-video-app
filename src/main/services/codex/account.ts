@@ -4,6 +4,9 @@ import { CodexClient } from './client'
 import type { GetAccountResponse } from './protocol/v2/GetAccountResponse'
 import type { LoginAccountResponse } from './protocol/v2/LoginAccountResponse'
 import type { WindowsSandboxReadinessResponse } from './protocol/v2/WindowsSandboxReadinessResponse'
+import type { GetAccountRateLimitsResponse } from './protocol/v2/GetAccountRateLimitsResponse'
+import type { RateLimitSnapshot } from './protocol/v2/RateLimitSnapshot'
+import type { Usage } from '../../../shared/app'
 import log from '../../log'
 
 let client: CodexClient | undefined
@@ -83,4 +86,36 @@ export async function prepareSandbox(projectDir: string): Promise<boolean> {
     log.warn(`[sandbox] loi: ${String(e)}`)
   }
   return (await sandboxReadiness()) === 'ready'
+}
+
+/** Luot ChatGPT con lai: lay cua so dung nhieu nhat (ngan han hoac dai han). */
+export function usageFrom(snap: RateLimitSnapshot | null | undefined): Usage | null {
+  if (!snap) return null
+  const windows = [snap.primary, snap.secondary].filter((w): w is NonNullable<typeof w> => !!w)
+  if (!windows.length) return null
+  const worst = windows.reduce((a, b) => (b.usedPercent > a.usedPercent ? b : a))
+  return {
+    remainingPercent: Math.max(0, Math.min(100, Math.round(100 - worst.usedPercent))),
+    resetsAt: worst.resetsAt ? worst.resetsAt * 1000 : undefined,
+    plan: snap.planType ?? undefined
+  }
+}
+
+export async function readUsage(): Promise<Usage | null> {
+  try {
+    const c = await getClient()
+    const res = (await c.request(
+      'account/rateLimits/read',
+      undefined
+    )) as GetAccountRateLimitsResponse
+    return usageFrom(res.rateLimitsByLimitId?.codex ?? res.rateLimits)
+  } catch (e) {
+    log.warn(`[luot] khong doc duoc: ${String(e)}`)
+    return null
+  }
+}
+
+export async function logout(): Promise<void> {
+  const c = await getClient()
+  await c.request('account/logout', undefined)
 }

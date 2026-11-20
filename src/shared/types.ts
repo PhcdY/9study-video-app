@@ -1,4 +1,5 @@
 // Kieu dung chung cho phan loi (main), cau noi (preload) va giao dien (renderer).
+import type { UpdateProgress, UpdateResult, Usage, VersionInfo } from './app'
 import type {
   ApprovalDecision,
   AudioLine,
@@ -153,6 +154,12 @@ export interface InvokeMap {
   'studio:start': { args: []; ret: { url: string } | { error: true } }
   'shell:showItem': { args: [path: string]; ret: void }
   'dialog:pickFiles': { args: []; ret: string[] }
+  'shell:openPath': { args: [path: string]; ret: void }
+  'version:get': { args: []; ret: VersionInfo }
+  'version:update': { args: [target: string]; ret: UpdateResult }
+  'account:usage': { args: []; ret: Usage | null }
+  'account:logout': { args: []; ret: void }
+  'app:bugReport': { args: []; ret: string | null }
 }
 
 /** Su kien (main -> renderer). */
@@ -161,6 +168,8 @@ export interface EventMap {
   'app:updateReady': { version: string }
   'videos:changed': VideosSnapshot
   'chat:changed': ChatState
+  'version:progress': UpdateProgress
+  'usage:changed': Usage | null
 }
 
 export type InvokeChannel = keyof InvokeMap

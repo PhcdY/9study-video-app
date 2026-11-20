@@ -14,14 +14,18 @@ export function ChatPanel({
   chatKey,
   chat,
   slug,
-  stage
+  stage,
+  wide
 }: {
   chatKey: string
   chat: ChatState | null
   slug?: string
   stage: VideoStage
+  /** Chiem het chieu ngang (man tro chuyen rieng, khong co tab ket qua) */
+  wide?: boolean
 }): React.JSX.Element {
   const [text, setText] = useState('')
+  const [width, setWidth] = useState(readWidth)
   const listRef = useRef<HTMLDivElement>(null)
   const busy = !!chat?.busy
   const items = useMemo(() => chat?.items ?? [], [chat])
@@ -44,8 +48,13 @@ export function ChatPanel({
   return (
     <section
       aria-label={c.label}
-      className="flex min-h-0 max-w-[460px] min-w-[340px] flex-[1_1_400px] flex-col border-r border-vien bg-white"
+      style={wide ? undefined : { width }}
+      className={cn(
+        'relative flex min-h-0 shrink-0 flex-col bg-white',
+        wide ? 'mx-auto w-full max-w-[900px] flex-1 border-x border-vien' : 'border-r border-vien'
+      )}
     >
+      {!wide && <ResizeHandle width={width} onChange={setWidth} />}
       <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-5">
         {items.length === 0 && !busy && <p className="m-0 text-sm text-phu">{c.empty}</p>}
         {items.map((it) => (
@@ -212,6 +221,11 @@ function ApprovalCard({
           {item.command}
         </code>
       )}
+      {item.estimate && (
+        <div className="rounded-lg bg-white px-3 py-2 text-sm font-semibold">
+          {copy.estimate(item.estimate.lines, item.estimate.chars)}
+        </div>
+      )}
       {item.costly && <div className="text-[13px] leading-normal text-phu">{c.costlyHint}</div>}
       {pending ? (
         <div className="flex flex-wrap gap-2">
@@ -243,5 +257,70 @@ function ApprovalCard({
         </div>
       )}
     </div>
+  )
+}
+
+// ---------- keo doi do rong khung chat ----------
+
+const WIDTH_KEY = 'do-rong-khung-chat'
+const MIN_W = 340
+const MAX_W = 900
+
+function readWidth(): number {
+  try {
+    const n = Number(localStorage.getItem(WIDTH_KEY))
+    return n >= MIN_W && n <= MAX_W ? n : 440
+  } catch {
+    return 440
+  }
+}
+
+function ResizeHandle({
+  width,
+  onChange
+}: {
+  width: number
+  onChange: (w: number) => void
+}): React.JSX.Element {
+  const start = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const x0 = e.clientX
+    const w0 = width
+    const el = e.currentTarget
+    el.setPointerCapture(e.pointerId)
+    const move = (ev: PointerEvent): void =>
+      onChange(Math.max(MIN_W, Math.min(MAX_W, w0 + ev.clientX - x0)))
+    const up = (ev: PointerEvent): void => {
+      el.releasePointerCapture(ev.pointerId)
+      el.removeEventListener('pointermove', move)
+      el.removeEventListener('pointerup', up)
+      try {
+        localStorage.setItem(
+          WIDTH_KEY,
+          String(Math.max(MIN_W, Math.min(MAX_W, w0 + ev.clientX - x0)))
+        )
+      } catch {
+        // khong luu duoc thi thoi
+      }
+    }
+    el.addEventListener('pointermove', move)
+    el.addEventListener('pointerup', up)
+  }
+  return (
+    <div
+      role="separator"
+      aria-orientation="vertical"
+      aria-label={copy.chatResize}
+      aria-valuenow={width}
+      aria-valuemin={MIN_W}
+      aria-valuemax={MAX_W}
+      tabIndex={0}
+      onPointerDown={start}
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') onChange(Math.max(MIN_W, width - 40))
+        if (e.key === 'ArrowRight') onChange(Math.min(MAX_W, width + 40))
+      }}
+      title={copy.chatResize}
+      className="absolute top-0 -right-1.5 z-10 h-full w-3 cursor-col-resize hover:bg-cham/15 focus-visible:bg-cham/20"
+    />
   )
 }
