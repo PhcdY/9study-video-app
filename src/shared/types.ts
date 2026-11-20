@@ -36,6 +36,38 @@ export type ErrorCode =
   | 'mayChuaSan'
   | 'khongRo'
 
+/** Tung phan cua mot buoc dai (vd tai bo cong cu, cai thu vien), hien rieng tren giao dien. */
+export type TaskId =
+  | 'taiBoCongCu'
+  | 'layDanhSachBan'
+  | 'chuyenBanMoi'
+  | 'taiThuVien'
+  | 'caiThuVien'
+  | 'taiTrinhDuyet'
+  | 'dangNhap'
+  | 'cheDoAnToan'
+
+export const STEP_TASKS: Partial<Record<SetupStepId, TaskId[]>> = {
+  taiDuAn: ['taiBoCongCu', 'layDanhSachBan', 'chuyenBanMoi'],
+  caiThuVien: ['taiThuVien', 'caiThuVien', 'taiTrinhDuyet'],
+  dangNhap: ['dangNhap', 'cheDoAnToan']
+}
+
+export type TaskStatus = 'waiting' | 'running' | 'done' | 'skipped' | 'error'
+
+export interface TaskState {
+  id: TaskId
+  status: TaskStatus
+  /** 0-100; khong co thi giao dien hien vong quay */
+  progress?: number
+  /** Da xong bao nhieu / tong bao nhieu (giao dien tu dinh dang theo don vi) */
+  amount?: { done: number; total?: number; unit: 'mb' | 'goi' }
+  /** Toc do tai, MB/giay */
+  speedMbps?: number
+  /** Ban vua chuyen sang (vd "3") */
+  version?: string
+}
+
 export interface StepState {
   id: SetupStepId
   status: StepStatus
@@ -44,6 +76,8 @@ export interface StepState {
   /** Dong trang thai ngan (tieng Viet), vd "Dang tai du an... 45%" */
   detail?: string
   error?: ErrorCode
+  /** Cac phan cua buoc (chi buoc dai) */
+  tasks?: TaskState[]
 }
 
 export interface MachineCheck {

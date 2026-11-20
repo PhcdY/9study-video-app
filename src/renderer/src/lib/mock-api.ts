@@ -14,15 +14,60 @@ function fixture(state: string): SetupSnapshot {
       ? 1
       : state === 'xong'
         ? 7
-        : Math.max(0, SETUP_ORDER.indexOf(state as never))
+        : state === 'caiThuVienCoSan'
+          ? 2
+          : Math.max(0, SETUP_ORDER.indexOf(state as never))
   const steps: StepState[] = SETUP_ORDER.map((id, i) => ({
     id,
     status: i < at ? 'done' : i === at ? 'ready' : 'locked'
   }))
   if (state === 'taiDuAnCoSan') Object.assign(steps[1], { status: 'ready' })
-  if (state === 'taiDuAn') Object.assign(steps[1], { status: 'running', progress: 45 })
+  if (state === 'taiDuAn')
+    Object.assign(steps[1], {
+      status: 'running',
+      progress: 15,
+      tasks: [
+        {
+          id: 'taiBoCongCu',
+          status: 'running',
+          progress: 45,
+          amount: { done: 3.4, unit: 'mb' },
+          speedMbps: 2.1
+        },
+        { id: 'layDanhSachBan', status: 'waiting' },
+        { id: 'chuyenBanMoi', status: 'waiting' }
+      ]
+    })
   if (state === 'caiThuVien')
-    Object.assign(steps[2], { status: 'running', progress: 64, detail: 'thuVien' })
+    Object.assign(steps[2], {
+      status: 'running',
+      progress: 54,
+      tasks: [
+        { id: 'taiThuVien', status: 'done', amount: { done: 346, total: 346, unit: 'goi' } },
+        { id: 'caiThuVien', status: 'done' },
+        {
+          id: 'taiTrinhDuyet',
+          status: 'running',
+          progress: 62,
+          amount: { done: 55.4, total: 89.4, unit: 'mb' }
+        }
+      ]
+    })
+  if (state === 'caiThuVienCoSan')
+    Object.assign(steps[2], {
+      status: 'running',
+      progress: 70,
+      tasks: [
+        { id: 'taiThuVien', status: 'skipped' },
+        { id: 'caiThuVien', status: 'skipped' },
+        {
+          id: 'taiTrinhDuyet',
+          status: 'running',
+          progress: 10,
+          amount: { done: 8.9, total: 89.4, unit: 'mb' }
+        }
+      ]
+    })
   if (state === 'dangNhap')
     Object.assign(steps[3], { status: 'running', progress: 10, detail: 'choDangNhap' })
   if (state === 'loi') Object.assign(steps[1], { status: 'error', error: 'mang' })

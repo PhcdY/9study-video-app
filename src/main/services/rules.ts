@@ -42,11 +42,13 @@ export function gitCloneProgress(line: string): number | null {
   return Math.round(from + (to - from) * pct)
 }
 
-/** Dem goi trong package-lock.json (de uoc tien trinh npm ci). */
+/** Dem goi bat buoc trong package-lock.json (goi tuy chon cho may khac khong tai tren Windows). */
 export function countLockPackages(lockText: string): number {
   try {
-    const lock = JSON.parse(lockText) as { packages?: Record<string, unknown> }
-    return Object.keys(lock.packages ?? {}).filter((k) => k.startsWith('node_modules/')).length
+    const lock = JSON.parse(lockText) as { packages?: Record<string, { optional?: boolean }> }
+    return Object.entries(lock.packages ?? {}).filter(
+      ([k, v]) => k.startsWith('node_modules/') && !v?.optional
+    ).length
   } catch {
     return 0
   }
@@ -68,3 +70,28 @@ export function looksLikeNetworkError(lines: string[]): boolean {
 
 /** Duong dan Google Drive cho Desktop: "<o>:\My Drive" hoac "<o>:\Drive cua toi". */
 export const DRIVE_FOLDER_NAMES = ['My Drive', 'Drive của tôi']
+
+const UNIT_MB: Record<string, number> = { KiB: 1 / 1024, MiB: 1, GiB: 1024 }
+
+/** So MB da nhan va toc do tu dong `git clone --progress`, vd "12.30 MiB | 2.10 MiB/s". */
+export function gitTransfer(line: string): { mb: number; speedMbps?: number } | null {
+  const m = /([\d.]+) (KiB|MiB|GiB)(?: \| ([\d.]+) (KiB|MiB|GiB)\/s)?/.exec(line)
+  if (!m || !/Receiving objects/.test(line)) return null
+  const mb = Number(m[1]) * UNIT_MB[m[2]]
+  const speedMbps = m[3] ? Number(m[3]) * UNIT_MB[m[4]] : undefined
+  return { mb: Math.round(mb * 10) / 10, speedMbps: speedMbps && Math.round(speedMbps * 10) / 10 }
+}
+
+/** Tien trinh tai trinh duyet cua Remotion: "Getting Chrome Headless Shell - 12.3 Mb/89.4 Mb" hoac "45%". */
+export function remotionDownload(
+  line: string
+): { done?: number; total?: number; pct: number } | null {
+  const mb = /([\d.]+)\s*Mb\s*\/\s*([\d.]+)\s*Mb/i.exec(line)
+  if (mb) {
+    const done = Number(mb[1])
+    const total = Number(mb[2])
+    return { done, total, pct: total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0 }
+  }
+  const pct = /(\d+)%/.exec(line)
+  return pct ? { pct: Math.min(100, Number(pct[1])) } : null
+}

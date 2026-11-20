@@ -1,5 +1,5 @@
 // Toan bo chu tieng Viet tren giao dien. Khong dung thuat ngu ky thuat (git, terminal, npm, sandbox...).
-import type { ErrorCode, MachineCheck, SetupStepId } from '../../../shared/types'
+import type { ErrorCode, MachineCheck, SetupStepId, TaskId } from '../../../shared/types'
 
 export const copy = {
   appName: '9Study',
@@ -109,6 +109,29 @@ export const copy = {
       running: 'Đang kiểm tra…'
     }
   } satisfies Record<SetupStepId, unknown>,
+
+  tasks: {
+    taiBoCongCu: { label: 'Tải bộ công cụ làm video', hint: 'khoảng 10 MB' },
+    layDanhSachBan: { label: 'Xem các bản đã phát hành', hint: 'vài giây' },
+    chuyenBanMoi: { label: 'Chuyển sang bản mới nhất', hint: 'vài giây' },
+    taiThuVien: { label: 'Tải thư viện dựng video', hint: 'khoảng 350 gói' },
+    caiThuVien: { label: 'Cài thư viện vào máy', hint: 'khoảng 1 phút' },
+    taiTrinhDuyet: { label: 'Tải trình duyệt dùng để xuất video', hint: 'khoảng 280 MB trên ổ' },
+    dangNhap: { label: 'Đăng nhập tài khoản ChatGPT', hint: 'bạn đăng nhập trên trình duyệt' },
+    cheDoAnToan: { label: 'Bật chế độ an toàn cho trợ lý AI', hint: 'vài giây' }
+  } satisfies Record<TaskId, { label: string; hint: string }>,
+  taskStatus: {
+    waiting: 'Chờ',
+    skipped: 'Máy đã có sẵn',
+    error: 'Bị lỗi',
+    version: (v: string) => `Bản ${v}`,
+    sandboxOff: 'Chưa bật được, AI sẽ hỏi trước mỗi việc'
+  },
+  willDo: 'Những gì app sẽ làm',
+  doing: 'Đang làm',
+  mb: (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} MB`,
+  goi: (n: number) => `${n.toLocaleString('vi-VN')} gói`,
+  speed: (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} MB/giây`,
 
   checks: {
     oDia: 'Ổ chứa bài còn trống',

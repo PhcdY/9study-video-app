@@ -10,7 +10,8 @@ import {
   XCircle
 } from 'lucide-react'
 import type { SetupSnapshot, SetupStepId, StepState } from '../../../../shared/types'
-import { OPTIONAL_STEPS } from '../../../../shared/types'
+import { OPTIONAL_STEPS, STEP_TASKS } from '../../../../shared/types'
+import { TaskList } from './TaskList'
 import { copy } from '@/lib/copy'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -71,8 +72,6 @@ export function StepPanel({ snap, step, index }: Props): React.JSX.Element {
         </div>
       )}
 
-      <StepBody snap={snap} step={step} />
-
       {running && step.progress !== undefined && step.id !== 'dangNhap' && (
         <div className="flex flex-col gap-2">
           <div className="flex justify-between text-sm">
@@ -83,11 +82,18 @@ export function StepPanel({ snap, step, index }: Props): React.JSX.Element {
           <div className="text-[13px] text-phu">{copy.canLeave}</div>
         </div>
       )}
+
+      {/* Tung phan cua buoc dai: truoc khi chay de biet se tai gi, khi chay de thay tung phan */}
+      {STEP_TASKS[step.id] && <TaskList step={step} />}
+
+      <StepBody snap={snap} step={step} />
     </main>
   )
 }
 
 function runningLabel(step: StepState): string {
+  const current = step.tasks?.find((t) => t.status === 'running')
+  if (current) return `${copy.tasks[current.id].label}…`
   if (step.id === 'caiThuVien' && step.detail)
     return copy.steps.caiThuVien.detail[step.detail] ?? copy.steps.caiThuVien.running
   const t = copy.steps[step.id]

@@ -1,18 +1,14 @@
 // 7 buoc cai dat lan dau. Moi buoc co check() (da xong chua) va run() (lam), bao tien trinh qua snapshot.
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
-import {
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  statfsSync,
-  accessSync,
-  constants
-} from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statfsSync } from 'node:fs'
+import { canWriteTo, ensureDir } from './fs-util'
 import {
   OPTIONAL_STEPS,
   SETUP_ORDER,
+  STEP_TASKS,
+  type TaskId,
+  type TaskState,
   type ErrorCode,
   type ExistingRepo,
   type MachineCheck,
@@ -28,6 +24,8 @@ import {
   DRIVE_FOLDER_NAMES,
   countLockPackages,
   gitCloneProgress,
+  gitTransfer,
+  remotionDownload,
   isNpmFetchLine,
   latestNumericTag,
   looksLikeNetworkError,
@@ -184,7 +182,9 @@ export class SetupService extends EventEmitter {
         log.warn(`[setup] check ${id} loi: ${String(e)}`)
       }
       const status = done ? 'done' : skipped.includes(id) ? 'skipped' : 'locked'
-      this.states.set(id, { id, status })
+      // Giu danh sach cac phan da lam (de xem lai da tai nhung gi)
+      const prevTasks = this.states.get(id)!.tasks
+      this.states.set(id, { id, status, tasks: done ? prevTasks : undefined })
     }
     this.relock()
     const snap = this.snapshot()
@@ -221,24 +221,30 @@ export class SetupService extends EventEmitter {
     if (st.status === 'running' || st.status === 'locked') return
     const ctrl = new AbortController()
     this.controllers.set(id, ctrl)
-    this.set(id, { status: 'running', progress: 0, detail: undefined, error: undefined })
+    this.set(id, {
+      status: 'running',
+      progress: 0,
+      detail: undefined,
+      error: undefined,
+      tasks: STEP_TASKS[id]?.map((t) => ({ id: t, status: 'waiting' }))
+    })
     try {
       await this.doStep(id, input, ctrl.signal)
       if (getSettings().skipped.includes(id))
         updateSettings({ skipped: getSettings().skipped.filter((s) => s !== id) })
-      this.set(id, { status: 'done', progress: 100 }, true)
+      this.set(id, { status: 'done', progress: 100, tasks: this.states.get(id)!.tasks }, true)
       // Doc lai cac buoc sau: viec nao may da co san (bo cong cu, thu vien, key...) thi tu qua
       await this.refresh()
     } catch (e) {
       const code: ErrorCode =
         e instanceof StepError ? e.code : ctrl.signal.aborted ? 'khongRo' : 'khongRo'
       log.error(`[setup] buoc ${id} loi (${code}): ${e instanceof Error ? e.message : String(e)}`)
+      const tasks = this.states
+        .get(id)!
+        .tasks?.map((t) => (t.status === 'running' ? { ...t, status: 'error' as const } : t))
       this.set(
         id,
-        {
-          status: ctrl.signal.aborted ? 'ready' : 'error',
-          error: ctrl.signal.aborted ? undefined : code
-        },
+        ctrl.signal.aborted ? { status: 'ready' } : { status: 'error', error: code, tasks },
         true
       )
     } finally {
@@ -254,6 +260,29 @@ export class SetupService extends EventEmitter {
     if (!OPTIONAL_STEPS.includes(id)) return
     updateSettings({ skipped: [...new Set([...getSettings().skipped, id])] })
     this.set(id, { status: 'skipped' }, true)
+  }
+
+  /** Cap nhat mot phan cua buoc; tien trinh chung cua buoc = trung binh cac phan. */
+  private task(id: SetupStepId, taskId: TaskId, patch: Partial<TaskState>): void {
+    const cur = this.states.get(id)!
+    if (!cur.tasks) return
+    const tasks = cur.tasks.map((t) =>
+      t.id === taskId
+        ? {
+            ...t,
+            ...patch,
+            ...(patch.status === 'done' || patch.status === 'skipped' ? { progress: 100 } : {})
+          }
+        : t
+    )
+    const weight = (t: TaskState): number =>
+      t.status === 'done' || t.status === 'skipped'
+        ? 100
+        : t.status === 'running'
+          ? (t.progress ?? 0)
+          : 0
+    const progress = Math.round(tasks.reduce((a, t) => a + weight(t), 0) / tasks.length)
+    this.set(id, { tasks, progress })
   }
 
   private progress(id: SetupStepId, progress: number, detail?: string): void {
@@ -285,13 +314,9 @@ export class SetupService extends EventEmitter {
     const existing = isVideoRepo(dir)
     const bad = validateProjectDir(dir, { existing })
     if (bad) throw new StepError(bad)
-    const parent = path.dirname(dir)
-    try {
-      mkdirSync(parent, { recursive: true })
-      accessSync(parent, constants.W_OK)
-    } catch (e) {
-      throw new StepError('khongGhiDuoc', String(e))
-    }
+    // Bo co san: ghi thu vao chinh no. Thu muc moi: ghi thu vao thu muc cha (co the la goc o, vd D:\)
+    const target = existing ? dir : path.dirname(dir)
+    if (!canWriteTo(target)) throw new StepError('khongGhiDuoc', `khong ghi duoc vao ${target}`)
     // Thu muc co file: chi nhan khi do chinh la bo cong cu
     if (!existing && existsSync(dir) && readdirSync(dir).length > 0) {
       throw new StepError('thuMucCoSan')
@@ -319,23 +344,38 @@ export class SetupService extends EventEmitter {
     const dir = this.projectDir
     // Bo cong cu da co san: khong dong vao (co the dang co bai do dang tren nhanh khac).
     // Doi ban ve sau di qua luong cap nhat an toan (Moc 3), khong phai o day.
-    if (isVideoRepo(dir)) return
+    if (isVideoRepo(dir)) {
+      for (const t of ['taiBoCongCu', 'layDanhSachBan', 'chuyenBanMoi'] as const)
+        this.task('taiDuAn', t, { status: 'skipped' })
+      return
+    }
     if (existsSync(dir) && readdirSync(dir).length > 0) throw new StepError('thuMucCoSan')
-    mkdirSync(path.dirname(dir), { recursive: true })
+    ensureDir(path.dirname(dir))
+
+    this.task('taiDuAn', 'taiBoCongCu', { status: 'running', progress: 0 })
+    let amount: TaskState['amount']
+    let speedMbps: number | undefined
     const res = await this.git(
       ['clone', '--progress', '--branch', VIDEO_REPO_BRANCH, VIDEO_REPO_URL, dir],
       signal,
       (l) => {
+        const tr = gitTransfer(l)
+        if (tr) {
+          amount = { done: tr.mb, unit: 'mb' }
+          speedMbps = tr.speedMbps ?? speedMbps
+        }
         const p = gitCloneProgress(l)
-        if (p !== null) this.progress('taiDuAn', Math.round(p * 0.9))
+        if (p !== null) this.task('taiDuAn', 'taiBoCongCu', { progress: p, amount, speedMbps })
       },
       path.dirname(dir)
     )
     if (signal.aborted) throw new Error('da huy')
     if (res.code !== 0)
       throw new StepError(looksLikeNetworkError(res.tail) ? 'mang' : 'khongRo', res.tail.join('\n'))
+    this.task('taiDuAn', 'taiBoCongCu', { status: 'done', amount, speedMbps: undefined })
     await this.git(['config', 'core.longpaths', 'true'], signal)
-    this.progress('taiDuAn', 92)
+
+    this.task('taiDuAn', 'layDanhSachBan', { status: 'running' })
     const fetched = await this.git(['fetch', '--tags', '--quiet'], signal)
     if (fetched.code !== 0)
       throw new StepError(
@@ -344,53 +384,97 @@ export class SetupService extends EventEmitter {
       )
     const tags: string[] = []
     await this.git(['tag', '--list'], signal, (l) => tags.push(l))
+    this.task('taiDuAn', 'layDanhSachBan', { status: 'done' })
+
     const tag = latestNumericTag(tags)
-    if (tag) {
-      const sw = await this.git(['switch', '--detach', `refs/tags/${tag}`], signal)
-      if (sw.code !== 0) throw new StepError('khongRo', sw.tail.join('\n'))
-      log.info(`[setup] da chuyen sang ban ${tag}`)
+    if (!tag) {
+      this.task('taiDuAn', 'chuyenBanMoi', { status: 'skipped' })
+      return
     }
+    this.task('taiDuAn', 'chuyenBanMoi', { status: 'running', version: tag })
+    const sw = await this.git(['switch', '--detach', `refs/tags/${tag}`], signal)
+    if (sw.code !== 0) throw new StepError('khongRo', sw.tail.join('\n'))
+    this.task('taiDuAn', 'chuyenBanMoi', { status: 'done', version: tag })
+    log.info(`[setup] da chuyen sang ban ${tag}`)
   }
 
   private async stepCaiThuVien(signal: AbortSignal): Promise<void> {
     const dir = this.projectDir
     const env = childEnv(dir)
-    const total =
-      countLockPackages(readFileSync(path.join(dir, 'package-lock.json'), 'utf8')) || 400
-    let fetched = 0
-    const t0 = Date.now()
-    // Tien trinh: max(dem goi tu log npm, uoc theo thoi gian ~150 s), toi da 85% cho npm ci
-    const timer = setInterval(() => {
-      const byTime = Math.min(80, ((Date.now() - t0) / 150_000) * 80)
-      const byCount = Math.min(85, (fetched / total) * 85)
-      this.progress('caiThuVien', Math.round(Math.max(byTime, byCount)), 'thuVien')
-    }, 1000)
-    try {
-      const res = await run(exe.npm(), ['ci', '--loglevel=http', '--no-fund', '--no-audit'], {
-        cwd: dir,
-        env,
-        signal,
-        onLine: (l) => {
-          if (isNpmFetchLine(l)) fetched++
-        }
+
+    if (librariesInstalled(dir)) {
+      this.task('caiThuVien', 'taiThuVien', { status: 'skipped' })
+      this.task('caiThuVien', 'caiThuVien', { status: 'skipped' })
+    } else {
+      const total =
+        countLockPackages(readFileSync(path.join(dir, 'package-lock.json'), 'utf8')) || 350
+      let fetched = 0
+      let lastFetch = Date.now()
+      let phase: 'tai' | 'cai' = 'tai'
+      this.task('caiThuVien', 'taiThuVien', {
+        status: 'running',
+        progress: 0,
+        amount: { done: 0, total, unit: 'goi' }
       })
-      if (signal.aborted) throw new Error('da huy')
-      if (res.code !== 0)
-        throw new StepError(
-          looksLikeNetworkError(res.tail) ? 'mang' : 'caiThuVienLoi',
-          res.tail.join('\n')
-        )
-    } finally {
-      clearInterval(timer)
+      // npm khong bao khi nao tai xong: tai gan du goi, hoac 6 giay khong tai them, thi coi la dang cai
+      const toInstallPhase = (): void => {
+        if (phase === 'cai') return
+        phase = 'cai'
+        this.task('caiThuVien', 'taiThuVien', {
+          status: 'done',
+          amount: { done: Math.min(fetched, total), total, unit: 'goi' }
+        })
+        this.task('caiThuVien', 'caiThuVien', { status: 'running' })
+      }
+      const timer = setInterval(() => {
+        if (phase === 'tai' && fetched > total * 0.5 && Date.now() - lastFetch > 6000)
+          toInstallPhase()
+      }, 1000)
+      try {
+        const res = await run(exe.npm(), ['ci', '--loglevel=http', '--no-fund', '--no-audit'], {
+          cwd: dir,
+          env,
+          signal,
+          onLine: (l) => {
+            if (!isNpmFetchLine(l) || phase === 'cai') return
+            fetched++
+            lastFetch = Date.now()
+            this.task('caiThuVien', 'taiThuVien', {
+              progress: Math.min(99, Math.round((fetched / total) * 100)),
+              amount: { done: Math.min(fetched, total), total, unit: 'goi' }
+            })
+            if (fetched >= total) toInstallPhase()
+          }
+        })
+        if (signal.aborted) throw new Error('da huy')
+        if (res.code !== 0)
+          throw new StepError(
+            looksLikeNetworkError(res.tail) ? 'mang' : 'caiThuVienLoi',
+            res.tail.join('\n')
+          )
+      } finally {
+        clearInterval(timer)
+      }
+      toInstallPhase()
+      this.task('caiThuVien', 'caiThuVien', { status: 'done' })
     }
-    this.progress('caiThuVien', 88, 'trinhDuyet')
+
+    if (renderBrowserInstalled(dir)) {
+      this.task('caiThuVien', 'taiTrinhDuyet', { status: 'skipped' })
+      return
+    }
+    this.task('caiThuVien', 'taiTrinhDuyet', { status: 'running', progress: 0 })
     const br = await run(exe.npx(), ['remotion', 'browser', 'ensure'], {
       cwd: dir,
       env,
       signal,
       onLine: (l) => {
-        const m = /(\d+)%/.exec(l)
-        if (m) this.progress('caiThuVien', 88 + Math.round(Number(m[1]) * 0.11), 'trinhDuyet')
+        const d = remotionDownload(l)
+        if (d)
+          this.task('caiThuVien', 'taiTrinhDuyet', {
+            progress: d.pct,
+            amount: d.done !== undefined ? { done: d.done, total: d.total, unit: 'mb' } : undefined
+          })
       }
     })
     if (signal.aborted) throw new Error('da huy')
@@ -399,12 +483,16 @@ export class SetupService extends EventEmitter {
         looksLikeNetworkError(br.tail) ? 'mang' : 'taiTrinhDuyetLoi',
         br.tail.join('\n')
       )
+    this.task('caiThuVien', 'taiTrinhDuyet', { status: 'done' })
   }
 
   private async stepDangNhap(signal: AbortSignal): Promise<void> {
     this.account = (await readAccount()) ?? undefined
-    if (!this.account) {
-      this.progress('dangNhap', 10, 'choDangNhap')
+    if (this.account) {
+      this.task('dangNhap', 'dangNhap', { status: 'skipped' })
+    } else {
+      this.task('dangNhap', 'dangNhap', { status: 'running' })
+      this.progress('dangNhap', this.states.get('dangNhap')!.progress ?? 0, 'choDangNhap')
       try {
         await loginChatGpt(signal)
       } catch (e) {
@@ -414,10 +502,14 @@ export class SetupService extends EventEmitter {
       this.account = (await readAccount()) ?? undefined
       if (!this.account)
         throw new StepError('dangNhapLoi', 'dang nhap xong nhung khong doc duoc tai khoan')
+      this.task('dangNhap', 'dangNhap', { status: 'done' })
     }
-    this.progress('dangNhap', 70, 'hopCat')
+    this.progress('dangNhap', this.states.get('dangNhap')!.progress ?? 50, 'hopCat')
+    this.task('dangNhap', 'cheDoAnToan', { status: 'running' })
     const ok = await prepareSandbox(this.projectDir)
     log.info(`[setup] sandbox san sang: ${ok}`)
+    // Chua bat duoc thi van lam video binh thuong, AI chi hoi nhieu hon
+    this.task('dangNhap', 'cheDoAnToan', { status: ok ? 'done' : 'skipped' })
   }
 
   private async stepKeyGiong(key: string, signal: AbortSignal): Promise<void> {
@@ -439,12 +531,7 @@ export class SetupService extends EventEmitter {
   }
 
   private stepNoiLuu(dir: string): void {
-    try {
-      mkdirSync(dir, { recursive: true })
-      accessSync(dir, constants.W_OK)
-    } catch (e) {
-      throw new StepError('khongGhiDuoc', String(e))
-    }
+    if (!canWriteTo(dir)) throw new StepError('khongGhiDuoc', `khong ghi duoc vao ${dir}`)
     writeEnvValues(this.envFile, { OUTPUT_DIR: path.resolve(dir) })
   }
 
