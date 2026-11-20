@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { existsSync, readFileSync } from 'node:fs'
 import { compareVersions, isSafeToSwitch, parseChangelog } from '../src/main/services/version'
+import { setSpeedText, speedFromText } from '../src/main/services/voice-config'
 
 const MD = `# Nhật ký phiên bản
 
@@ -73,5 +74,19 @@ describe('so sanh phien ban', () => {
     expect(compareVersions('0.1.10', '0.1.9')).toBeGreaterThan(0)
     expect(compareVersions('1.0.0', '1.0')).toBe(0)
     expect(compareVersions('0.1.2', '1.0.0')).toBeLessThan(0)
+  })
+})
+
+describe('toc do doc', () => {
+  it('doi toc do ma giu nguyen phan con lai cua file', () => {
+    const t = '{\n  "engine": "vivibe",\n  "speed": 1.0,\n  "note": "x"\n}\n'
+    expect(setSpeedText(t, 1.1)).toBe(t.replace('1.0', '1.1'))
+    expect(setSpeedText(t, 0.95)).toBe(t.replace('1.0', '0.95'))
+    expect(setSpeedText(t, 1)).toBe(t)
+    expect(speedFromText(t)).toBe(1)
+  })
+  it('chi sua toc do trong tts_config.json thi van doi ban tu dong duoc', () => {
+    expect(isSafeToSwitch([' M scripts/tts_config.json', '?? src/videos/a/'])).toBe(true)
+    expect(isSafeToSwitch(['M  scripts/tts_config.json'])).toBe(false)
   })
 })

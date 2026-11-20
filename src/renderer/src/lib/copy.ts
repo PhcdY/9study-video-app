@@ -187,7 +187,7 @@ export const copy = {
   } satisfies Record<ErrorCode, string>,
 
   // ---------- Video cua toi ----------
-  nav: { videos: 'Video', settings: 'Cài đặt' },
+  nav: { videos: 'Video', settings: 'Cài đặt', guide: 'Hướng dẫn' },
   home: {
     continueTitle: 'Làm tiếp',
     continueBtn: 'Làm tiếp',
@@ -558,6 +558,53 @@ export const copy = {
         ? `${(b / 1024 / 1024).toFixed(1).replace('.', ',')} MB`
         : `${Math.max(1, Math.round(b / 1024))} KB`
   },
+  guide: {
+    title: 'Hướng dẫn',
+    lead: 'Đọc một lần là làm được. Chỗ nào chưa rõ thì hỏi AI ngay trong khung chat.',
+    sections: [
+      {
+        title: 'Làm một video',
+        steps: [
+          'Bấm "Làm video mới", chọn môn, lớp, bài rồi bấm "Bắt đầu viết kịch bản".',
+          'Đọc kịch bản ở tab Kịch bản. Muốn sửa gì thì nhắn AI, ví dụ "câu 2 cảnh 3 nói ngắn lại".',
+          'Kịch bản ổn thì bấm "Duyệt kịch bản, sang bước 2". AI dựng hình, xem ở tab Storyboard.',
+          'Hình ổn thì bấm "Duyệt hình, sang bước 3". AI tạo giọng đọc (tốn credit Vivibe, app hỏi trước). Câu nào đọc sai thì bấm "Đọc sai" ở tab Nghe thử.',
+          'Giọng ổn thì bấm "Giọng ổn, dựng bản hoàn chỉnh" rồi "Xuất video". Video nằm ở tab Thành phẩm.'
+        ]
+      },
+      {
+        title: 'Khi AI xin phép',
+        steps: [
+          'Việc tốn credit (tạo giọng đọc) hoặc cần mạng thì app hỏi bạn trước.',
+          'Đọc dòng mô tả. Thấy đúng việc bạn vừa nhờ thì bấm "Đồng ý".',
+          'Không chắc thì bấm "Để sau" và hỏi AI việc đó để làm gì.'
+        ]
+      },
+      {
+        title: 'Thấy lỗi lặp ở nhiều video',
+        steps: [
+          'Lỗi chỉ ở video này: nhắn AI sửa là đủ.',
+          'Lỗi lặp ở video khác, hoặc luật chưa hợp: bấm "Góp ý cho đội" (hoặc "Góp ý tại đây" khi xem video).',
+          'Chọn chỗ lỗi, loại lỗi, viết vài chữ rồi gửi. Xem trạng thái trong Cài đặt › Góp ý cho đội.'
+        ]
+      },
+      {
+        title: 'Khi app báo lỗi',
+        steps: [
+          'Bấm nút app đưa ra (Thử lại, Sửa giúp tôi).',
+          'Vẫn lỗi: vào Cài đặt › Hỗ trợ › "Gửi báo lỗi", gửi file trên Desktop cho người phụ trách.',
+          'Máy chậm hoặc ổ C đầy: Cài đặt › Ổ đĩa › Dọn.'
+        ]
+      },
+      {
+        title: 'Lên bản mới của bộ công cụ',
+        steps: [
+          'Có bản mới thì trang Video hiện thông báo. Bấm "Xem bản mới" để đọc có gì mới.',
+          'Bấm "Cập nhật". Bài của bạn giữ nguyên. Nếu bạn đã dạy AI điều gì, app nhờ AI đổi bản giúp.'
+        ]
+      }
+    ]
+  },
   inbox: {
     nav: 'Góp ý',
     mode: 'Chế độ người bảo trì',
@@ -678,6 +725,30 @@ export const copy = {
     fullVideo: 'Luôn gửi kèm cả video thành phẩm',
     fullVideoDesc: 'Mặc định chỉ gửi đoạn 20 giây quanh chỗ lỗi cho nhẹ Drive.',
     maintainer: 'Chế độ người bảo trì',
+    keyOk: 'Đang dùng được',
+    recheckKey: 'Kiểm tra lại',
+    defaultVoice: 'Giọng mặc định theo môn',
+    defaultVoiceDesc: 'Màn "Làm video mới" tự chọn sẵn giọng này. Đổi từng video vẫn được.',
+    voiceGroups: { tuNhien: 'Toán, Lý, Hóa, Sinh', xaHoi: 'Sử, Địa, Văn, KTPL', anh: 'Tiếng Anh' },
+    speed: 'Tốc độ đọc chung',
+    speedDesc:
+      'Chỉ đổi khi nghe cả bài thấy nhanh hoặc chậm. Đoạn nào nhanh quá thì nhờ AI chia câu ngắn hơn, đừng giảm tốc độ.',
+    speedValue: (v: number) => `${v.toFixed(2).replace(/0$/, '').replace('.', ',')}×`,
+    goBack: (v: string) => `Quay lại bản ${v}`,
+    goBackConfirm: (v: string) =>
+      `Quay lại bản ${v}? Bài của bạn giữ nguyên. Muốn lên bản mới lại thì bấm "Xem bản mới".`,
+    goBackDone: (v: string) => `Đã quay lại bản ${v}.`,
+    goBackFail: 'Chưa quay lại được. Thử lại sau ít phút.',
+    disk: 'Ổ đĩa',
+    drafts: (size: string) => `Ảnh nháp và storyboard · ${size}`,
+    draftsDesc: 'Tạo lại được bất cứ lúc nào. Không đụng tới video thành phẩm.',
+    temp: (size: string) => `File tạm khi xuất video · ${size}`,
+    tempDesc: 'Xoá được khi không đang xuất video.',
+    lowC: (gb: number) => `Ổ C còn ${gb} GB. Nên dọn để xuất video không bị lỗi.`,
+    clean: 'Dọn',
+    cleanConfirm: 'Xoá luôn? Lần sau AI sẽ tạo lại khi cần.',
+    cleaning: 'Đang dọn…',
+    guide: 'Xem hướng dẫn',
     maintainerDesc:
       'Hiện mục "Góp ý" để xem và xử lý góp ý của mọi người. Chỉ bật trên máy người phụ trách bộ công cụ.'
   },

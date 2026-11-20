@@ -6,6 +6,7 @@ import { childEnv, exe } from './runtime'
 import { run, type RunResult } from './process'
 import { latestNumericTag, looksLikeNetworkError } from './rules'
 import log from '../log'
+import { TTS_CONFIG, readSpeed, writeSpeed } from './voice-config'
 
 // ---------- ham thuan (co bai thu) ----------
 
@@ -40,6 +41,8 @@ export function parseChangelog(md: string): ChangelogEntry[] {
 
 /** Thu muc bai cua nguoi dung: chua theo doi trong Git, doi ban khong dung toi. */
 const USER_AREAS = ['src/videos/', 'public/audio/', 'out/']
+/** File bo cong cu ma app cho nguoi dung chinh trong Cai dat (toc do doc): app tu giu lai khi doi ban. */
+const PREF_FILES = [TTS_CONFIG]
 
 /**
  * Doi ban tu dong an toan khi `git status --porcelain` khong co file bo cong cu nao bi sua:
@@ -52,6 +55,7 @@ export function isSafeToSwitch(porcelain: string[]): boolean {
     .every((l) => {
       const code = l.slice(0, 2)
       const file = l.slice(3).replace(/^"|"$/g, '')
+      if (code === ' M' && PREF_FILES.includes(file)) return true
       return code === '??' && USER_AREAS.some((a) => file.startsWith(a))
     })
 }
@@ -107,8 +111,14 @@ export class VersionService {
       const d = (await this.lines(['describe', '--tags', '--match', '[0-9]*']))[0] ?? ''
       base = /^(\d+)/.exec(d)?.[1]
     }
-    const latest = latestNumericTag(await this.lines(['tag', '--list'])) ?? undefined
+    const tags = await this.lines(['tag', '--list'])
+    const latest = latestNumericTag(tags) ?? undefined
     const mine = Number(current ?? base ?? 0)
+    // Ban lien truoc ban dang dung (de "Quay lai ban truoc")
+    const previous = latestNumericTag(
+      tags.filter((t) => /^\d+$/.test(t.trim()) && Number(t) < mine)
+    )
+
     const updateAvailable = !!latest && Number(latest) > mine
 
     let notes: ChangelogEntry[] = []
@@ -133,6 +143,7 @@ export class VersionService {
       updateAvailable,
       notes,
       safe: !branch && !!current && isSafeToSwitch(status),
+      previous: previous ?? undefined,
       needAppVersion,
       offline
     }
@@ -149,7 +160,15 @@ export class VersionService {
     if (!info.safe) return { ok: false, code: 'nhoAi', chatKey: handoff() }
     const before = (await this.lines(['rev-parse', 'HEAD']))[0]?.trim()
     onProgress({ step: 'doiBan', status: 'running' })
+    // Toc do doc nguoi dung da chinh: tra file ve nhu cu de doi ban, doi xong ghi lai
+    const dir = this.projectDir()
+    const speed = readSpeed(dir)
+    const speedChanged = (await this.lines(['status', '--porcelain', '--', TTS_CONFIG])).some((l) =>
+      l.startsWith(' M')
+    )
+    if (speedChanged) await this.git(['checkout', '--', TTS_CONFIG])
     const sw = await this.git(['switch', '--detach', `refs/tags/${target}`])
+    if (speedChanged && speed !== null) writeSpeed(dir, speed)
     if (sw.code !== 0) {
       log.warn(`[phien ban] doi ban loi:\n${sw.tail.join('\n')}`)
       return { ok: false, code: looksLikeNetworkError(sw.tail) ? 'mang' : 'khongRo' }
@@ -166,7 +185,6 @@ export class VersionService {
     ])
     if (diff.code === 1) {
       onProgress({ step: 'caiThuVien', status: 'running' })
-      const dir = this.projectDir()
       const npm = await run(exe.npm(), ['install', '--no-fund', '--no-audit'], {
         cwd: dir,
         env: childEnv(dir)

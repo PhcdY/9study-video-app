@@ -36,7 +36,11 @@ const INVOKE: InvokeChannel[] = [
   'feedback:list',
   'feedback:setState',
   'feedback:fix',
-  'feedback:pickDir'
+  'feedback:pickDir',
+  'voice:speed',
+  'voice:setSpeed',
+  'disk:usage',
+  'disk:clean'
 ]
 const EVENTS: EventChannel[] = [
   'setup:changed',

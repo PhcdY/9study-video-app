@@ -32,6 +32,8 @@ export interface VersionInfo {
   needAppVersion?: string
   /** Khong ket noi duoc GitHub: thong tin chi tu may */
   offline: boolean
+  /** Ban lien truoc (de quay lai) */
+  previous?: string
 }
 
 export type UpdateResult =
@@ -80,6 +82,18 @@ export interface Prefs {
   autoCompact?: boolean
   /** Tu tai ban app moi (mac dinh bat) */
   autoUpdateApp?: boolean
+  /** Giong mac dinh theo nhom mon (man Lam video moi chon san) */
+  defaultVoices?: { tuNhien?: string; xaHoi?: string; anh?: string }
+}
+
+/** Dung luong file tao lai duoc, de don. */
+export interface DiskUsage {
+  /** Anh nhap va storyboard (<noi luu>/_lam-viec) */
+  drafts: number
+  /** File tam khi xuat video va cai thu vien */
+  temp: number
+  /** O C con trong (GB) */
+  cFreeGb?: number
 }
 
 export interface PrefsSnapshot extends Prefs {

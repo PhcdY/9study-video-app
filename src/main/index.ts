@@ -22,6 +22,8 @@ import {
   FEEDBACK_FOLDER
 } from './services/feedback'
 import { outputBase } from './services/project'
+import { readSpeed, writeSpeed } from './services/voice-config'
+import { cleanDisk, diskUsage } from './services/disk'
 import type { Prefs, PrefsSnapshot } from '../shared/app'
 import type { FeedbackList } from '../shared/feedback'
 import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
@@ -67,6 +69,7 @@ function prefsSnapshot(): PrefsSnapshot {
     askPolicy: s.askPolicy,
     autoCompact: s.autoCompact,
     autoUpdateApp: s.autoUpdateApp,
+    defaultVoices: s.defaultVoices,
     feedbackDirInUse: feedbackDir(),
     projectDir: dir,
     outputDir: dir ? outputBase(dir) : undefined
@@ -236,6 +239,16 @@ function registerIpc(): void {
     broadcast('feedback:changed', feedbackList())
     return snap
   })
+  handle('voice:speed', () => {
+    const dir = getSettings().projectDir
+    return dir ? readSpeed(dir) : null
+  })
+  handle('voice:setSpeed', (speed) => {
+    const dir = getSettings().projectDir
+    if (dir) writeSpeed(dir, speed)
+  })
+  handle('disk:usage', () => diskUsage(getSettings().projectDir ?? ''))
+  handle('disk:clean', (which) => cleanDisk(getSettings().projectDir ?? '', which))
   handle('feedback:draft', (slug, time, beatLine) =>
     feedbackDraft(getSettings().projectDir ?? '', slug, time, beatLine)
   )

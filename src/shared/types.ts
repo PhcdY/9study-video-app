@@ -1,5 +1,13 @@
 // Kieu dung chung cho phan loi (main), cau noi (preload) va giao dien (renderer).
-import type { Prefs, PrefsSnapshot, UpdateProgress, UpdateResult, Usage, VersionInfo } from './app'
+import type {
+  DiskUsage,
+  Prefs,
+  PrefsSnapshot,
+  UpdateProgress,
+  UpdateResult,
+  Usage,
+  VersionInfo
+} from './app'
 import type {
   BatchInput,
   FeedbackDraft,
@@ -185,6 +193,11 @@ export interface InvokeMap {
   /** Gom gop y thanh mot lan sua; openNow thi mo Codex va tra ve khoa cuoc tro chuyen */
   'feedback:fix': { args: [input: BatchInput]; ret: string | null }
   'feedback:pickDir': { args: []; ret: PrefsSnapshot | null }
+  /** Toc do doc chung (scripts/tts_config.json); null neu bo cong cu chua co */
+  'voice:speed': { args: []; ret: number | null }
+  'voice:setSpeed': { args: [speed: number]; ret: void }
+  'disk:usage': { args: []; ret: DiskUsage }
+  'disk:clean': { args: [which: 'drafts' | 'temp']; ret: DiskUsage }
 }
 
 /** Su kien (main -> renderer). */

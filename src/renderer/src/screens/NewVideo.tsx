@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronDown, ChevronLeft, FileText, Paperclip, X } from 'lucide-react'
 import type { Lesson, NewVideoInput, SubjectId } from '../../../shared/video'
 import { EXAMS, SUBJECTS, VOICES, subjectName, suggestedVoice } from '../../../shared/prompt'
-import { api, useVideos } from '@/lib/api'
+import { api, useVideos, usePrefs } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -65,6 +65,8 @@ export function NewVideoScreen({
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const videos = useVideos()
+  const [prefs] = usePrefs()
+  const defaults = prefs?.defaultVoices
 
   useEffect(() => {
     let alive = true
@@ -78,7 +80,7 @@ export function NewVideoScreen({
     setV((old) => ({
       ...old,
       subject: id,
-      voice: suggestedVoice(id),
+      voice: suggestedVoice(id, defaults),
       bai: '',
       lessonFile: undefined
     }))
@@ -227,7 +229,7 @@ export function NewVideoScreen({
                     <span className="text-[15px] font-semibold">{voice.id}</span>
                     <span className="text-[13px] text-phu">{t.voiceDesc[voice.id]}</span>
                   </span>
-                  {voice.id === suggestedVoice(v.subject) && (
+                  {voice.id === suggestedVoice(v.subject, defaults) && (
                     <span className="ml-auto rounded-full bg-xong-nen px-2 py-0.5 text-xs font-semibold text-xong">
                       {t.voiceSuggested(subjectName(v.subject))}
                     </span>
@@ -238,7 +240,7 @@ export function NewVideoScreen({
             <Field label={t.voiceOther}>
               <TextInput
                 value={VOICES.some((x) => x.id === v.voice) ? '' : v.voice}
-                onChange={(x) => set('voice', x || suggestedVoice(v.subject))}
+                onChange={(x) => set('voice', x || suggestedVoice(v.subject, defaults))}
               />
             </Field>
             <label className="flex items-center gap-2 text-sm">

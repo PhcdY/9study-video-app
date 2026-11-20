@@ -26,8 +26,26 @@ export const VOICES: { id: string; subjects: SubjectId[] }[] = [
   { id: 'anh-male', subjects: ['anh'] }
 ]
 
-export function suggestedVoice(subject: SubjectId): string {
-  return VOICES.find((v) => v.subjects.includes(subject))?.id ?? VOICES[0].id
+/** Nhom mon de dat giong mac dinh trong Cai dat. */
+export type VoiceGroup = 'tuNhien' | 'xaHoi' | 'anh'
+export const VOICE_GROUPS: { id: VoiceGroup; subjects: SubjectId[] }[] = [
+  { id: 'tuNhien', subjects: ['toan', 'ly', 'hoa', 'sinh'] },
+  { id: 'xaHoi', subjects: ['su', 'dia', 'van', 'ktpl'] },
+  { id: 'anh', subjects: ['anh'] }
+]
+export function voiceGroup(subject: SubjectId): VoiceGroup {
+  return VOICE_GROUPS.find((g) => g.subjects.includes(subject))?.id ?? 'tuNhien'
+}
+
+/** Giong goi y cho mon: giong mac dinh nguoi dung dat trong Cai dat, khong co thi theo roster. */
+export function suggestedVoice(
+  subject: SubjectId,
+  defaults?: Partial<Record<VoiceGroup, string>>
+): string {
+  return (
+    defaults?.[voiceGroup(subject)] ||
+    (VOICES.find((v) => v.subjects.includes(subject))?.id ?? VOICES[0].id)
+  )
 }
 
 export const EXAMS = ['THPTQG', 'TSA', 'HSA', 'V-ACT']

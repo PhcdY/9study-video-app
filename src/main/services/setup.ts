@@ -302,7 +302,11 @@ export class SetupService extends EventEmitter {
       case 'dangNhap':
         return this.stepDangNhap(signal)
       case 'keyGiong':
-        return this.stepKeyGiong(input.key ?? '', signal)
+        // Khong dua key moi: kiem tra lai key da luu (nut "Kiem tra lai" trong Cai dat)
+        return this.stepKeyGiong(
+          input.key ?? readEnvFile(this.envFile).get('VIVIBE_API_KEY') ?? '',
+          signal
+        )
       case 'noiLuu':
         return this.stepNoiLuu(input.dir ?? this.snapshot().suggestedOutputDir)
       case 'kiemTra':

@@ -1,22 +1,29 @@
 import { useEffect, useState } from 'react'
 import { CheckCircle2, FolderOpen, Loader2, TriangleAlert, XCircle } from 'lucide-react'
-import type { VersionInfo } from '../../../shared/app'
+import type { DiskUsage, VersionInfo } from '../../../shared/app'
+import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
 import { api, useFeedback, usePrefs, useSetup, useUsage } from '@/lib/api'
 import { headline } from '../../../shared/feedback-rules'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
-import { Card, CardTitle, Input, Page, PageTitle, SettingRow } from '@/components/ui/layout'
+import { Card, CardTitle, Input, Page, PageTitle, Select, SettingRow } from '@/components/ui/layout'
 import { cn } from '@/lib/utils'
 
 const t = copy.settings
 
 export function SettingsScreen({
   version,
-  onOpenUpdate
+  onOpenUpdate,
+  onVersionChanged,
+  onOpenChat,
+  onOpenGuide
 }: {
   version: VersionInfo | null
   onOpenUpdate: () => void
+  onVersionChanged: () => void
+  onOpenChat: (key: string) => void
+  onOpenGuide: () => void
 }): React.JSX.Element {
   const snap = useSetup()
   const usage = useUsage()
@@ -30,11 +37,20 @@ export function SettingsScreen({
   const [fb] = useFeedback()
   const [showSent, setShowSent] = useState(false)
   const [name, setName] = useState<string | null>(null)
+  const [speed, setSpeed] = useState<number | null>(null)
+  const [disk, setDisk] = useState<DiskUsage | null>(null)
+  const [cleaning, setCleaning] = useState<'drafts' | 'temp' | null>(null)
+  const [confirmClean, setConfirmClean] = useState<'drafts' | 'temp' | null>(null)
+  const [back, setBack] = useState<'idle' | 'confirm' | 'busy' | 'done' | 'fail'>('idle')
+  useEffect(() => {
+    void api.invoke('voice:speed').then(setSpeed)
+    void api.invoke('disk:usage').then(setDisk)
+  }, [])
   useEffect(() => void api.invoke('app:version').then(setAppVersion), [])
   // Cuon toi muc nao thi to dam muc do o cot trai
   useEffect(() => {
     const onScroll = (): void => {
-      const ids = ['thu-muc', 'giong-doc', 'tro-ly', 'phien-ban', 'gop-y', 'ho-tro']
+      const ids = ['thu-muc', 'giong-doc', 'tro-ly', 'phien-ban', 'o-dia', 'gop-y', 'ho-tro']
       let cur = ids[0]
       for (const id of ids) {
         const el = document.getElementById(id)
@@ -63,6 +79,22 @@ export function SettingsScreen({
     setEditKey(false)
     setKey('')
   }
+  const goBack = async (): Promise<void> => {
+    if (!version?.previous) return
+    setBack('busy')
+    const res = await api.invoke('version:update', version.previous)
+    if (res.ok) {
+      setBack('done')
+      onVersionChanged()
+    } else if (res.code === 'nhoAi') onOpenChat(res.chatKey)
+    else setBack('fail')
+  }
+  const clean = async (which: 'drafts' | 'temp'): Promise<void> => {
+    setConfirmClean(null)
+    setCleaning(which)
+    setDisk(await api.invoke('disk:clean', which))
+    setCleaning(null)
+  }
   const bugReport = async (): Promise<void> => {
     setReport('busy')
     setReport({ path: await api.invoke('app:bugReport') })
@@ -73,6 +105,7 @@ export function SettingsScreen({
     { id: 'giong-doc', title: t.voice },
     { id: 'tro-ly', title: t.ai },
     { id: 'phien-ban', title: t.versions },
+    { id: 'o-dia', title: t.disk },
     { id: 'gop-y', title: t.feedback },
     { id: 'ho-tro', title: t.support }
   ]
@@ -147,10 +180,29 @@ export function SettingsScreen({
 
           <SettingsCard id="giong-doc" title={t.voice}>
             <SettingRow
-              label={t.key}
+              label={
+                <span className="flex flex-wrap items-center gap-2">
+                  {t.key}
+                  {snap.vivibeKeyMasked && keyStep?.status === 'done' && (
+                    <span className="rounded-full bg-xong-nen px-2.5 py-0.5 text-xs font-bold text-xong">
+                      {t.keyOk}
+                    </span>
+                  )}
+                </span>
+              }
               value={snap.vivibeKeyMasked}
               desc={snap.vivibeKeyMasked ? t.keyLocal : t.keyNone}
             >
+              {!editKey && snap.vivibeKeyMasked && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={keyStep?.status === 'running'}
+                  onClick={() => void api.invoke('setup:run', 'keyGiong')}
+                >
+                  {t.recheckKey}
+                </Button>
+              )}
               {!editKey && (
                 <Button variant="outline" size="sm" onClick={() => setEditKey(true)}>
                   {snap.vivibeKeyMasked ? t.changeKey : t.addKey}
@@ -182,6 +234,64 @@ export function SettingsScreen({
             {keyStep?.status === 'running' && <Working />}
             {keyStep?.status === 'error' && keyStep.error && (
               <Alert>{copy.errors[keyStep.error]}</Alert>
+            )}
+            <div className="flex flex-col gap-3 border-b border-[#EEF1F8] py-4">
+              <div className="flex flex-col gap-1">
+                <div className="text-[15px] font-bold">{t.defaultVoice}</div>
+                <div className="text-[13px] text-phu">{t.defaultVoiceDesc}</div>
+              </div>
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
+                {VOICE_GROUPS.map((g) => {
+                  const cur = suggestedVoice(g.subjects[0], prefs?.defaultVoices)
+                  return (
+                    <label key={g.id} className="flex flex-col gap-1.5">
+                      <span className="text-[13px] font-semibold text-phu">
+                        {t.voiceGroups[g.id]}
+                      </span>
+                      <Select
+                        value={cur}
+                        onChange={(e) =>
+                          void savePrefs({
+                            defaultVoices: { ...prefs?.defaultVoices, [g.id]: e.target.value }
+                          })
+                        }
+                        className="h-10 text-sm"
+                      >
+                        {[...new Set([...VOICES.map((x) => x.id), cur])].map((id) => (
+                          <option key={id} value={id}>
+                            {id}
+                          </option>
+                        ))}
+                      </Select>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+            {speed !== null && (
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-3 py-4">
+                <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-1">
+                  <label htmlFor="spd" className="text-[15px] font-bold">
+                    {t.speed}
+                  </label>
+                  <div className="text-[13px] leading-normal text-phu">{t.speedDesc}</div>
+                </div>
+                <div className="flex flex-[0_1_280px] items-center gap-3">
+                  <input
+                    id="spd"
+                    type="range"
+                    min={0.8}
+                    max={1.2}
+                    step={0.05}
+                    value={speed}
+                    onChange={(e) => setSpeed(Number(e.target.value))}
+                    onPointerUp={() => void api.invoke('voice:setSpeed', speed)}
+                    onKeyUp={() => void api.invoke('voice:setSpeed', speed)}
+                    className="flex-1 accent-cham"
+                  />
+                  <span className="w-12 text-[15px] font-bold">{t.speedValue(speed)}</span>
+                </div>
+              </div>
             )}
           </SettingsCard>
 
@@ -289,7 +399,30 @@ export function SettingsScreen({
                   {t.viewUpdate}
                 </Button>
               )}
+              {version?.previous && version.safe && back === 'idle' && (
+                <Button variant="outline" size="sm" onClick={() => setBack('confirm')}>
+                  {t.goBack(version.previous)}
+                </Button>
+              )}
             </SettingRow>
+            {back === 'confirm' && version?.previous && (
+              <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[10px] border border-vien bg-nen px-4 py-3">
+                <span className="flex-1 text-sm">{t.goBackConfirm(version.previous)}</span>
+                <Button size="sm" onClick={() => void goBack()}>
+                  {t.goBack(version.previous)}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setBack('idle')}>
+                  {t.cancel}
+                </Button>
+              </div>
+            )}
+            {back === 'busy' && <Working />}
+            {back === 'done' && (
+              <p className="m-0 pb-4 text-sm font-semibold text-xong">
+                {t.goBackDone(version?.current ?? '')}
+              </p>
+            )}
+            {back === 'fail' && <Alert>{t.goBackFail}</Alert>}
             <SettingRow label={t.appName(appVersion)} />
             <CheckRow
               checked={prefs?.autoUpdateApp !== false}
@@ -297,6 +430,54 @@ export function SettingsScreen({
               label={t.autoUpdate}
               desc={t.autoUpdateDesc}
             />
+          </SettingsCard>
+
+          <SettingsCard id="o-dia" title={t.disk}>
+            {(['drafts', 'temp'] as const).map((which) => (
+              <SettingRow
+                key={which}
+                label={
+                  which === 'drafts'
+                    ? t.drafts(copy.feedback.size(disk?.drafts ?? 0))
+                    : t.temp(copy.feedback.size(disk?.temp ?? 0))
+                }
+                desc={
+                  which === 'temp' && disk?.cFreeGb !== undefined && disk.cFreeGb < 10 ? (
+                    <span className="font-semibold text-credit">
+                      {t.lowC(Math.floor(disk.cFreeGb))}
+                    </span>
+                  ) : which === 'drafts' ? (
+                    t.draftsDesc
+                  ) : (
+                    t.tempDesc
+                  )
+                }
+              >
+                {confirmClean === which ? (
+                  <>
+                    <span className="text-sm">{t.cleanConfirm}</span>
+                    <Button variant="danger" size="sm" onClick={() => void clean(which)}>
+                      {t.clean}
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setConfirmClean(null)}>
+                      {t.cancel}
+                    </Button>
+                  </>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={
+                      !disk || (which === 'drafts' ? disk.drafts : disk.temp) === 0 || !!cleaning
+                    }
+                    onClick={() => setConfirmClean(which)}
+                  >
+                    {cleaning === which && <Loader2 aria-hidden className="size-4 animate-spin" />}
+                    {cleaning === which ? t.cleaning : t.clean}
+                  </Button>
+                )}
+              </SettingRow>
+            ))}
           </SettingsCard>
 
           <SettingsCard id="gop-y" title={t.feedback}>
@@ -399,6 +580,9 @@ export function SettingsScreen({
                 >
                   {report === 'busy' && <Loader2 aria-hidden className="size-4 animate-spin" />}
                   {t.bugReport}
+                </Button>
+                <Button variant="outline" size="md" onClick={onOpenGuide}>
+                  {t.guide}
                 </Button>
               </div>
               <p className="m-0 text-[13px] leading-normal text-phu">{t.bugReportDesc}</p>

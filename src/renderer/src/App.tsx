@@ -12,6 +12,7 @@ import { SettingsScreen } from '@/screens/Settings'
 import { AssistantChatScreen } from '@/screens/AssistantChat'
 import { FeedbackScreen, type FeedbackTarget } from '@/screens/Feedback'
 import { InboxScreen } from '@/screens/Inbox'
+import { GuideScreen } from '@/screens/Guide'
 import { UsagePill } from '@/components/UsagePill'
 import logoNgang from '@/assets/brand/logo-ngang.png'
 import { UpdateBanner, UpdateDialog } from '@/components/UpdateDialog'
@@ -25,6 +26,7 @@ type Route =
   | { name: 'assistant'; key: string; from?: 'inbox' }
   | { name: 'feedback'; target: FeedbackTarget; backKey: string }
   | { name: 'inbox' }
+  | { name: 'guide' }
 
 function App(): React.JSX.Element {
   const snap = useSetup()
@@ -47,7 +49,7 @@ function App(): React.JSX.Element {
   const [version, reloadVersion] = useVersion()
 
   const navItem = (
-    name: 'home' | 'settings' | 'inbox',
+    name: 'home' | 'settings' | 'inbox' | 'guide',
     label: string,
     badge?: number
   ): React.JSX.Element => (
@@ -95,6 +97,7 @@ function App(): React.JSX.Element {
                 {navItem('home', copy.nav.videos)}
                 {prefs?.maintainer && navItem('inbox', copy.inbox.nav, newFeedback)}
                 {navItem('settings', copy.settings.nav)}
+                {navItem('guide', copy.nav.guide)}
               </nav>
             )}
             <div className="ml-auto flex items-center gap-3">
@@ -144,7 +147,15 @@ function App(): React.JSX.Element {
           onCreated={(key) => setRoute({ name: 'video', key })}
         />
       ) : current.name === 'settings' ? (
-        <SettingsScreen version={version} onOpenUpdate={() => setShowUpdate(true)} />
+        <SettingsScreen
+          version={version}
+          onOpenUpdate={() => setShowUpdate(true)}
+          onVersionChanged={reloadVersion}
+          onOpenChat={(key) => setRoute({ name: 'assistant', key })}
+          onOpenGuide={() => setRoute({ name: 'guide' })}
+        />
+      ) : current.name === 'guide' ? (
+        <GuideScreen />
       ) : current.name === 'assistant' ? (
         <AssistantChatScreen
           chatKey={current.key}
