@@ -1,4 +1,15 @@
 // Kieu dung chung cho phan loi (main), cau noi (preload) va giao dien (renderer).
+import type {
+  ApprovalDecision,
+  AudioLine,
+  ChatState,
+  ChipId,
+  Lesson,
+  NewVideoInput,
+  ScriptData,
+  SubjectId,
+  VideosSnapshot
+} from './video'
 
 export type SetupStepId =
   'thuMuc' | 'taiDuAn' | 'caiThuVien' | 'dangNhap' | 'keyGiong' | 'noiLuu' | 'kiemTra'
@@ -125,12 +136,31 @@ export interface InvokeMap {
   'app:openLoginPage': { args: []; ret: void }
   'app:restartToUpdate': { args: []; ret: void }
   'app:version': { args: []; ret: string }
+  'videos:list': { args: []; ret: VideosSnapshot }
+  'videos:script': { args: [slug: string]; ret: ScriptData | null }
+  'videos:audio': { args: [slug: string]; ret: AudioLine[] }
+  'videos:lessons': { args: [subject: SubjectId, lop: number]; ret: Lesson[] }
+  /** Tao cuoc tro chuyen moi va gui yeu cau viet kich ban; tra ve khoa cuoc tro chuyen */
+  'videos:create': { args: [input: NewVideoInput]; ret: string }
+  'chat:open': { args: [key: string]; ret: ChatState }
+  'chat:send': { args: [key: string, text: string]; ret: void }
+  'chat:chip': { args: [key: string, chip: ChipId, slug: string]; ret: void }
+  'chat:interrupt': { args: [key: string]; ret: void }
+  'chat:approve': {
+    args: [key: string, itemId: string, decision: ApprovalDecision]
+    ret: void
+  }
+  'studio:start': { args: []; ret: { url: string } | { error: true } }
+  'shell:showItem': { args: [path: string]; ret: void }
+  'dialog:pickFiles': { args: []; ret: string[] }
 }
 
 /** Su kien (main -> renderer). */
 export interface EventMap {
   'setup:changed': SetupSnapshot
   'app:updateReady': { version: string }
+  'videos:changed': VideosSnapshot
+  'chat:changed': ChatState
 }
 
 export type InvokeChannel = keyof InvokeMap

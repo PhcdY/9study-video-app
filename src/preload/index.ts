@@ -9,9 +9,27 @@ const INVOKE: InvokeChannel[] = [
   'dialog:pickFolder',
   'app:openLoginPage',
   'app:restartToUpdate',
-  'app:version'
+  'app:version',
+  'videos:list',
+  'videos:script',
+  'videos:audio',
+  'videos:lessons',
+  'videos:create',
+  'chat:open',
+  'chat:send',
+  'chat:chip',
+  'chat:interrupt',
+  'chat:approve',
+  'studio:start',
+  'shell:showItem',
+  'dialog:pickFiles'
 ]
-const EVENTS: EventChannel[] = ['setup:changed', 'app:updateReady']
+const EVENTS: EventChannel[] = [
+  'setup:changed',
+  'app:updateReady',
+  'videos:changed',
+  'chat:changed'
+]
 
 const api: Api = {
   invoke<K extends InvokeChannel>(channel: K, ...args: InvokeMap[K]['args']) {

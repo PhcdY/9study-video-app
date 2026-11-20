@@ -1,5 +1,12 @@
 // Toan bo chu tieng Viet tren giao dien. Khong dung thuat ngu ky thuat (git, terminal, npm, sandbox...).
 import type { ErrorCode, MachineCheck, SetupStepId, TaskId } from '../../../shared/types'
+import type {
+  ApprovalTitle,
+  ChatErrorCode,
+  ChipId,
+  StatusLabel,
+  VideoStage
+} from '../../../shared/video'
 
 export const copy = {
   appName: '9Study',
@@ -177,5 +184,235 @@ export const copy = {
     keyTrong: 'Bạn chưa dán key.',
     mayChuaSan: 'Máy còn thiếu vài thứ, xem danh sách bên dưới.',
     khongRo: 'Có lỗi ngoài dự kiến. Bấm Thử lại; nếu vẫn lỗi, hãy báo cho người phụ trách.'
-  } satisfies Record<ErrorCode, string>
+  } satisfies Record<ErrorCode, string>,
+
+  // ---------- Video cua toi ----------
+  nav: { videos: 'Video', settings: 'Cài đặt' },
+  home: {
+    continueTitle: 'Làm tiếp',
+    continueBtn: 'Làm tiếp',
+    allTitle: (n: number) => `Bài của bạn · ${n}`,
+    samplesTitle: (n: number) => `Video mẫu của bộ công cụ · ${n}`,
+    samplesHint: 'Video làm sẵn để xem cách làm. Bạn mở xem được, nhưng đừng sửa.',
+    search: 'Tìm bài',
+    allSubjects: 'Tất cả môn',
+    newVideo: 'Làm video mới',
+    emptyTitle: 'Chưa có video nào',
+    emptyDesc:
+      'Bấm Làm video mới để bắt đầu. AI sẽ cùng bạn viết kịch bản, duyệt hình rồi tạo giọng đọc.',
+    colLesson: 'Bài',
+    colSubject: 'Môn',
+    colStage: 'Trạng thái',
+    colUpdated: 'Cập nhật',
+    nextStep: {
+      kichBan: 'Việc tiếp theo: đọc kịch bản và duyệt với AI.',
+      duyetHinh: 'Việc tiếp theo: xem storyboard và duyệt hình. Chưa tốn credit.',
+      giongDoc: 'Việc tiếp theo: nghe thử giọng đọc rồi xuất video.',
+      daXuat: 'Video đã xuất xong. Mở để xem hoặc xuất lại.'
+    } satisfies Record<VideoStage, string>,
+    updatedAt: (ms: number) => {
+      const d = new Date(ms)
+      const now = new Date()
+      if (d.toDateString() === now.toDateString())
+        return `Sửa lúc ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} hôm nay`
+      return `Sửa ngày ${d.toLocaleDateString('vi-VN')}`
+    },
+    shortDate: (ms: number) => {
+      const d = new Date(ms)
+      return d.toDateString() === new Date().toDateString()
+        ? d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        : d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+    },
+    toolkit: (v?: string) => (v ? `Bộ công cụ bản ${v}` : 'Bộ công cụ'),
+    savedAt: (p: string) => `Video lưu tại ${p}`,
+    lop: (n?: number) => (n ? `Lớp ${n}` : ''),
+    loai: (l?: string) => (l === 'hien-tuong' ? 'Hiện tượng' : l === 'bai-hoc' ? 'Bài học' : '')
+  },
+  stage: {
+    kichBan: 'Kịch bản',
+    duyetHinh: 'Duyệt hình',
+    giongDoc: 'Giọng đọc và xuất',
+    daXuat: 'Đã xuất'
+  } satisfies Record<VideoStage, string>,
+  stageStatus: {
+    kichBan: 'Đang viết kịch bản',
+    duyetHinh: 'Đang duyệt hình',
+    giongDoc: 'Đang làm giọng đọc',
+    daXuat: 'Đã xuất video'
+  } satisfies Record<VideoStage, string>,
+
+  // ---------- Lam video moi ----------
+  newVideo: {
+    title: 'Làm video mới',
+    back: 'Video của tôi',
+    part1: 'Video về bài nào',
+    part2: 'Giọng đọc Vivibe',
+    part2Hint: 'Đổi được tới trước khi tạo giọng ở bước 3',
+    part3: 'Tuỳ chọn nâng cao',
+    part3Hint: 'Không bắt buộc. Điền càng nhiều, video càng sát ý bạn và AI càng ít phải hỏi lại.',
+    subject: 'Môn',
+    lop: 'Lớp',
+    loai: 'Loại video',
+    baiHoc: 'Bài học',
+    baiHocHint: 'Dạy đủ một bài SGK',
+    hienTuong: 'Hiện tượng',
+    hienTuongHint: 'Trả lời một câu "vì sao"',
+    bai: 'Bài trong SGK',
+    baiPick: 'Chọn bài',
+    baiOther: 'Bài khác (gõ tên bài)',
+    baiPlaceholder: 'Ví dụ: Bài 1. Tính đơn điệu và cực trị của hàm số',
+    hasCard: 'Đã có thẻ bài học cho bài này. AI dạy đủ các mục trong thẻ.',
+    noCard: 'Chưa có thẻ bài học cho bài này. AI sẽ soạn thẻ cùng bạn trước.',
+    cauHoi: 'Câu hỏi "vì sao" của video',
+    cauHoiPlaceholder: 'Ví dụ: Vì sao muối làm đá tan nhanh hơn?',
+    yBanChat: 'Ý bản chất muốn học sinh hiểu (không bắt buộc)',
+    yBanChatHint: 'Để trống thì AI đề xuất 2–3 góc nhìn cho bạn chọn.',
+    voiceSuggested: (mon: string) => `Gợi ý cho ${mon}`,
+    voiceDesc: {
+      'nam - c Bình': 'Dứt khoát, logic. Hợp Toán, Lý, Hóa, Sinh.',
+      'nữ - c Nhi': 'Ấm, truyền cảm. Hợp Sử, Địa, Văn, KTPL.',
+      'anh-male': 'Giọng bản xứ, chuẩn phát âm. Hợp Tiếng Anh.'
+    } as Record<string, string>,
+    voiceOther: 'Giọng khác trên tài khoản Vivibe của bạn (gõ tên giọng)',
+    voicePerScene:
+      'Đổi giọng theo nhân vật hoặc theo cảnh (ví dụ hội thoại tiếng Anh dùng giọng bản xứ)',
+    viewer: 'Người xem',
+    exams: 'Kỳ thi nhắm tới',
+    daHoc: 'Học sinh đã học gì',
+    chuaHoc: 'Chưa học gì',
+    studentHint: '"Học sinh ảo" dùng đúng hai ô này để đọc thử kịch bản như người xem thật.',
+    videoTruoc: 'Video trước trong chuỗi',
+    videoTruocNone: 'Không có',
+    videoTruocHint: 'AI đọc video đó để không dạy lại và nối tiếp đúng chỗ.',
+    story: 'Cách kể',
+    moDau: 'Mở đầu bằng',
+    moDauOpts: {
+      aiChon: 'Để AI chọn',
+      hienTuong: 'Hiện tượng đời thực',
+      cauDeThi: 'Một câu đề thi',
+      hieuSai: 'Cách hiểu sai phổ biến'
+    },
+    goiYMoDau: 'Gợi ý hiện tượng / câu hỏi mở đầu',
+    viDu: 'Ví dụ xuyên suốt muốn dùng',
+    doDai: 'Độ dài',
+    doDaiOpts: { ai: 'Để AI chọn (2:30–4:00)', gon: 'Gọn, khoảng 2:30', ky: 'Kỹ, khoảng 4:00' },
+    examContent: 'Nội dung thi',
+    loiHayMac: 'Lỗi học sinh hay mắc',
+    loiHayMacHint: 'Thành đoạn "Bẫy thường gặp" trong video.',
+    dangBaiThi: 'Dạng bài trong đề thi muốn có',
+    dangBaiThiHint: 'Thành đoạn "Trong đề thi".',
+    docs: 'Tài liệu và ghi chú',
+    attach: 'Chọn ảnh SGK, câu đề thi, ảnh chụp bảng… (ảnh hoặc PDF)',
+    attachBtn: 'Chọn tệp',
+    ghiChu: 'Ghi chú khác cho AI',
+    submit: 'Bắt đầu viết kịch bản',
+    cancel: 'Huỷ',
+    remember: 'App nhớ lựa chọn này cho video sau.',
+    whatNext: 'Bấm xong thì sao?',
+    whatNextSteps: [
+      'AI đọc SGK và trình Bảng nội dung: dạy gì, ở đoạn nào, bằng hình gì.',
+      'Bạn gạch hoặc thêm ý. Đây là lúc sửa rẻ nhất.',
+      'AI viết kịch bản, tự kiểm tra lỗi và nhờ "học sinh ảo" đọc thử.'
+    ],
+    whatNextNote:
+      'Bước 1 và 2 không tốn credit giọng đọc. Giọng chỉ được tạo ở bước 3, sau khi bạn đồng ý.',
+    needBai: 'Hãy chọn hoặc gõ tên bài.',
+    needCauHoi: 'Hãy gõ câu hỏi của video.'
+  },
+
+  // ---------- Man mot video ----------
+  workspace: {
+    back: 'Về Video của tôi',
+    newTitle: 'Video mới',
+    newSub: 'AI đang soạn Bảng nội dung',
+    tabs: {
+      kichBan: 'Kịch bản',
+      storyboard: 'Storyboard',
+      chuyenDong: 'Xem chuyển động',
+      giongDoc: 'Nghe thử',
+      thanhPham: 'Thành phẩm'
+    },
+    noScript: 'Chưa có kịch bản. AI sẽ tạo sau khi bạn duyệt Bảng nội dung.',
+    scene: (n?: number) => (n ? `Cảnh ${n}` : ''),
+    colLine: 'Câu',
+    colSpeak: 'Lời đọc',
+    colText: 'Chữ trên hình',
+    noStoryboard:
+      'Chưa có storyboard. Duyệt kịch bản xong, AI sẽ dựng bản nháp và xuất storyboard.',
+    studioStart: 'Mở bản xem chuyển động',
+    studioStarting: 'Đang mở bản xem chuyển động… lần đầu mất khoảng 10–30 giây.',
+    studioError: 'Chưa mở được bản xem chuyển động. Bấm thử lại; nếu vẫn lỗi, hãy gửi báo lỗi.',
+    studioHint: 'Chọn tên video ở cột trái của khung bên dưới để xem.',
+    noAudio: 'Chưa có giọng đọc. Duyệt hình xong, AI sẽ tạo các câu nghe thử.',
+    audioCount: (n: number) => `${n} câu đã có giọng đọc`,
+    noFinal: 'Chưa xuất video. Nghe giọng đọc ổn thì bấm "Xuất video" bên khung chat.',
+    openFolder: 'Mở thư mục',
+    retry: 'Thử lại'
+  },
+  chat: {
+    label: 'Trò chuyện với trợ lý AI',
+    placeholder: 'Nhắn cho AI, ví dụ: cảnh 3 đổi màu đường cong sang chàm',
+    send: 'Gửi',
+    stop: 'Dừng',
+    thinking: 'AI đang làm…',
+    empty: 'Nhắn cho AI hoặc bấm một nút gợi ý bên dưới.',
+    you: 'Bạn',
+    status: {
+      docTaiLieu: 'Đang đọc tài liệu',
+      timTaiLieu: 'Đang tìm trong tài liệu',
+      kiemKichBan: 'Đang kiểm tra kịch bản',
+      xuatStoryboard: 'Đang xuất storyboard',
+      kiemBoCuc: 'Đang kiểm tra bố cục',
+      chupAnh: 'Đang chụp ảnh soát',
+      taoGiong: 'Đang tạo giọng đọc',
+      canTu: 'Đang căn lời với giọng đọc',
+      xuatVideo: 'Đang xuất video',
+      kiemLoi: 'Đang kiểm tra lỗi',
+      suaFile: 'Đang sửa bài',
+      xemBan: 'Đang xem các bản',
+      hocSinhAo: 'Học sinh ảo đang đọc thử',
+      lamViec: 'Đang làm việc'
+    } satisfies Record<StatusLabel, string>,
+    statusDone: (label: string, n: number) =>
+      n > 1 ? `${label} · xong ${n} việc` : `${label} · xong`,
+    statusFailed: (label: string) => `${label} · có việc chưa chạy được`,
+    approval: {
+      congCu: 'AI muốn dùng công cụ của bộ công cụ',
+      taoGiong: 'Tạo giọng đọc cho bài',
+      taoLaiGiong: 'Tạo lại giọng đọc cho vài câu',
+      xuatVideo: 'Xuất video',
+      doiBan: 'Đổi phiên bản bộ công cụ',
+      caiThuVien: 'Cài thêm thư viện',
+      mang: 'Truy cập mạng',
+      suaFile: 'Sửa file trong bài',
+      lenhLa: 'AI muốn chạy lệnh này'
+    } satisfies Record<ApprovalTitle, string>,
+    costly: 'Việc này tốn credit Vivibe',
+    costlyHint: 'Chỉ đồng ý khi các câu nghe thử đã ổn.',
+    // "Đang kiểm tra kịch bản" -> "Cho phép AI kiểm tra kịch bản"
+    approvalTool: (viec: string) => `Cho phép AI ${viec.replace(/^Đang\s+/, '')}`,
+    accept: 'Đồng ý',
+    acceptAlways: 'Luôn cho phép việc này',
+    decline: 'Để sau',
+    accepted: 'Đã đồng ý',
+    acceptedAlways: 'Đã cho phép cho cả buổi làm việc',
+    declined: 'Đã từ chối',
+    errors: {
+      hetLuot: 'Đã hết lượt dùng ChatGPT. Chờ tới lúc làm mới lượt rồi nhắn lại.',
+      mang: 'Mất kết nối mạng giữa chừng. Kiểm tra wifi rồi nhắn lại.',
+      chuaDangNhap: 'Phiên đăng nhập ChatGPT đã hết. Vào Cài đặt để đăng nhập lại.',
+      khongRo: 'AI gặp lỗi ngoài dự kiến. Nhắn lại thường sẽ được; nếu vẫn lỗi, hãy gửi báo lỗi.'
+    } satisfies Record<ChatErrorCode, string>,
+    chips: {
+      duyetKichBan: 'Duyệt kịch bản, sang bước 2',
+      kiemKichBan: 'Kiểm tra lại kịch bản',
+      hocSinhAoKichBan: 'Nhờ học sinh ảo đọc thử',
+      duyetHinh: 'Duyệt hình, sang bước 3',
+      xuatLaiStoryboard: 'Xuất lại storyboard',
+      hocSinhAoHinh: 'Nhờ học sinh ảo xem',
+      nghiOnDungHoanChinh: 'Giọng ổn, dựng bản hoàn chỉnh',
+      xuatVideo: 'Xuất video',
+      xuatLaiVideo: 'Xuất lại video'
+    } satisfies Record<ChipId, string>
+  }
 }

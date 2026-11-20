@@ -22,3 +22,13 @@ export async function pickFolder(defaultPath: string): Promise<string | null> {
   const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
   return res.canceled ? null : (res.filePaths[0] ?? null)
 }
+
+export async function pickFiles(): Promise<string[]> {
+  const win = BrowserWindow.getFocusedWindow() ?? undefined
+  const opts: Electron.OpenDialogOptions = {
+    properties: ['openFile', 'multiSelections'],
+    filters: [{ name: 'Ảnh hoặc PDF', extensions: ['png', 'jpg', 'jpeg', 'webp', 'pdf'] }]
+  }
+  const res = win ? await dialog.showOpenDialog(win, opts) : await dialog.showOpenDialog(opts)
+  return res.canceled ? [] : res.filePaths
+}

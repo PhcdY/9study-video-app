@@ -52,3 +52,61 @@ body {
   outline: 2px solid var(--color-cham);
   outline-offset: 2px;
 }
+
+/* Tin nhan cua AI (Markdown) */
+.ai-md > :first-child {
+  margin-top: 0;
+}
+.ai-md > :last-child {
+  margin-bottom: 0;
+}
+.ai-md p,
+.ai-md ul,
+.ai-md ol {
+  margin: 0 0 0.6em;
+}
+.ai-md ul,
+.ai-md ol {
+  padding-left: 1.3em;
+}
+.ai-md li {
+  margin: 0.15em 0;
+}
+.ai-md h1,
+.ai-md h2,
+.ai-md h3 {
+  font-size: 1em;
+  font-weight: 700;
+  margin: 0.8em 0 0.4em;
+}
+.ai-md code {
+  font-size: 0.88em;
+  background: var(--color-nen);
+  border-radius: 4px;
+  padding: 0.1em 0.3em;
+}
+.ai-md pre {
+  background: var(--color-nen);
+  border-radius: 8px;
+  padding: 0.6em 0.8em;
+  overflow-x: auto;
+}
+.ai-md pre code {
+  background: none;
+  padding: 0;
+}
+.ai-md table {
+  border-collapse: collapse;
+  margin: 0 0 0.6em;
+  font-size: 0.93em;
+}
+.ai-md th,
+.ai-md td {
+  border: 1px solid var(--color-vien);
+  padding: 0.3em 0.6em;
+  text-align: left;
+  vertical-align: top;
+}
+.ai-md a {
+  color: var(--color-cham);
+}
