@@ -1,0 +1,54 @@
+@import '@fontsource/plus-jakarta-sans/vietnamese-400.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-500.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-600.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-700.css';
+@import '@fontsource/plus-jakarta-sans/vietnamese-800.css';
+@import '@fontsource/plus-jakarta-sans/latin-400.css';
+@import '@fontsource/plus-jakarta-sans/latin-500.css';
+@import '@fontsource/plus-jakarta-sans/latin-600.css';
+@import '@fontsource/plus-jakarta-sans/latin-700.css';
+@import '@fontsource/plus-jakarta-sans/latin-800.css';
+@import 'tailwindcss';
+
+/* Mau va chu theo he thong giao dien 9Study Video (artifact thiet ke, artboard Main) */
+@theme {
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+
+  --color-cham: #3d4aef; /* nut chinh, diem nhan */
+  --color-cham-dam: #2b36c9; /* hover */
+  --color-cham-nhat: #eceefe; /* dang chon */
+  --color-xanh: #4b87f4; /* thanh tien trinh, khong lam nen chu nho */
+  --color-navy: #0e1046; /* chu chinh */
+  --color-phu: #5e6785; /* chu phu */
+  --color-mo: #8a94ae; /* bieu tuong khoa */
+  --color-nen: #f6f8fe;
+  --color-vien: #e4eaf6;
+  --color-vien-dam: #c9d2ea;
+  --color-nen-nhan: #eef1f8;
+
+  --color-xong: #0e7c3e;
+  --color-xong-nen: #e7f6ec;
+  --color-credit: #a85300;
+  --color-credit-nen: #fff1e0;
+  --color-loi: #c7262b;
+  --color-loi-nen: #fdecec;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-nen);
+  color: var(--color-navy);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-cham);
+  outline-offset: 2px;
+}
