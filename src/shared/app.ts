@@ -63,3 +63,30 @@ export interface Usage {
   resetsAt?: number
   plan?: string
 }
+
+/** Cai dat nguoi dung chinh duoc tren man Cai dat. */
+export interface Prefs {
+  /** Thu muc gop y chung (Drive), vd G:\My Drive\9Study_GopY */
+  feedbackDir?: string
+  /** Ten hien trong gop y */
+  authorName?: string
+  /** Luon gui kem ca video thanh pham */
+  alwaysFullVideo?: boolean
+  /** Hien muc Gop y de xu ly gop y cua moi nguoi */
+  maintainer?: boolean
+  /** 'tonCredit': AI tu hoi khi can (mac dinh); 'moiLenh': hoi moi lenh */
+  askPolicy?: 'tonCredit' | 'moiLenh'
+  /** Tu don bo nho AI khi sang buoc moi (mac dinh bat) */
+  autoCompact?: boolean
+  /** Tu tai ban app moi (mac dinh bat) */
+  autoUpdateApp?: boolean
+}
+
+export interface PrefsSnapshot extends Prefs {
+  /** Thu muc gop y dang dung (da dat hoac tu tim thay trong Drive) */
+  feedbackDirInUse?: string
+  /** Thu muc du an (bo cong cu + video) */
+  projectDir?: string
+  /** Noi luu video thanh pham */
+  outputDir?: string
+}

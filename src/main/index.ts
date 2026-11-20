@@ -9,7 +9,22 @@ import { exe } from './services/runtime'
 import { logout, readUsage, reopenLoginPage, stopAccountClient } from './services/codex/account'
 import { VersionService } from './services/version'
 import { makeBugReport } from './services/report'
-import { getSettings } from './services/settings'
+import { getSettings, updateSettings } from './services/settings'
+import {
+  createFeedback,
+  feedbackDir,
+  feedbackDraft,
+  fixFeedback,
+  listFeedback,
+  machineId,
+  setFeedbackState,
+  voiceOf,
+  FEEDBACK_FOLDER
+} from './services/feedback'
+import { outputBase } from './services/project'
+import type { Prefs, PrefsSnapshot } from '../shared/app'
+import type { FeedbackList } from '../shared/feedback'
+import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
 import { restartToUpdate, startUpdater } from './services/updater'
 import { VideosService } from './services/videos'
 import { handleFileScheme, isInside, registerFileScheme } from './services/files-protocol'
@@ -34,6 +49,54 @@ const versions = new VersionService(() => getSettings().projectDir ?? '')
 let lastVersion: string | undefined
 
 let mainWindow: BrowserWindow | null = null
+
+/** Noi giao dien duoc mo file: du an, noi luu video, thu muc gop y. */
+function allowedRoots(): string[] {
+  const fb = feedbackDir()
+  return [...videos.allowedRoots(), ...(fb ? [fb] : [])]
+}
+
+function prefsSnapshot(): PrefsSnapshot {
+  const s = getSettings()
+  const dir = s.projectDir
+  return {
+    feedbackDir: s.feedbackDir,
+    authorName: s.authorName,
+    alwaysFullVideo: s.alwaysFullVideo,
+    maintainer: s.maintainer,
+    askPolicy: s.askPolicy,
+    autoCompact: s.autoCompact,
+    autoUpdateApp: s.autoUpdateApp,
+    feedbackDirInUse: feedbackDir(),
+    projectDir: dir,
+    outputDir: dir ? outputBase(dir) : undefined
+  }
+}
+
+function feedbackList(): FeedbackList {
+  return { items: listFeedback(), me: machineId(), dir: feedbackDir() }
+}
+
+// Theo doi thu muc gop y (Drive dong bo ve): bao giao dien doc lai
+let fbWatcher: FSWatcher | undefined
+let fbWatchDir: string | undefined
+let fbTimer: NodeJS.Timeout | undefined
+function watchFeedback(): void {
+  const dir = feedbackDir()
+  if (dir === fbWatchDir) return
+  fbWatcher?.close()
+  fbWatcher = undefined
+  fbWatchDir = dir
+  if (!dir || !existsSync(dir)) return
+  try {
+    fbWatcher = watch(dir, { recursive: true }, () => {
+      if (fbTimer) clearTimeout(fbTimer)
+      fbTimer = setTimeout(() => broadcast('feedback:changed', feedbackList()), 1500)
+    })
+  } catch (e) {
+    log.warn(`[gop y] khong theo doi duoc thu muc: ${String(e)}`)
+  }
+}
 
 function createWindow(): void {
   mainWindow = new BrowserWindow({
@@ -107,11 +170,11 @@ function registerIpc(): void {
   })
   handle('shell:showItem', (p) => {
     // Chi mo duoc file trong thu muc du an / noi luu video
-    if (videos.allowedRoots().some((r) => isInside(p, r))) shell.showItemInFolder(p)
+    if (allowedRoots().some((r) => isInside(p, r))) shell.showItemInFolder(p)
   })
   handle('dialog:pickFiles', () => pickFiles())
   handle('shell:openPath', (p) => {
-    if (videos.allowedRoots().some((r) => isInside(p, r))) void shell.openPath(p)
+    if (allowedRoots().some((r) => isInside(p, r))) void shell.openPath(p)
   })
   handle('version:get', async () => {
     const info = await versions.info()
@@ -145,6 +208,65 @@ function registerIpc(): void {
       return null
     }
   })
+
+  handle('prefs:get', () => prefsSnapshot())
+  handle('prefs:set', (patch: Prefs) => {
+    updateSettings(patch)
+    watchFeedback()
+    const snap = prefsSnapshot()
+    broadcast('prefs:changed', snap)
+    if ('feedbackDir' in patch) broadcast('feedback:changed', feedbackList())
+    return snap
+  })
+  handle('feedback:pickDir', async () => {
+    const picked = await pickFolder(feedbackDir() ?? app.getPath('home'))
+    if (!picked) return null
+    // Chon thu muc cha (vd My Drive) thi tao 9Study_GopY ben trong
+    const dir = /9Study_GopY$/i.test(picked) ? picked : join(picked, FEEDBACK_FOLDER)
+    try {
+      mkdirSync(dir, { recursive: true })
+    } catch (e) {
+      log.warn(`[gop y] khong tao duoc thu muc: ${String(e)}`)
+      return null
+    }
+    updateSettings({ feedbackDir: dir })
+    watchFeedback()
+    const snap = prefsSnapshot()
+    broadcast('prefs:changed', snap)
+    broadcast('feedback:changed', feedbackList())
+    return snap
+  })
+  handle('feedback:draft', (slug, time, beatLine) =>
+    feedbackDraft(getSettings().projectDir ?? '', slug, time, beatLine)
+  )
+  handle('feedback:create', async (input) => {
+    if (!feedbackDir()) return { ok: false as const, code: 'chuaCoThuMuc' as const }
+    const dir = getSettings().projectDir ?? ''
+    try {
+      const out = await createFeedback(dir, input, {
+        toolkitVersion: await videos.toolkitVersion(),
+        voice: voiceOf(dir, input.slug)
+      })
+      broadcast('feedback:changed', feedbackList())
+      return { ok: true as const, dir: out }
+    } catch (e) {
+      log.error(`[gop y] tao goi loi: ${String(e)}`)
+      return { ok: false as const, code: 'loi' as const }
+    }
+  })
+  handle('feedback:list', () => {
+    watchFeedback()
+    return feedbackList()
+  })
+  handle('feedback:setState', (ids, patch) => {
+    setFeedbackState(ids, patch)
+    broadcast('feedback:changed', feedbackList())
+  })
+  handle('feedback:fix', async (input) => {
+    const key = await fixFeedback(input, (k, text) => void videos.chat().send(k, text))
+    broadcast('feedback:changed', feedbackList())
+    return key
+  })
 }
 
 app.on('second-instance', () => {
@@ -161,7 +283,8 @@ app.whenReady().then(() => {
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   // Lan truoc app bi tat ngang (treo, mat dien) thi Codex co the con chay ngam: don truoc
   void killOrphans(exe.codex())
-  handleFileScheme(() => videos.allowedRoots())
+  handleFileScheme(() => allowedRoots())
+  watchFeedback()
   registerIpc()
   createWindow()
   startUpdater()
@@ -171,6 +294,7 @@ app.whenReady().then(() => {
 app.on('before-quit', () => {
   stopAccountClient()
   videos.stopAll()
+  fbWatcher?.close()
   killAll()
 })
 

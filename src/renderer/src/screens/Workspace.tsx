@@ -1,5 +1,7 @@
 import { useState } from 'react'
-import { Check, ChevronLeft } from 'lucide-react'
+import { Check, ChevronLeft, MessageSquareWarning } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import type { FeedbackTarget } from '@/screens/Feedback'
 import type { VideoStage } from '../../../shared/video'
 import { subjectName } from '../../../shared/prompt'
 import { useChat, useVideos } from '@/lib/api'
@@ -27,10 +29,12 @@ const STEPS: VideoStage[] = ['kichBan', 'duyetHinh', 'giongDoc']
 
 export function WorkspaceScreen({
   chatKey,
-  onBack
+  onBack,
+  onFeedback
 }: {
   chatKey: string
   onBack: () => void
+  onFeedback: (t: FeedbackTarget) => void
 }): React.JSX.Element {
   const chat = useChat(chatKey)
   const videos = useVideos()
@@ -68,6 +72,11 @@ export function WorkspaceScreen({
           </span>
         </div>
         <StageBar stage={stage} />
+        {slug && (
+          <Button variant="outline" size="sm" onClick={() => onFeedback({ slug })}>
+            <MessageSquareWarning aria-hidden className="size-4" /> {copy.feedback.open}
+          </Button>
+        )}
         <UsagePill />
       </div>
 
@@ -103,8 +112,16 @@ export function WorkspaceScreen({
             {tab === 'kichBan' && <ScriptTab slug={slug} version={video?.updatedAt} />}
             {tab === 'storyboard' && <StoryboardTab video={video} />}
             {tab === 'chuyenDong' && <StudioTab compositionId={video?.compositionId} />}
-            {tab === 'giongDoc' && <AudioTab slug={slug} version={video?.updatedAt} />}
-            {tab === 'thanhPham' && <FinalTab video={video} />}
+            {tab === 'giongDoc' && (
+              <AudioTab
+                slug={slug}
+                version={video?.updatedAt}
+                onWrong={(beatLine) => slug && onFeedback({ slug, beatLine, kind: 'giong' })}
+              />
+            )}
+            {tab === 'thanhPham' && (
+              <FinalTab video={video} onFeedback={(time) => slug && onFeedback({ slug, time })} />
+            )}
           </div>
         </section>
       </div>

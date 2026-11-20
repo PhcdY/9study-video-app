@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { CheckCircle2, FolderOpen, Loader2, TriangleAlert, XCircle } from 'lucide-react'
 import type { VersionInfo } from '../../../shared/app'
 import type { StepState } from '../../../shared/types'
-import { api, useSetup, useUsage } from '@/lib/api'
+import { api, useFeedback, usePrefs, useSetup, useUsage } from '@/lib/api'
+import { headline } from '../../../shared/feedback-rules'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
 import { Card, CardTitle, Input, Page, PageTitle, SettingRow } from '@/components/ui/layout'
@@ -25,7 +26,27 @@ export function SettingsScreen({
   const [confirmLogout, setConfirmLogout] = useState(false)
   const [report, setReport] = useState<'idle' | 'busy' | { path: string | null }>('idle')
   const [active, setActive] = useState('thu-muc')
+  const [prefs, savePrefs] = usePrefs()
+  const [fb] = useFeedback()
+  const [showSent, setShowSent] = useState(false)
+  const [name, setName] = useState<string | null>(null)
   useEffect(() => void api.invoke('app:version').then(setAppVersion), [])
+  // Cuon toi muc nao thi to dam muc do o cot trai
+  useEffect(() => {
+    const onScroll = (): void => {
+      const ids = ['thu-muc', 'giong-doc', 'tro-ly', 'phien-ban', 'gop-y', 'ho-tro']
+      let cur = ids[0]
+      for (const id of ids) {
+        const el = document.getElementById(id)
+        if (el && el.getBoundingClientRect().top <= 140) cur = id
+      }
+      // Cuon het trang: muc cuoi
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) cur = ids.at(-1)!
+      setActive(cur)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
   if (!snap) return <main className="flex-1" />
   const step = (id: 'keyGiong' | 'noiLuu' | 'kiemTra'): StepState | undefined =>
@@ -52,6 +73,7 @@ export function SettingsScreen({
     { id: 'giong-doc', title: t.voice },
     { id: 'tro-ly', title: t.ai },
     { id: 'phien-ban', title: t.versions },
+    { id: 'gop-y', title: t.feedback },
     { id: 'ho-tro', title: t.support }
   ]
   const go = (id: string): void => {
@@ -59,6 +81,11 @@ export function SettingsScreen({
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
   const isDrive = /my drive|drive của tôi/i.test(snap.outputDir)
+  const mine = (fb?.items ?? []).filter((it) => it.machine === fb?.me)
+  const mineFixed = mine.filter((it) => it.state.status === 'daSua').length
+  const mineWaiting = mine.filter(
+    (it) => it.state.status === 'moi' || it.state.status === 'dangSua'
+  ).length
 
   return (
     <Page>
@@ -209,6 +236,39 @@ export function SettingsScreen({
                 </Button>
               </div>
             )}
+            <fieldset className="m-0 flex flex-col gap-1 border-0 border-b border-[#EEF1F8] p-0 pb-4">
+              <legend className="float-left w-full pt-4 pb-1 text-[15px] font-bold">
+                {t.askTitle}
+              </legend>
+              {(['tonCredit', 'moiLenh'] as const).map((v) => (
+                <label key={v} className="flex cursor-pointer items-start gap-3 py-1.5">
+                  <input
+                    type="radio"
+                    name="ask"
+                    checked={(prefs?.askPolicy ?? 'tonCredit') === v}
+                    onChange={() => void savePrefs({ askPolicy: v })}
+                    className="m-0 mt-[3px] size-[18px] accent-cham"
+                  />
+                  <span className="flex flex-col gap-0.5">
+                    <span className="text-[15px] font-semibold">
+                      {v === 'tonCredit' ? t.askCredit : t.askAll}
+                      {v === 'tonCredit' && (
+                        <span className="font-normal text-phu">{t.askCreditTag}</span>
+                      )}
+                    </span>
+                    <span className="text-[13px] text-phu">
+                      {v === 'tonCredit' ? t.askCreditDesc : t.askAllDesc}
+                    </span>
+                  </span>
+                </label>
+              ))}
+            </fieldset>
+            <CheckRow
+              checked={prefs?.autoCompact !== false}
+              onChange={(v) => void savePrefs({ autoCompact: v })}
+              label={t.autoCompact}
+              desc={t.autoCompactDesc}
+            />
           </SettingsCard>
 
           <SettingsCard id="phien-ban" title={t.versions}>
@@ -231,6 +291,92 @@ export function SettingsScreen({
               )}
             </SettingRow>
             <SettingRow label={t.appName(appVersion)} />
+            <CheckRow
+              checked={prefs?.autoUpdateApp !== false}
+              onChange={(v) => void savePrefs({ autoUpdateApp: v })}
+              label={t.autoUpdate}
+              desc={t.autoUpdateDesc}
+            />
+          </SettingsCard>
+
+          <SettingsCard id="gop-y" title={t.feedback}>
+            <SettingRow
+              label={t.feedbackDir}
+              value={prefs?.feedbackDirInUse ?? '—'}
+              desc={prefs?.feedbackDirInUse ? t.feedbackDirOk : t.feedbackDirNone}
+              descTone={prefs?.feedbackDirInUse ? 'ok' : undefined}
+            >
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => void api.invoke('feedback:pickDir')}
+              >
+                {prefs?.feedbackDirInUse ? t.change : t.pick}
+              </Button>
+            </SettingRow>
+            <SettingRow label={t.authorName} desc={t.authorNameDesc}>
+              <label className="sr-only" htmlFor="ten-ctv">
+                {t.authorName}
+              </label>
+              <Input
+                id="ten-ctv"
+                value={name ?? prefs?.authorName ?? ''}
+                placeholder={t.authorNamePh}
+                onChange={(e) => setName(e.target.value)}
+                onBlur={() => {
+                  if (name !== null) void savePrefs({ authorName: name.trim() })
+                }}
+                className="h-10 w-56"
+              />
+            </SettingRow>
+            <SettingRow label={t.sent(mine.length)} desc={t.sentSummary(mineFixed, mineWaiting)}>
+              {mine.length > 0 && (
+                <Button variant="outline" size="sm" onClick={() => setShowSent((v) => !v)}>
+                  {showSent ? t.hide : t.view}
+                </Button>
+              )}
+            </SettingRow>
+            {showSent && (
+              <ul className="m-0 mb-4 flex list-none flex-col rounded-[10px] border border-vien p-0">
+                {mine.map((it) => (
+                  <li
+                    key={it.id}
+                    className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#EEF1F8] px-4 py-2.5 last:border-b-0"
+                  >
+                    <span className="flex min-w-0 flex-[1_1_240px] flex-col">
+                      <span className="text-sm font-semibold">{headline(it.desc)}</span>
+                      <span className="text-xs text-phu">{it.title}</span>
+                    </span>
+                    <span
+                      className={cn(
+                        'rounded-full px-2.5 py-0.5 text-xs font-bold',
+                        it.state.status === 'daSua'
+                          ? 'bg-xong-nen text-xong'
+                          : it.state.status === 'dangSua'
+                            ? 'bg-cham-nhat text-cham'
+                            : 'bg-[#F1F3FA] text-phu'
+                      )}
+                    >
+                      {it.state.status === 'daSua' && it.state.fixedIn
+                        ? copy.feedback.fixedIn(it.state.fixedIn)
+                        : copy.feedback.status[it.state.status]}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <CheckRow
+              checked={!!prefs?.alwaysFullVideo}
+              onChange={(v) => void savePrefs({ alwaysFullVideo: v })}
+              label={t.fullVideo}
+              desc={t.fullVideoDesc}
+            />
+            <CheckRow
+              checked={!!prefs?.maintainer}
+              onChange={(v) => void savePrefs({ maintainer: v })}
+              label={t.maintainer}
+              desc={t.maintainerDesc}
+            />
           </SettingsCard>
 
           <SettingsCard id="ho-tro" title={t.support}>
@@ -309,6 +455,34 @@ function SettingsCard({
       </div>
       {children}
     </Card>
+  )
+}
+
+/** Hang bat / tat: o tick + tieu de dam + mo ta (theo thiet ke). */
+function CheckRow({
+  checked,
+  onChange,
+  label,
+  desc
+}: {
+  checked: boolean
+  onChange: (v: boolean) => void
+  label: string
+  desc?: string
+}): React.JSX.Element {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 border-b border-[#EEF1F8] py-4 last:border-b-0">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="m-0 mt-0.5 size-5 shrink-0 accent-cham"
+      />
+      <span className="flex flex-col gap-0.5">
+        <span className="text-[15px] font-bold">{label}</span>
+        {desc && <span className="text-[13px] text-phu">{desc}</span>}
+      </span>
+    </label>
   )
 }
 

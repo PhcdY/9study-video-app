@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Loader2, RefreshCw } from 'lucide-react'
-import { api, useSetup, useUpdateReady, useVersion } from '@/lib/api'
+import { api, useFeedback, usePrefs, useSetup, useUpdateReady, useVersion } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { SetupScreen } from '@/screens/Setup'
@@ -10,6 +10,8 @@ import { NewVideoScreen } from '@/screens/NewVideo'
 import { WorkspaceScreen } from '@/screens/Workspace'
 import { SettingsScreen } from '@/screens/Settings'
 import { AssistantChatScreen } from '@/screens/AssistantChat'
+import { FeedbackScreen, type FeedbackTarget } from '@/screens/Feedback'
+import { InboxScreen } from '@/screens/Inbox'
 import { UsagePill } from '@/components/UsagePill'
 import logoNgang from '@/assets/brand/logo-ngang.png'
 import { UpdateBanner, UpdateDialog } from '@/components/UpdateDialog'
@@ -20,7 +22,9 @@ type Route =
   | { name: 'new' }
   | { name: 'settings' }
   | { name: 'video'; key: string }
-  | { name: 'assistant'; key: string }
+  | { name: 'assistant'; key: string; from?: 'inbox' }
+  | { name: 'feedback'; target: FeedbackTarget; backKey: string }
+  | { name: 'inbox' }
 
 function App(): React.JSX.Element {
   const snap = useSetup()
@@ -34,14 +38,22 @@ function App(): React.JSX.Element {
   const current: Route | null = !snap?.allDone
     ? null
     : (route ?? (sawSetup ? { name: 'ready' } : { name: 'home' }))
-  const fullHeight = current?.name === 'video' || current?.name === 'assistant'
+  const fullHeight =
+    current?.name === 'video' || current?.name === 'assistant' || current?.name === 'feedback'
+  const [prefs] = usePrefs()
+  const [feedback] = useFeedback()
+  const newFeedback = feedback?.items.filter((it) => it.state.status === 'moi').length ?? 0
   const ready = !!current && current.name !== 'ready'
   const [version, reloadVersion] = useVersion()
 
-  const navItem = (name: 'home' | 'settings', label: string): React.JSX.Element => (
+  const navItem = (
+    name: 'home' | 'settings' | 'inbox',
+    label: string,
+    badge?: number
+  ): React.JSX.Element => (
     <button
       type="button"
-      onClick={() => setRoute(name === 'home' ? { name: 'home' } : { name: 'settings' })}
+      onClick={() => setRoute({ name } as Route)}
       aria-current={current?.name === name ? 'page' : undefined}
       className={cn(
         'flex cursor-pointer items-center px-2.5 text-sm',
@@ -51,6 +63,11 @@ function App(): React.JSX.Element {
       )}
     >
       {label}
+      {!!badge && (
+        <span className="ml-1.5 rounded-full bg-cham px-1.5 py-px text-[11px] font-bold text-white">
+          {badge}
+        </span>
+      )}
     </button>
   )
 
@@ -76,6 +93,7 @@ function App(): React.JSX.Element {
             {ready && (
               <nav aria-label="Chính" className="flex items-stretch gap-1 self-stretch">
                 {navItem('home', copy.nav.videos)}
+                {prefs?.maintainer && navItem('inbox', copy.inbox.nav, newFeedback)}
                 {navItem('settings', copy.settings.nav)}
               </nav>
             )}
@@ -91,6 +109,11 @@ function App(): React.JSX.Element {
                     <RefreshCw aria-hidden className="size-4" /> {copy.restartToUpdate}
                   </button>
                 </div>
+              )}
+              {ready && current?.name === 'inbox' && (
+                <span className="rounded-md bg-[#F1F3FA] px-2.5 py-1 text-xs font-semibold text-phu">
+                  {copy.inbox.mode}
+                </span>
               )}
               {ready && <UsagePill onOpenSettings={() => setRoute({ name: 'settings' })} />}
             </div>
@@ -123,12 +146,26 @@ function App(): React.JSX.Element {
       ) : current.name === 'settings' ? (
         <SettingsScreen version={version} onOpenUpdate={() => setShowUpdate(true)} />
       ) : current.name === 'assistant' ? (
-        <AssistantChatScreen chatKey={current.key} onBack={() => setRoute({ name: 'home' })} />
+        <AssistantChatScreen
+          chatKey={current.key}
+          onBack={() => setRoute({ name: current.from ?? 'home' } as Route)}
+        />
+      ) : current.name === 'inbox' ? (
+        <InboxScreen
+          version={version}
+          onOpenChat={(key) => setRoute({ name: 'assistant', key, from: 'inbox' })}
+        />
+      ) : current.name === 'feedback' ? (
+        <FeedbackScreen
+          target={current.target}
+          onClose={() => setRoute({ name: 'video', key: current.backKey })}
+        />
       ) : (
         <WorkspaceScreen
           key={current.key}
           chatKey={current.key}
           onBack={() => setRoute({ name: 'home' })}
+          onFeedback={(target) => setRoute({ name: 'feedback', target, backKey: current.key })}
         />
       )}
 

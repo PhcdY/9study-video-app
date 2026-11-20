@@ -16,9 +16,12 @@ import { CodexClient } from './client'
 import { trustProject } from '../runtime'
 import { describeApproval, estimateVoice, statusLabelFor } from './approvals'
 import log from '../../log'
+import { getSettings } from '../settings'
 
 const SANDBOX = 'workspace-write' as const
-const APPROVAL = 'on-request' as const
+/** Xin quyen: mac dinh de AI tu hoi khi can; 'moiLenh' thi hoi moi lenh ngoai danh sach an toan. */
+const approval = (): 'on-request' | 'untrusted' =>
+  getSettings().askPolicy === 'moiLenh' ? 'untrusted' : 'on-request'
 
 interface Chat {
   key: string
@@ -183,7 +186,7 @@ export class CodexSession extends EventEmitter {
         threadId,
         cwd: this.projectDir,
         sandbox: SANDBOX,
-        approvalPolicy: APPROVAL
+        approvalPolicy: approval()
       })
       chat.threadId = threadId
       this.byThread.set(threadId, chat)
@@ -211,7 +214,7 @@ export class CodexSession extends EventEmitter {
       const res = (await c.request('thread/start', {
         cwd: this.projectDir,
         sandbox: SANDBOX,
-        approvalPolicy: APPROVAL
+        approvalPolicy: approval()
       })) as ThreadStartResponse
       chat.threadId = res.thread.id
       this.byThread.set(chat.threadId, chat)

@@ -73,6 +73,12 @@ export class VideosService extends EventEmitter {
     }
   }
 
+  /** Ban bo cong cu dang dung (tag so tren commit hien tai). */
+  async toolkitVersion(): Promise<string | undefined> {
+    await this.loadRepoFacts().catch(() => undefined)
+    return this.version
+  }
+
   script(slug: string): ScriptData | null {
     return readScript(this.projectDir, slug)
   }
@@ -134,7 +140,9 @@ export class VideosService extends EventEmitter {
   async chip(key: string, chip: ChipId, slug: string): Promise<void> {
     const s = this.chat()
     await s.open(key)
-    if (STAGE_CHANGING_CHIPS.includes(chip)) await s.compact(key)
+    // Sang buoc moi: don bo nho AI cho do ton luot (tat duoc trong Cai dat)
+    if (STAGE_CHANGING_CHIPS.includes(chip) && getSettings().autoCompact !== false)
+      await s.compact(key)
     await s.send(key, chipPrompt(chip, slug))
   }
 

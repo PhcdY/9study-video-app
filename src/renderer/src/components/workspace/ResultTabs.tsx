@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { FolderOpen, Loader2, Play } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
+import { FolderOpen, Loader2, MessageSquareWarning, Play } from 'lucide-react'
 import type { AudioLine, ScriptData, VideoInfo } from '../../../../shared/video'
 import { api, fileUrl } from '@/lib/api'
 import { copy } from '@/lib/copy'
@@ -132,10 +132,13 @@ export function StudioTab({ compositionId }: { compositionId?: string }): React.
 /** Nghe tung cau giong doc (public/audio/<slug>/). */
 export function AudioTab({
   slug,
-  version
+  version,
+  onWrong
 }: {
   slug?: string
   version?: number
+  /** "Doc sai": mo gop y cho dung cau nay */
+  onWrong?: (beatLine: string) => void
 }): React.JSX.Element {
   const [lines, setLines] = useState<AudioLine[]>([])
   useEffect(() => {
@@ -159,6 +162,11 @@ export function AudioTab({
             <span className="w-20 text-xs font-bold text-phu">{l.id}</span>
             <span className="min-w-[240px] flex-1 text-[15px] leading-snug">{l.speak}</span>
             <audio controls preload="none" src={fileUrl(l.file, version)} className="h-9" />
+            {onWrong && (
+              <Button variant="ghost" size="sm" onClick={() => onWrong(l.id)}>
+                {w.readWrong}
+              </Button>
+            )}
           </div>
         ))}
       </div>
@@ -167,12 +175,21 @@ export function AudioTab({
 }
 
 /** Video thanh pham. */
-export function FinalTab({ video }: { video?: VideoInfo }): React.JSX.Element {
+export function FinalTab({
+  video,
+  onFeedback
+}: {
+  video?: VideoInfo
+  /** "Gop y tai day": giay dang xem */
+  onFeedback?: (time: number) => void
+}): React.JSX.Element {
+  const ref = useRef<HTMLVideoElement>(null)
   if (!video?.finalMp4) return <Empty>{w.noFinal}</Empty>
   const mp4 = video.finalMp4
   return (
     <div className="flex flex-col gap-3">
       <video
+        ref={ref}
         controls
         src={fileUrl(mp4, video.updatedAt)}
         className="w-full rounded-xl border border-vien bg-black"
@@ -181,6 +198,18 @@ export function FinalTab({ video }: { video?: VideoInfo }): React.JSX.Element {
         <Button variant="outline" size="md" onClick={() => void api.invoke('shell:showItem', mp4)}>
           <FolderOpen aria-hidden className="size-4" /> {w.openFolder}
         </Button>
+        {onFeedback && (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => {
+              ref.current?.pause()
+              onFeedback(ref.current?.currentTime ?? 0)
+            }}
+          >
+            <MessageSquareWarning aria-hidden className="size-4" /> {copy.feedback.here}
+          </Button>
+        )}
         <span className="min-w-0 truncate text-[13px] text-phu" title={mp4}>
           {mp4}
         </span>

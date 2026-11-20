@@ -3,12 +3,15 @@ import { app } from 'electron'
 import path from 'node:path'
 import { readFileSync, writeFileSync, renameSync, existsSync } from 'node:fs'
 import type { SetupStepId } from '../../shared/types'
+import type { Prefs } from '../../shared/app'
 
-export interface Settings {
+export interface Settings extends Prefs {
   projectDir?: string
   skipped: SetupStepId[]
   /** Buoc kiem tra may da qua it nhat mot lan */
   machineChecked?: boolean
+  /** Ma ngau nhien cua may, de nhan ra "gop y cua toi" */
+  machineId?: string
 }
 
 const file = (): string => path.join(app.getPath('userData'), 'settings.json')

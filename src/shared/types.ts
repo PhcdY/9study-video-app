@@ -1,5 +1,12 @@
 // Kieu dung chung cho phan loi (main), cau noi (preload) va giao dien (renderer).
-import type { UpdateProgress, UpdateResult, Usage, VersionInfo } from './app'
+import type { Prefs, PrefsSnapshot, UpdateProgress, UpdateResult, Usage, VersionInfo } from './app'
+import type {
+  BatchInput,
+  FeedbackDraft,
+  FeedbackInput,
+  FeedbackList,
+  FeedbackState
+} from './feedback'
 import type {
   ApprovalDecision,
   AudioLine,
@@ -160,6 +167,24 @@ export interface InvokeMap {
   'account:usage': { args: []; ret: Usage | null }
   'account:logout': { args: []; ret: void }
   'app:bugReport': { args: []; ret: string | null }
+  'prefs:get': { args: []; ret: PrefsSnapshot }
+  'prefs:set': { args: [patch: Prefs]; ret: PrefsSnapshot }
+  'feedback:draft': {
+    args: [slug: string, time?: number, beatLine?: string]
+    ret: FeedbackDraft | null
+  }
+  'feedback:create': {
+    args: [input: FeedbackInput]
+    ret: { ok: true; dir: string } | { ok: false; code: 'chuaCoThuMuc' | 'loi' }
+  }
+  'feedback:list': { args: []; ret: FeedbackList }
+  'feedback:setState': {
+    args: [ids: string[], patch: Omit<FeedbackState, 'updatedAt'>]
+    ret: void
+  }
+  /** Gom gop y thanh mot lan sua; openNow thi mo Codex va tra ve khoa cuoc tro chuyen */
+  'feedback:fix': { args: [input: BatchInput]; ret: string | null }
+  'feedback:pickDir': { args: []; ret: PrefsSnapshot | null }
 }
 
 /** Su kien (main -> renderer). */
@@ -170,6 +195,8 @@ export interface EventMap {
   'chat:changed': ChatState
   'version:progress': UpdateProgress
   'usage:changed': Usage | null
+  'feedback:changed': FeedbackList
+  'prefs:changed': PrefsSnapshot
 }
 
 export type InvokeChannel = keyof InvokeMap

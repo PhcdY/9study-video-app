@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { ChatState, VideosSnapshot } from '../../../shared/video'
-import type { Usage, VersionInfo } from '../../../shared/app'
+import type { Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
+import type { FeedbackList } from '../../../shared/feedback'
 import { createMockApi } from './mock-api'
 
 // Ngoai Electron (xem giao dien trong trinh duyet khi phat trien) thi dung du lieu gia
@@ -80,4 +81,35 @@ export function useVersion(): [VersionInfo | null, () => void] {
     }
   }, [n])
   return [v, () => setN((x) => x + 1)]
+}
+
+/** Cai dat nguoi dung (thu muc gop y, ten, che do nguoi bao tri...). */
+export function usePrefs(): [
+  PrefsSnapshot | null,
+  (patch: Prefs) => Promise<void>,
+  (p: PrefsSnapshot) => void
+] {
+  const [p, setP] = useState<PrefsSnapshot | null>(null)
+  useEffect(() => {
+    const off = api.on('prefs:changed', setP)
+    void api.invoke('prefs:get').then(setP)
+    return off
+  }, [])
+  const save = async (patch: Prefs): Promise<void> => {
+    setP((cur) => (cur ? { ...cur, ...patch } : cur))
+    setP(await api.invoke('prefs:set', patch))
+  }
+  return [p, save, setP]
+}
+
+/** Moi gop y trong thu muc chung, tu cap nhat khi Drive dong bo ve. */
+export function useFeedback(): [FeedbackList | null, () => void] {
+  const [list, setList] = useState<FeedbackList | null>(null)
+  const [tick, setTick] = useState(0)
+  useEffect(() => {
+    const off = api.on('feedback:changed', setList)
+    void api.invoke('feedback:list').then(setList)
+    return off
+  }, [tick])
+  return [list, () => setTick((t) => t + 1)]
 }

@@ -28,7 +28,15 @@ const INVOKE: InvokeChannel[] = [
   'version:update',
   'account:usage',
   'account:logout',
-  'app:bugReport'
+  'app:bugReport',
+  'prefs:get',
+  'prefs:set',
+  'feedback:draft',
+  'feedback:create',
+  'feedback:list',
+  'feedback:setState',
+  'feedback:fix',
+  'feedback:pickDir'
 ]
 const EVENTS: EventChannel[] = [
   'setup:changed',
@@ -36,7 +44,9 @@ const EVENTS: EventChannel[] = [
   'videos:changed',
   'chat:changed',
   'version:progress',
-  'usage:changed'
+  'usage:changed',
+  'feedback:changed',
+  'prefs:changed'
 ]
 
 const api: Api = {

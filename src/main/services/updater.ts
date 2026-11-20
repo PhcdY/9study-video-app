@@ -3,6 +3,7 @@ import { app } from 'electron'
 import electronUpdater from 'electron-updater'
 import log from '../log'
 import { broadcast } from '../ipc'
+import { getSettings } from './settings'
 
 const { autoUpdater } = electronUpdater
 
@@ -16,6 +17,8 @@ export function startUpdater(): void {
   )
   autoUpdater.on('error', (e) => log.warn(`[cap nhat] ${String(e)}`))
   const check = (): void => {
+    // Nguoi dung tat "Tu tai ban app moi" trong Cai dat
+    if (getSettings().autoUpdateApp === false) return
     autoUpdater.checkForUpdates().catch((e) => log.warn(`[cap nhat] ${String(e)}`))
   }
   check()
