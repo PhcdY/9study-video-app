@@ -27,7 +27,15 @@ export const copy = {
       youDo: 'Giữ thư mục gợi ý, hoặc chọn thư mục khác không dấu, không dấu cách.',
       primary: 'Dùng thư mục này',
       secondary: 'Đổi thư mục',
-      fieldLabel: 'Thư mục lưu'
+      fieldLabel: 'Thư mục lưu',
+      existingTitle: 'Máy bạn đã có bộ công cụ',
+      existingDesc:
+        'App tìm thấy bộ công cụ làm video trên máy. Dùng luôn bộ này thì không phải tải lại, bài cũ của bạn vẫn giữ nguyên.',
+      existingReady: 'Đã cài đủ, dùng được ngay',
+      existingPartial: 'Cần cài thêm thư viện (vài phút)',
+      useExisting: 'Dùng bộ có sẵn',
+      newInstead: 'Tải bộ mới vào chỗ khác',
+      backToExisting: 'Dùng bộ có sẵn trên máy'
     },
     taiDuAn: {
       nav: 'Tải bộ công cụ',

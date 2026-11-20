@@ -1,12 +1,15 @@
 // Luat thuan (khong dung tien trinh hay file), de viet bai thu de dang.
 import type { ErrorCode } from '../../shared/types'
 
-/** Thu muc du an: khong dau, khong dau cach, khong OneDrive, khong thu muc he thong, khong goc o dia. */
-export function validateProjectDir(p: string): ErrorCode | null {
+/**
+ * Thu muc du an: khong dau, khong dau cach, khong OneDrive, khong thu muc he thong, khong goc o dia.
+ * Bo cong cu da co san (`existing`) duoc phep co dau cach: nguoi dung da chay duoc o do roi.
+ */
+export function validateProjectDir(p: string, opts: { existing?: boolean } = {}): ErrorCode | null {
   const norm = p.replace(/\//g, '\\').replace(/\\+$/, '')
   // eslint-disable-next-line no-control-regex
   if (/[^\x00-\x7F]/.test(norm)) return 'thuMucCoDau'
-  if (/\s/.test(norm)) return 'thuMucCoDauCach'
+  if (/\s/.test(norm) && !opts.existing) return 'thuMucCoDauCach'
   if (/\\onedrive/i.test(norm)) return 'thuMucOneDrive'
   if (/^[a-z]:$/i.test(norm)) return 'thuMucHeThong'
   if (/^[a-z]:\\(windows|program files|program files \(x86\)|programdata)(\\|$)/i.test(norm))

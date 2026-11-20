@@ -54,6 +54,12 @@ export interface MachineCheck {
   value?: string
 }
 
+export interface ExistingRepo {
+  dir: string
+  /** Da cai du thu vien va trinh duyet xuat video */
+  ready: boolean
+}
+
 export interface SetupSnapshot {
   steps: StepState[]
   projectDir: string
@@ -62,6 +68,8 @@ export interface SetupSnapshot {
   suggestedProjectDir: string
   suggestedOutputDir: string
   driveFound: boolean
+  /** Bo cong cu da co san tren may (chi do khi chua chon thu muc), bo day du nhat dung dau */
+  existingRepos: ExistingRepo[]
   account?: { email: string; plan: string }
   vivibeKeyMasked?: string
   checks: MachineCheck[]

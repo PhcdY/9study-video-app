@@ -1,5 +1,5 @@
 // Chi dung khi phat trien: xem giao dien trong trinh duyet thuong (khong co phan loi Electron).
-// Chon trang thai bang ?state=thuMuc|taiDuAn|caiThuVien|dangNhap|keyGiong|noiLuu|kiemTra|loi|xong
+// Chon trang thai bang ?state=coSan|thuMuc|taiDuAn|caiThuVien|dangNhap|keyGiong|noiLuu|kiemTra|loi|xong
 import {
   SETUP_ORDER,
   type Api,
@@ -10,11 +10,16 @@ import {
 
 function fixture(state: string): SetupSnapshot {
   const at =
-    state === 'loi' ? 1 : state === 'xong' ? 7 : Math.max(0, SETUP_ORDER.indexOf(state as never))
+    state === 'loi' || state === 'taiDuAnCoSan'
+      ? 1
+      : state === 'xong'
+        ? 7
+        : Math.max(0, SETUP_ORDER.indexOf(state as never))
   const steps: StepState[] = SETUP_ORDER.map((id, i) => ({
     id,
     status: i < at ? 'done' : i === at ? 'ready' : 'locked'
   }))
+  if (state === 'taiDuAnCoSan') Object.assign(steps[1], { status: 'ready' })
   if (state === 'taiDuAn') Object.assign(steps[1], { status: 'running', progress: 45 })
   if (state === 'caiThuVien')
     Object.assign(steps[2], { status: 'running', progress: 64, detail: 'thuVien' })
@@ -30,6 +35,13 @@ function fixture(state: string): SetupSnapshot {
     suggestedProjectDir: 'D:\\9Study\\VideoAI',
     suggestedOutputDir: 'G:\\My Drive\\9Study Video',
     driveFound: true,
+    existingRepos:
+      state === 'coSan' || state === 'taiDuAnCoSan'
+        ? [
+            { dir: 'D:\\Video AI', ready: true },
+            { dir: 'D:\\test\\Video AI', ready: false }
+          ]
+        : [],
     account: at > 3 ? { email: 'ctv@example.com', plan: 'plus' } : undefined,
     checks:
       state === 'kiemTra'

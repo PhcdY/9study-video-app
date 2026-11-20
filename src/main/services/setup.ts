@@ -7,15 +7,14 @@ import {
   readdirSync,
   readFileSync,
   statfsSync,
-  writeFileSync,
   accessSync,
   constants
 } from 'node:fs'
-import { createHash } from 'node:crypto'
 import {
   OPTIONAL_STEPS,
   SETUP_ORDER,
   type ErrorCode,
+  type ExistingRepo,
   type MachineCheck,
   type SetupInput,
   type SetupSnapshot,
@@ -35,13 +34,19 @@ import {
   validateProjectDir
 } from './rules'
 import { maskKey, readEnvFile, writeEnvValues } from './env-file'
+import {
+  defaultSearchRoots,
+  findVideoRepos,
+  isVideoRepo,
+  librariesInstalled,
+  renderBrowserInstalled
+} from './detect'
 import { loginChatGpt, prepareSandbox, readAccount, sandboxReadiness } from './codex/account'
 import log from '../log'
 
 export const VIDEO_REPO_URL = 'https://github.com/PhcdY/remotion_claudecode.git'
 export const VIDEO_REPO_BRANCH = 'main-codex'
 const MIN_FREE_GB = 15
-const INSTALL_MARKER = '.9study-installed'
 
 class StepError extends Error {
   constructor(
@@ -86,6 +91,8 @@ export class SetupService extends EventEmitter {
   private account?: { email: string; plan: string }
   private checks: MachineCheck[] = []
   private driveDir: string | null = null
+  /** Bo cong cu da co san tren may (nguoi dung tung tai ve, vd bang VS Code) */
+  private existingRepos: ExistingRepo[] = []
 
   constructor() {
     super()
@@ -114,6 +121,7 @@ export class SetupService extends EventEmitter {
         ? path.join(this.driveDir, '9Study Video')
         : path.join(path.dirname(this.projectDir || defaultProjectDir()), 'VideoXuat'),
       driveFound: !!this.driveDir,
+      existingRepos: this.existingRepos,
       account: this.account,
       vivibeKeyMasked: key ? maskKey(key) : undefined,
       checks: this.checks,
@@ -153,6 +161,19 @@ export class SetupService extends EventEmitter {
 
   private async doRefresh(): Promise<SetupSnapshot> {
     this.driveDir = findGoogleDrive()
+    // Chua chon thu muc thi do xem may da co bo cong cu chua, de dung lai thay vi tai moi
+    // (ca khi da chon thu muc nhung chua tai gi vao do)
+    const needRepo = !this.projectDir || !isVideoRepo(this.projectDir)
+    this.existingRepos = !needRepo
+      ? []
+      : findVideoRepos(defaultSearchRoots())
+          .filter((dir) => path.resolve(dir) !== path.resolve(this.projectDir || '.'))
+          .map((dir) => ({ dir, ready: librariesInstalled(dir) && renderBrowserInstalled(dir) }))
+          .sort((a, b) => Number(b.ready) - Number(a.ready))
+    if (this.existingRepos.length)
+      log.info(
+        `[setup] tim thay bo cong cu co san: ${this.existingRepos.map((r) => r.dir).join(', ')}`
+      )
     const skipped = getSettings().skipped
     for (const id of SETUP_ORDER) {
       if (this.states.get(id)!.status === 'running') continue
@@ -175,15 +196,12 @@ export class SetupService extends EventEmitter {
     const dir = this.projectDir
     switch (id) {
       case 'thuMuc':
-        return !!dir && validateProjectDir(dir) === null
+        return !!dir && validateProjectDir(dir, { existing: isVideoRepo(dir) }) === null
       case 'taiDuAn':
-        return (
-          !!dir && existsSync(path.join(dir, '.git')) && existsSync(path.join(dir, 'package.json'))
-        )
-      case 'caiThuVien': {
-        const marker = path.join(dir, 'node_modules', INSTALL_MARKER)
-        return !!dir && existsSync(marker) && readFileSync(marker, 'utf8') === this.lockHash()
-      }
+        return !!dir && isVideoRepo(dir)
+      case 'caiThuVien':
+        // Da cai (boi app hay boi nguoi dung tu `npm install`) va da co trinh duyet render
+        return !!dir && librariesInstalled(dir) && renderBrowserInstalled(dir)
       case 'dangNhap':
         this.account = (await readAccount()) ?? undefined
         return !!this.account
@@ -194,13 +212,6 @@ export class SetupService extends EventEmitter {
       case 'kiemTra':
         return !!getSettings().machineChecked
     }
-  }
-
-  private lockHash(): string {
-    const lock = path.join(this.projectDir, 'package-lock.json')
-    return existsSync(lock)
-      ? createHash('sha256').update(readFileSync(lock)).digest('hex').slice(0, 16)
-      : 'none'
   }
 
   // ---------- chay buoc ----------
@@ -216,6 +227,8 @@ export class SetupService extends EventEmitter {
       if (getSettings().skipped.includes(id))
         updateSettings({ skipped: getSettings().skipped.filter((s) => s !== id) })
       this.set(id, { status: 'done', progress: 100 }, true)
+      // Doc lai cac buoc sau: viec nao may da co san (bo cong cu, thu vien, key...) thi tu qua
+      await this.refresh()
     } catch (e) {
       const code: ErrorCode =
         e instanceof StepError ? e.code : ctrl.signal.aborted ? 'khongRo' : 'khongRo'
@@ -269,7 +282,8 @@ export class SetupService extends EventEmitter {
   }
 
   private stepThuMuc(dir: string): void {
-    const bad = validateProjectDir(dir)
+    const existing = isVideoRepo(dir)
+    const bad = validateProjectDir(dir, { existing })
     if (bad) throw new StepError(bad)
     const parent = path.dirname(dir)
     try {
@@ -278,10 +292,12 @@ export class SetupService extends EventEmitter {
     } catch (e) {
       throw new StepError('khongGhiDuoc', String(e))
     }
-    if (existsSync(dir) && readdirSync(dir).length > 0 && !existsSync(path.join(dir, '.git'))) {
+    // Thu muc co file: chi nhan khi do chinh la bo cong cu
+    if (!existing && existsSync(dir) && readdirSync(dir).length > 0) {
       throw new StepError('thuMucCoSan')
     }
-    if (freeGb(dir) < MIN_FREE_GB) throw new StepError('khongDuCho')
+    // Bo co san thi da chiem cho roi, chi can du cho cho video
+    if (freeGb(dir) < (existing ? 5 : MIN_FREE_GB)) throw new StepError('khongDuCho')
     updateSettings({ projectDir: path.resolve(dir) })
   }
 
@@ -301,24 +317,23 @@ export class SetupService extends EventEmitter {
 
   private async stepTaiDuAn(signal: AbortSignal): Promise<void> {
     const dir = this.projectDir
-    if (!existsSync(path.join(dir, '.git'))) {
-      mkdirSync(path.dirname(dir), { recursive: true })
-      const res = await this.git(
-        ['clone', '--progress', '--branch', VIDEO_REPO_BRANCH, VIDEO_REPO_URL, dir],
-        signal,
-        (l) => {
-          const p = gitCloneProgress(l)
-          if (p !== null) this.progress('taiDuAn', Math.round(p * 0.9))
-        },
-        path.dirname(dir)
-      )
-      if (signal.aborted) throw new Error('da huy')
-      if (res.code !== 0)
-        throw new StepError(
-          looksLikeNetworkError(res.tail) ? 'mang' : 'khongRo',
-          res.tail.join('\n')
-        )
-    }
+    // Bo cong cu da co san: khong dong vao (co the dang co bai do dang tren nhanh khac).
+    // Doi ban ve sau di qua luong cap nhat an toan (Moc 3), khong phai o day.
+    if (isVideoRepo(dir)) return
+    if (existsSync(dir) && readdirSync(dir).length > 0) throw new StepError('thuMucCoSan')
+    mkdirSync(path.dirname(dir), { recursive: true })
+    const res = await this.git(
+      ['clone', '--progress', '--branch', VIDEO_REPO_BRANCH, VIDEO_REPO_URL, dir],
+      signal,
+      (l) => {
+        const p = gitCloneProgress(l)
+        if (p !== null) this.progress('taiDuAn', Math.round(p * 0.9))
+      },
+      path.dirname(dir)
+    )
+    if (signal.aborted) throw new Error('da huy')
+    if (res.code !== 0)
+      throw new StepError(looksLikeNetworkError(res.tail) ? 'mang' : 'khongRo', res.tail.join('\n'))
     await this.git(['config', 'core.longpaths', 'true'], signal)
     this.progress('taiDuAn', 92)
     const fetched = await this.git(['fetch', '--tags', '--quiet'], signal)
@@ -384,7 +399,6 @@ export class SetupService extends EventEmitter {
         looksLikeNetworkError(br.tail) ? 'mang' : 'taiTrinhDuyetLoi',
         br.tail.join('\n')
       )
-    writeFileSync(path.join(dir, 'node_modules', INSTALL_MARKER), this.lockHash())
   }
 
   private async stepDangNhap(signal: AbortSignal): Promise<void> {

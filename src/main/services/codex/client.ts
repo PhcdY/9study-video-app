@@ -55,7 +55,7 @@ export class CodexClient extends EventEmitter {
       this.child = child
       child.stderr?.on('data', (d: Buffer) => log.debug(`[codex stderr] ${redact(d.toString())}`))
       child.once('exit', (code) => {
-        log.warn(`[codex] app-server thoat, ma ${code}`)
+        log.info(`[codex] app-server da tat (ma ${code})`)
         for (const p of this.pending.values())
           p.reject(new CodexRpcError(p.method, -1, 'app-server da thoat'))
         this.pending.clear()

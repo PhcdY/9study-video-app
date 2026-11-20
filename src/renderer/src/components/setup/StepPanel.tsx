@@ -127,13 +127,8 @@ function run(id: SetupStepId, input?: { dir?: string; key?: string }): void {
 function StepBody({ snap, step }: { snap: SetupSnapshot; step: StepState }): React.JSX.Element {
   switch (step.id) {
     case 'thuMuc':
-      return (
-        <FolderStep
-          step={step}
-          initial={snap.projectDir || snap.suggestedProjectDir}
-          labels={copy.steps.thuMuc}
-        />
-      )
+      return <ProjectFolderStep snap={snap} step={step} />
+
     case 'noiLuu':
       return (
         <FolderStep
@@ -148,6 +143,15 @@ function StepBody({ snap, step }: { snap: SetupSnapshot; step: StepState }): Rea
       return <LoginStep step={step} email={snap.account?.email} />
     case 'kiemTra':
       return <CheckStep snap={snap} step={step} />
+    case 'taiDuAn':
+      return (
+        <div className="flex flex-col gap-4">
+          {snap.existingRepos[0] && step.status !== 'running' && step.status !== 'done' && (
+            <ExistingRepoHint dir={snap.existingRepos[0].dir} />
+          )}
+          <SimpleStep step={step} />
+        </div>
+      )
     default:
       return <SimpleStep step={step} />
   }
@@ -186,6 +190,102 @@ function SimpleStep({ step }: { step: StepState }): React.JSX.Element {
         {step.status === 'error' ? copy.retry : t.primary}
       </Button>
     </Actions>
+  )
+}
+
+/** Buoc 2: thu muc da chon con trong nhung may da co bo cong cu o cho khac. */
+function ExistingRepoHint({ dir }: { dir: string }): React.JSX.Element {
+  const t = copy.steps.thuMuc
+  return (
+    <div className="flex flex-wrap items-center gap-3 rounded-[10px] border border-xong/25 bg-xong-nen px-4 py-3.5">
+      <CheckCircle2 aria-hidden className="size-5 shrink-0 text-xong" />
+      <div className="min-w-0 flex-1 text-[15px]">
+        <b>{t.existingTitle}</b> <span className="font-mono text-sm">{dir}</span>
+      </div>
+      <Button variant="outline" size="md" onClick={() => run('thuMuc', { dir })}>
+        {t.useExisting}
+      </Button>
+    </div>
+  )
+}
+
+/** Buoc 1: may da co bo cong cu thi goi y dung luon; khong thi chon thu muc moi. */
+function ProjectFolderStep({
+  snap,
+  step
+}: {
+  snap: SetupSnapshot
+  step: StepState
+}): React.JSX.Element {
+  const t = copy.steps.thuMuc
+  const repos = snap.existingRepos
+  const [mode, setMode] = useState<'existing' | 'new'>(repos.length ? 'existing' : 'new')
+  const [chosen, setChosen] = useState(repos[0]?.dir ?? '')
+  const busy = step.status === 'running'
+
+  if (mode === 'new' || !repos.length)
+    return (
+      <div className="flex flex-col gap-3">
+        <FolderStep
+          step={step}
+          initial={snap.projectDir || snap.suggestedProjectDir}
+          labels={copy.steps.thuMuc}
+        />
+        {repos.length > 0 && (
+          <button
+            type="button"
+            className="cursor-pointer self-start px-0 py-2 text-[15px] font-semibold text-cham hover:text-cham-dam"
+            onClick={() => setMode('existing')}
+          >
+            {t.backToExisting}
+          </button>
+        )}
+      </div>
+    )
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1 rounded-[10px] border border-xong/25 bg-xong-nen px-4 py-3.5">
+        <div className="flex items-center gap-2 text-[15px] font-bold text-xong">
+          <CheckCircle2 aria-hidden className="size-5" /> {t.existingTitle}
+        </div>
+        <div className="text-sm leading-normal text-navy">{t.existingDesc}</div>
+      </div>
+      <fieldset className="m-0 flex flex-col gap-2 border-0 p-0">
+        <legend className="mb-1.5 p-0 text-sm font-semibold text-phu">{t.fieldLabel}</legend>
+        {repos.map((r) => (
+          <label
+            key={r.dir}
+            className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 ${
+              chosen === r.dir ? 'border-cham bg-cham-nhat' : 'border-vien-dam bg-white'
+            }`}
+          >
+            <input
+              type="radio"
+              name="existing-repo"
+              className="size-4 accent-cham"
+              checked={chosen === r.dir}
+              onChange={() => setChosen(r.dir)}
+            />
+            <span className="min-w-0 flex-1 truncate font-mono text-[15px]" title={r.dir}>
+              {r.dir}
+            </span>
+            <span className={`text-[13px] font-semibold ${r.ready ? 'text-xong' : 'text-credit'}`}>
+              {r.ready ? t.existingReady : t.existingPartial}
+            </span>
+          </label>
+        ))}
+      </fieldset>
+      <Actions>
+        <Button disabled={busy || !chosen} onClick={() => run('thuMuc', { dir: chosen })}>
+          {busy ? <Loader2 aria-hidden className="size-4 animate-spin" /> : null}
+          {t.useExisting}
+        </Button>
+        <Button variant="ghost" size="md" disabled={busy} onClick={() => setMode('new')}>
+          {t.newInstead}
+        </Button>
+      </Actions>
+    </div>
   )
 }
 
