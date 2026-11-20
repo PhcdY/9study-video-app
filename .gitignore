@@ -1,0 +1,14 @@
+node_modules/
+out/
+dist/
+release/
+.vite/
+*.log
+
+# Runtime tải về lúc build (Node portable, Python embeddable), không commit
+resources/runtimes/
+
+# Bản chụp, bài thử tạm
+spikes/output/
+.env
+.claude/
