@@ -1,0 +1,14 @@
+BAI THU MOC 0 TREN MAY AO SACH
+==============================
+
+Can: may Windows 10/11 MOI CAI, chua cai Node, Python, Git, Chrome. Co mang. O trong >= 15 GB.
+     (VirtualBox + Windows 11 ban dung thu, hoac may mot CTV.)
+
+1. Chep file 9study-moc0-kit.zip vao may ao.
+2. Giai nen vao C:\9StudyTest   (duong dan khong dau, khong dau cach).
+3. Bam dup  C:\9StudyTest\chay-thu.cmd
+   - Neu Windows hien "Windows protected your PC": bam "More info" -> "Run anyway".
+   - Buoc 1 mat khoang 5-10 phut (tai du an + cai thu vien).
+   - Buoc 3: trinh duyet mo trang dang nhap ChatGPT -> dang nhap tai khoan thu -> Tiep tuc.
+   - Buoc 5: neu Windows hien hop thoai hoi quyen thi CHUP MAN HINH roi bam Yes.
+4. Xong thi gui lai file  C:\9StudyTest\ketqua-may-ao.txt  (khong chua mat khau hay key).

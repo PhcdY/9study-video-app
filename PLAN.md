@@ -1,6 +1,6 @@
 # App làm video cho cộng tác viên — Kế hoạch
 
-> Trạng thái: đang làm Mốc 0. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
+> Trạng thái: Mốc 0 xong trên máy dev, chờ thử trên máy ảo sạch. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
 > Tên tạm của app: **9Study Video** (đổi sau).
 
 ---
@@ -293,18 +293,35 @@ Rủi ro lớn nhất về thời gian: sandbox Codex trên Windows cần quyề
 ## 7. Việc cần làm
 
 ### Mốc 0 — thử kỹ thuật (làm chi tiết)
-- [ ] **Codex**:
-  - Script Node chạy `codex app-server`, gửi `initialize`, rồi `account/login/start` kiểu `chatgpt`, mở `authUrl`, chờ `account/login/completed`.
-  - Sau đó `thread/start` (cwd = repo) và `turn/start` với câu "Đọc AGENTS.md rồi tóm tắt quy trình 3 bước".
-  - In các sự kiện ra màn hình.
-- [ ] **Thẻ xin quyền**: yêu cầu Codex chạy `py scripts/check_script.py dao-ham-tiep-tuyen`. Bắt được `requestApproval` và trả `accept`.
-- [ ] **Sandbox Windows**: xem `windowsSandbox/readiness`. Ghi lại có cần quyền admin hay hiện hộp thoại gì không. **Đây là điểm mù lớn nhất, phải thử trên máy sạch.**
-- [ ] **Runtime đóng gói**:
-  - Giải nén Node portable, Python embeddable, git (dugite) vào một thư mục.
-  - Tạo `py.cmd`, dựng PATH, rồi chạy `npm install`, `py scripts/check_script.py`, `node scripts/storyboard.mjs` trên máy sạch.
-- [ ] **Remotion**: `npx remotion browser ensure` (tải trình duyệt render) và render thử 1 video mẫu ngắn trên máy sạch.
-- [ ] **Studio nhúng**: chạy `npm run dev`, đọc cổng từ log, mở trong một cửa sổ Electron. Tắt app thì cây tiến trình tắt sạch.
-- [ ] Ghi kết quả vào `PLAN.md`: cái gì chạy, cái gì phải đổi.
+
+Code thử nằm ở `spikes/` (`codex-probe.mjs`, `fetch-runtimes.mjs`, `moc0-test.ps1`, `studio-probe.mjs`, bộ chạy máy ảo `chay-thu.cmd`).
+
+- [x] **Codex**: `initialize` → `account/login/start` (`chatgpt`) → mở `authUrl` → `account/login/completed` → `thread/start` + `turn/start`. Chạy được trên máy dev (20/11).
+- [x] **Thẻ xin quyền**: bắt được `item/commandExecution/requestApproval`, trả `accept` thì lệnh chạy.
+- [ ] **Sandbox Windows**: máy dev báo `notConfigured` (với `CODEX_HOME` riêng). Chưa chạy `windowsSandbox/setupStart` trên máy dev vì nó đổi quyền hệ thống. **Còn chờ thử trên máy ảo sạch** (bước 4–5 của `chay-thu.cmd`).
+- [x] **Runtime đóng gói** (máy dev, PATH sạch chỉ còn runtime đóng gói + thư mục Windows): `npm ci`, `py scripts/check_script.py`, `node scripts/storyboard.mjs` đều chạy. **Còn chờ máy sạch.**
+- [x] **Remotion**: `npx remotion browser ensure` và render 2 giây `physics-showcase` chạy được. **Còn chờ máy sạch.**
+- [x] **Studio**: `npm run dev -- --port N --no-open` sẵn sàng sau 3 giây; `taskkill /T /F` tắt sạch cả 6 tiến trình, cổng được trả lại. Nhúng vào cửa sổ Electron làm ở Mốc 1.
+- [x] Ghi kết quả vào `PLAN.md`.
+- [ ] **Chạy `spikes/output/9study-moc0-kit.zip` trên máy ảo sạch**, đọc `ketqua-may-ao.txt`, rồi chốt Mốc 0.
+
+#### Kết quả Mốc 0 trên máy dev (20/11/2026)
+
+| Hạng mục | Kết quả | Hệ quả cho app |
+| :--- | :--- | :--- |
+| Codex `0.171.0` (ghim) | Đăng nhập ChatGPT (cả tài khoản free), thread, luồng chữ, xin quyền đều chạy. Một lượt ngắn mất 14 giây | Giữ hướng `codex app-server`. Kiểu sinh bằng `generate-ts` (không `--experimental`) đã có đủ hàm cần dùng |
+| Mở link đăng nhập | `cmd /c start <url>` cắt link tại dấu `&` → trang báo "thiếu tham số" | App dùng `shell.openExternal` của Electron, không đi qua `cmd` |
+| Xin quyền khi **chưa** chuẩn bị sandbox | Codex hỏi quyền cho **mọi** lệnh, kể cả lệnh chỉ đọc (`git status`). Lệnh được bọc trong `powershell.exe -Command '...'` | Phải chuẩn bị sandbox ở màn cài đặt, không thì CTV bị hỏi liên tục. Bảng dịch lệnh phải bóc lệnh thật ra khỏi `powershell -Command` |
+| Lượt dùng | `account/rateLimits/read` trả `usedPercent`, `resetsAt` (tài khoản free: chu kỳ 30 ngày) | Thanh lượt dùng làm được, rẻ |
+| Node 22.23.5 portable | 100 MB giải nén | — |
+| Python 3.12.10 embeddable | 22 MB. Là bản 3.12 cuối có file cài; 3.12.11+ chỉ vá bảo mật, không có bản embeddable | Dùng 3.12.10. Cân nhắc lên 3.13 sau khi thử script |
+| Git (dugite 3.3.3, git 2.56.1) | 106 MB | — |
+| Shim `py.cmd` | Codex gọi `py scripts/...` chạy đúng Python đóng gói | Giữ |
+| Thời gian trên PATH sạch | `npm ci` 139 s, tải trình duyệt render 17 s, storyboard nháp `tiem-can` 112 s, render 2 giây 14 s | Bước "Cài thư viện" cần thanh tiến trình thật, ~2–3 phút |
+| `remotion compositions` | Lỗi cả repo khi một video chưa có audio (`public/audio` không commit) | App **không** dùng lệnh này để liệt kê video; quét `src/videos/*/script.json` như đã định |
+| `storyboard.mjs` | Ưu tiên Chrome cài sẵn trên máy, máy CTV không có thì dùng trình duyệt Remotion | Phải xác nhận trên máy sạch (không Chrome) |
+| Dung lượng Codex | `codex.exe` 407 MB, `codex-code-mode-host.exe` 81 MB, `codex-resources` 46 MB (riêng phần giọng nói ~20 MB) | Bản cài ước ~300–350 MB nén, ~1 GB sau cài. Thử bỏ phần giọng nói và `code-mode-host` ở Mốc 1 |
+| `tar` của Git Bash | Hiểu `D:` là máy từ xa | Script build dùng `C:\Windows\System32\tar.exe` |
 
 ### Mốc 1 — vỏ app và cài đặt
 - [ ] Tạo dự án bằng electron-vite (React + TS), thêm Tailwind + shadcn/ui, dựng khung IPC có kiểu.

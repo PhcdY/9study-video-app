@@ -6,4 +6,4 @@ App desktop Windows cho cộng tác viên làm video giải thích bản chất:
 - Quy ước cho AI và người phát triển: [AGENTS.md](AGENTS.md)
 - Bộ công cụ làm video: `PhcdY/remotion_claudecode` (nhánh `main-codex`)
 
-Trạng thái: chưa có code. Việc đầu tiên là Mốc 0 trong `PLAN.md` (thử kỹ thuật trên máy Windows sạch).
+Trạng thái: Mốc 0 (thử kỹ thuật) xong trên máy dev, chờ thử trên máy ảo sạch. Code thử ở `spikes/`.

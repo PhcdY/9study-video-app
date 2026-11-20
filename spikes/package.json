@@ -1,0 +1,10 @@
+{
+  "name": "9study-video-spikes",
+  "private": true,
+  "type": "module",
+  "description": "Moc 0: bai thu ky thuat, code xau cung duoc",
+  "dependencies": {
+    "@openai/codex": "0.171.0",
+    "dugite": "3.3.3"
+  }
+}
