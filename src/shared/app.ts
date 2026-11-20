@@ -46,10 +46,20 @@ export interface UpdateProgress {
   status: 'running' | 'done'
 }
 
+export interface UsageWindow {
+  /** Do dai cua so tinh luot (phut): 300 = 5 gio, 10080 = tuan */
+  minutes: number | null
+  usedPercent: number
+  /** Luc lam moi (ms) */
+  resetsAt?: number
+}
+
 export interface Usage {
-  /** Phan tram luot con lai (0-100) */
+  /** Tung han muc (vd 5 gio va tuan), ngan truoc */
+  windows: UsageWindow[]
+  /** Phan tram con lai cua han muc chat nhat (0-100) */
   remainingPercent: number
-  /** Luc lam moi luot (ms) */
+  /** Luc lam moi cua han muc chat nhat (ms) */
   resetsAt?: number
   plan?: string
 }

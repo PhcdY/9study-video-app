@@ -95,6 +95,13 @@ export function usageFrom(snap: RateLimitSnapshot | null | undefined): Usage | n
   if (!windows.length) return null
   const worst = windows.reduce((a, b) => (b.usedPercent > a.usedPercent ? b : a))
   return {
+    windows: windows
+      .map((w) => ({
+        minutes: w.windowDurationMins,
+        usedPercent: Math.max(0, Math.min(100, Math.round(w.usedPercent))),
+        resetsAt: w.resetsAt ? w.resetsAt * 1000 : undefined
+      }))
+      .sort((a, b) => (a.minutes ?? 0) - (b.minutes ?? 0)),
     remainingPercent: Math.max(0, Math.min(100, Math.round(100 - worst.usedPercent))),
     resetsAt: worst.resetsAt ? worst.resetsAt * 1000 : undefined,
     plan: snap.planType ?? undefined

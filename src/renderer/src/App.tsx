@@ -11,6 +11,7 @@ import { WorkspaceScreen } from '@/screens/Workspace'
 import { SettingsScreen } from '@/screens/Settings'
 import { AssistantChatScreen } from '@/screens/AssistantChat'
 import { UsagePill } from '@/components/UsagePill'
+import logoNgang from '@/assets/brand/logo-ngang.png'
 import { UpdateBanner, UpdateDialog } from '@/components/UpdateDialog'
 
 type Route =
@@ -65,10 +66,11 @@ function App(): React.JSX.Element {
               ready ? 'mx-auto w-full max-w-[1180px] px-8' : 'px-6'
             )}
           >
-            <span className="text-base font-extrabold tracking-[-0.01em]">
-              {copy.appName} <span className="text-cham">{copy.appNameAccent}</span>
+            <span className="flex items-center gap-2">
+              <img src={logoNgang} alt={copy.appName} className="h-7 w-auto" draggable={false} />
+              <span className="text-base font-extrabold text-cham">{copy.appNameAccent}</span>
               {snap && !snap.allDone && (
-                <span className="ml-2 text-sm font-normal text-phu">· {copy.setupTitle}</span>
+                <span className="ml-1 text-sm text-phu">· {copy.setupTitle}</span>
               )}
             </span>
             {ready && (
@@ -90,7 +92,7 @@ function App(): React.JSX.Element {
                   </button>
                 </div>
               )}
-              {ready && <UsagePill onClick={() => setRoute({ name: 'settings' })} />}
+              {ready && <UsagePill onOpenSettings={() => setRoute({ name: 'settings' })} />}
             </div>
           </div>
         </header>

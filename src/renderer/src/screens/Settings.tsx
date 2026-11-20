@@ -162,9 +162,30 @@ export function SettingsScreen({
             <SettingRow
               label={t.signedIn(snap.account?.email ?? '', snap.account?.plan)}
               desc={
-                usage
-                  ? `${copy.usage.pill(usage.remainingPercent)}${usage.resetsAt ? ` · ${copy.usage.resets(usage.resetsAt)}` : ''}`
-                  : undefined
+                usage ? (
+                  <span className="mt-1 flex flex-col gap-2">
+                    {usage.windows.map((w, i) => (
+                      <span key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                        <span className="w-28 text-[13px] font-semibold text-navy">
+                          {copy.usage.windowLong(w.minutes)}
+                        </span>
+                        <span
+                          className="h-1.5 w-40 overflow-hidden rounded-full bg-vien"
+                          aria-hidden
+                        >
+                          <span
+                            className="block h-full rounded-full bg-xanh"
+                            style={{ width: `${w.usedPercent}%` }}
+                          />
+                        </span>
+                        <span className="text-[13px]">
+                          {copy.usage.used(w.usedPercent)}
+                          {w.resetsAt ? ` · ${copy.usage.resets(w.resetsAt)}` : ''}
+                        </span>
+                      </span>
+                    ))}
+                  </span>
+                ) : undefined
               }
             >
               {!confirmLogout && (

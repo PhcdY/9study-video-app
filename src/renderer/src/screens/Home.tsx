@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, Check, ChevronDown, Film, Plus, Search } from 'lucide-react'
 import type { VideoInfo, VideoStage } from '../../../shared/video'
 import { SUBJECTS, subjectName } from '../../../shared/prompt'
-import { useVideos } from '@/lib/api'
+import { fileUrl, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -133,9 +133,8 @@ export function HomeScreen({
       {samples.length > 0 && (
         <details className="group rounded-xl border border-vien bg-white">
           <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 [&::-webkit-details-marker]:hidden">
-            <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="min-w-0 flex-1" title={copy.home.samplesHint}>
               <Eyebrow>{copy.home.samplesTitle(samples.length)}</Eyebrow>
-              <span className="text-[13px] text-phu">{copy.home.samplesHint}</span>
             </div>
             <ChevronDown
               aria-hidden
@@ -146,13 +145,6 @@ export function HomeScreen({
             <VideoTable videos={samples} onOpen={onOpen} flat />
           </div>
         </details>
-      )}
-
-      {snap && (
-        <footer className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-phu">
-          <span>{copy.home.toolkit(snap.toolkitVersion)}</span>
-          {snap.outputDir && <span>{copy.home.savedAt(snap.outputDir)}</span>}
-        </footer>
       )}
     </Page>
   )
@@ -190,16 +182,26 @@ function StageTrail({ stage }: { stage: VideoStage }): React.JSX.Element {
   )
 }
 
+/** Hinh thu nho: anh storyboard that; chua co storyboard thi o mau voi bieu tuong phim. */
 function Thumb({ v, large }: { v: VideoInfo; large?: boolean }): React.JSX.Element {
+  const box = cn(
+    'flex shrink-0 items-center justify-center overflow-hidden border border-vien bg-[#FBFCFF]',
+    large ? 'aspect-video w-56 rounded-lg' : 'h-9 w-16 rounded-md'
+  )
+  if (v.thumb)
+    return (
+      <div aria-hidden className={box}>
+        <img
+          src={fileUrl(v.thumb, v.updatedAt)}
+          alt=""
+          className="size-full object-cover"
+          draggable={false}
+        />
+      </div>
+    )
   return (
-    <div
-      aria-hidden
-      className={cn(
-        'flex shrink-0 items-center justify-center rounded-lg border border-vien bg-[#FBFCFF] font-extrabold text-cham',
-        large ? 'aspect-video w-56 text-2xl' : 'h-9 w-16 rounded-md text-xs'
-      )}
-    >
-      {subjectName(v.subject).split(' ')[0]}
+    <div aria-hidden className={box}>
+      <Film className={cn('text-mo', large ? 'size-8' : 'size-4')} strokeWidth={1.6} />
     </div>
   )
 }

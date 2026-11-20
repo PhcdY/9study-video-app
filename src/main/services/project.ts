@@ -126,11 +126,25 @@ export function scanVideos(
         mtime(mp4)
       ),
       storyboardHtml: facts.hasStoryboard ? storyboard : undefined,
+      thumb: facts.hasStoryboard ? pickThumb(path.dirname(storyboard)) : undefined,
       finalMp4: facts.hasMp4 ? mp4 : undefined,
       hasChat: chatSlugs.has(slug)
     })
   }
   return out.sort((a, b) => b.updatedAt - a.updatedAt)
+}
+
+/** Hinh thu nho: anh storyboard o khoang 1/3 bai (anh dau thuong con trong). */
+export function pickThumb(storyboardDir: string): string | undefined {
+  try {
+    const pngs = readdirSync(storyboardDir)
+      .filter((f) => /^b\d+-l\d+\.png$/i.test(f))
+      .sort()
+    if (!pngs.length) return undefined
+    return path.join(storyboardDir, pngs[Math.floor(pngs.length / 3)])
+  } catch {
+    return undefined
+  }
 }
 
 /** Slug video mau: thu muc co script.json da nam trong ban phat hanh (git ls-files). */

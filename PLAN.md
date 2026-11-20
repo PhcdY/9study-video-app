@@ -10,6 +10,7 @@
 App desktop cho Windows. Cộng tác viên (CTV) cài một file, bấm theo từng bước, rồi làm video bằng nút bấm và khung chat. Không phải cài Node/Python/Git, không mở VS Code hay Terminal, không gõ lệnh, không cần tài khoản GitHub.
 
 Bên trong, app chỉ "đóng gói lại" những thứ repo đã có:
+
 - **Codex** (trợ lý AI): chạy ngầm bằng `codex app-server`. CTV đăng nhập bằng tài khoản ChatGPT của chính mình. Codex vẫn tự đọc `AGENTS.md`, `.agents/skills/`, `.codex/agents/` như hiện tại, **không phải viết lại skill nào**.
 - **Repo `remotion_claudecode`**: repo public nên app clone thẳng, không cần đăng nhập GitHub. CTV chỉ kéo về, không bao giờ đẩy lên.
 - **Remotion Studio, storyboard, script Python**: app tự chạy rồi hiện kết quả ngay trong cửa sổ.
@@ -17,22 +18,24 @@ Bên trong, app chỉ "đóng gói lại" những thứ repo đã có:
 ### Tính năng (bản 1)
 
 **A. Cài đặt lần đầu** (các bước sáng lần lượt, app tự nhận ra bước nào đã xong):
+
 1. Chọn chỗ lưu. Mặc định `D:\9Study\VideoAI`: không dấu, không dấu cách, tránh ổ C và thư mục OneDrive.
 2. Tải dự án: clone `main-codex`, rồi tự chuyển sang bản phát hành số lớn nhất. Có thanh tiến trình.
 3. Cài thư viện: `npm install` và tải sẵn trình duyệt render của Remotion. Có thanh tiến trình.
 4. Đăng nhập ChatGPT: app mở trình duyệt, CTV bấm "Tiếp tục", app tự nhận ra khi đăng nhập xong.
 5. Key giọng đọc Vivibe (có thể bỏ qua, làm sau): dán key, app gọi thử để kiểm tra, rồi tự ghi vào `.env`.
 6. Nơi lưu video: app tự dò ổ Google Drive và gợi ý, rồi ghi `OUTPUT_DIR` vào `.env`.
-6b. Thư mục góp ý (tuỳ chọn): nhận ra thư mục `9Study_GopY` mà đội đã chia sẻ trên Drive.
+   6b. Thư mục góp ý (tuỳ chọn): nhận ra thư mục `9Study_GopY` mà đội đã chia sẻ trên Drive.
 7. Kiểm tra máy: đủ dung lượng trống, các công cụ chạy được. Xong thì hiện "Máy bạn đã sẵn sàng".
 
 **B. Màn hình chính — "Video của tôi"**
+
 - Danh sách video đọc từ `src/videos/*/script.json`: tên, môn, lớp, đang ở bước nào.
 - App suy ra bước hiện tại từ file có sẵn: có kịch bản → có storyboard → có audio → đã xuất MP4.
 - Nút **Làm video mới**: form 3 phần. App ghép tất cả thành câu lệnh rồi gọi `$viet-kich-ban`.
-  - *Video về bài nào*: môn, lớp, loại video (bài học / hiện tượng), bài SGK (báo có thẻ bài học chưa), ý bản chất.
-  - *Giọng đọc Vivibe*: 3 giọng của roster, có nút nghe mẫu và gợi ý theo môn; giọng khác lấy từ tài khoản Vivibe (`--list-voices`); tuỳ chọn đổi giọng theo cảnh.
-  - *Tuỳ chọn nâng cao* (gập được, đều không bắt buộc):
+  - _Video về bài nào_: môn, lớp, loại video (bài học / hiện tượng), bài SGK (báo có thẻ bài học chưa), ý bản chất.
+  - _Giọng đọc Vivibe_: 3 giọng của roster, có nút nghe mẫu và gợi ý theo môn; giọng khác lấy từ tài khoản Vivibe (`--list-voices`); tuỳ chọn đổi giọng theo cảnh.
+  - _Tuỳ chọn nâng cao_ (gập được, đều không bắt buộc):
     - Kỳ thi (đi vào `exams`).
     - Học sinh đã học gì / chưa học gì (tiền đề cho học sinh ảo).
     - Video trước trong chuỗi.
@@ -43,30 +46,34 @@ Bên trong, app chỉ "đóng gói lại" những thứ repo đã có:
 - Mở lại video cũ thì tiếp tục đúng cuộc trò chuyện cũ của video đó.
 
 **C. Màn hình một video**
+
 - Trên cùng là thanh 3 bước: **Kịch bản → Duyệt hình → Giọng đọc và xuất video**.
 - **Bên trái: khung chat Codex.**
   - Chữ chạy dần như ChatGPT, hiện được công thức.
   - Các lệnh AI chạy được gom thành một dòng trạng thái, ví dụ "Đang kiểm tra kịch bản…".
   - Mỗi bước có nút gợi ý thay cho prompt mẫu: "Duyệt kịch bản, sang bước 2", "Xuất lại storyboard", "Tạo giọng đọc"…
 - **Bên phải: các tab xem kết quả.**
-  - *Kịch bản*: bảng dễ đọc (cảnh, lời đọc, chữ trên hình) lấy từ `script.json`.
-  - *Storyboard*: nhúng `out/_lam-viec/<id>/storyboard/index.html`.
-  - *Xem chuyển động*: app tự chạy `npm run dev` và nhúng Remotion Studio, CTV không phải mở Terminal.
-  - *Thành phẩm*: phát MP4 ngay trong app, kèm nút "Mở thư mục".
+  - _Kịch bản_: bảng dễ đọc (cảnh, lời đọc, chữ trên hình) lấy từ `script.json`.
+  - _Storyboard_: nhúng `out/_lam-viec/<id>/storyboard/index.html`.
+  - _Xem chuyển động_: app tự chạy `npm run dev` và nhúng Remotion Studio, CTV không phải mở Terminal.
+  - _Thành phẩm_: phát MP4 ngay trong app, kèm nút "Mở thư mục".
 - **Khi AI xin quyền**, hiện thẻ hỏi bằng tiếng Việt. Ví dụ: "Tạo giọng đọc cho 58 câu, khoảng 4.200 credit Vivibe. Đồng ý?"
 - **Nghe thử giọng đọc**: phát thẳng các file mp3 mà skill `tao-audio` bắt nghe, không phải dò đường dẫn.
 - **Tự dọn bộ nhớ AI**: xong mỗi bước app tự thu gọn cuộc trò chuyện (thay cho việc gõ `/compact`).
 
 **D. Phiên bản bộ công cụ**
+
 - Góc trên hiện "Bản 2". Khi có bản mới thì hiện "Có bản 3" kèm phần "có gì mới" đọc từ `CHANGELOG.md`, và nút **Cập nhật**.
 - Khi cập nhật, app tự đổi bản nếu an toàn. Nếu CTV đã sửa file của bộ công cụ, app giao cho skill `phien-ban` xử lý (chi tiết ở mục 5).
 
 **E. Tiện ích**
+
 - **Thanh lượt dùng ChatGPT**, ví dụ "Đã dùng 60%, làm mới lúc 14:00", để CTV không bị hết lượt bất ngờ giữa chừng.
 - **Nút "Gửi báo lỗi"**: gom log thành một file zip ra Desktop để gửi cho bạn.
 - **App tự cập nhật**: tải ngầm bản mới, rồi hiện "Khởi động lại để cập nhật".
 
 **F. Màn Cài đặt** (nút trên thanh đầu màn "Video của tôi")
+
 - **Thư mục**: thư mục dự án (mở, chuyển sang ổ khác) và nơi lưu video thành phẩm (`OUTPUT_DIR`, nhận ra Google Drive).
 - **Giọng đọc**: key Vivibe (che bớt, kiểm tra lại, đổi), giọng mặc định theo nhóm môn, tốc độ đọc chung (`tts_config.json`, kèm lời dặn đừng giảm tốc để chữa câu dài).
 - **Trợ lý AI**: tài khoản ChatGPT và lượt còn lại, đăng xuất; khi nào AI phải hỏi trước (việc tốn credit hoặc cần mạng / mọi lệnh); tự dọn bộ nhớ AI sau mỗi bước.
@@ -76,6 +83,7 @@ Bên trong, app chỉ "đóng gói lại" những thứ repo đã có:
 - **Góp ý**: thư mục góp ý chung, số góp ý đã gửi và trạng thái, luôn kèm cả video hay không, bật chế độ người bảo trì.
 
 **G. Góp ý cho đội** (để người bảo trì sửa skill chung)
+
 - **Kênh**: thư mục Google Drive chung `9Study_GopY` do người bảo trì chia sẻ. App ghi gói vào đó, Drive for Desktop tự đồng bộ. Không cần server hay token. Màn cài đặt lần đầu có bước "Thư mục góp ý" (tuỳ chọn).
 - **Phía CTV**:
   - Có nút "Góp ý cho đội" ở thanh đầu màn làm video và trên từng ảnh storyboard. Xem video thành phẩm thì bấm "Góp ý tại đây" để lấy mốc thời gian, rồi dùng `scripts/beat_at.py` đổi ra cảnh và câu.
@@ -103,16 +111,16 @@ Bên trong, app chỉ "đóng gói lại" những thứ repo đã có:
 
 Chốt 20/11/2026: mục tiêu là app vận hành được cho CTV, không làm đủ mọi tiện ích ở mục 1. Những gì không có trong cột "Làm" thì để sau khi CTV đã dùng thật.
 
-| Phần | Làm ở bản 1 | Để sau |
-| :--- | :--- | :--- |
-| A. Cài đặt lần đầu | Bước 1–7 | Bước 6b (thư mục góp ý) |
-| B. Video của tôi | Danh sách, suy ra bước, form "Làm video mới" (cả phần nâng cao, đều là ô chữ), 3 giọng roster + nghe mẫu, mở lại đúng cuộc trò chuyện | Lấy giọng từ tài khoản Vivibe (`--list-voices`), đổi giọng theo cảnh |
-| C. Màn một video | Toàn bộ | — |
-| D. Phiên bản bộ công cụ | Hiện bản, "có gì mới", nút Cập nhật (tầng 1 tự đổi, tầng 2 giao `$phien-ban`) | Quay lại bản trước |
-| E. Tiện ích | Gửi báo lỗi (zip), app tự cập nhật, thanh lượt dùng nếu Codex trả sẵn số liệu | — |
-| F. Màn Cài đặt | Tối giản: mở thư mục dự án, đổi nơi lưu video, đổi key Vivibe, đăng xuất ChatGPT, chạy lại kiểm tra máy, gửi báo lỗi | Chuyển ổ, giọng mặc định theo môn, tốc độ đọc, quyền AI, quay lại bản, dọn ổ đĩa |
-| G. Góp ý cho đội | Không làm. Tạm dùng "Gửi báo lỗi" | Toàn bộ (8–11 ngày) |
-| Chữ ký số | Không. Kèm ảnh hướng dẫn qua SmartScreen | Cân nhắc khi phát rộng |
+| Phần                    | Làm ở bản 1                                                                                                                           | Để sau                                                                           |
+| :---------------------- | :------------------------------------------------------------------------------------------------------------------------------------ | :------------------------------------------------------------------------------- |
+| A. Cài đặt lần đầu      | Bước 1–7                                                                                                                              | Bước 6b (thư mục góp ý)                                                          |
+| B. Video của tôi        | Danh sách, suy ra bước, form "Làm video mới" (cả phần nâng cao, đều là ô chữ), 3 giọng roster + nghe mẫu, mở lại đúng cuộc trò chuyện | Lấy giọng từ tài khoản Vivibe (`--list-voices`), đổi giọng theo cảnh             |
+| C. Màn một video        | Toàn bộ                                                                                                                               | —                                                                                |
+| D. Phiên bản bộ công cụ | Hiện bản, "có gì mới", nút Cập nhật (tầng 1 tự đổi, tầng 2 giao `$phien-ban`)                                                         | Quay lại bản trước                                                               |
+| E. Tiện ích             | Gửi báo lỗi (zip), app tự cập nhật, thanh lượt dùng nếu Codex trả sẵn số liệu                                                         | —                                                                                |
+| F. Màn Cài đặt          | Tối giản: mở thư mục dự án, đổi nơi lưu video, đổi key Vivibe, đăng xuất ChatGPT, chạy lại kiểm tra máy, gửi báo lỗi                  | Chuyển ổ, giọng mặc định theo môn, tốc độ đọc, quyền AI, quay lại bản, dọn ổ đĩa |
+| G. Góp ý cho đội        | Không làm. Tạm dùng "Gửi báo lỗi"                                                                                                     | Toàn bộ (8–11 ngày)                                                              |
+| Chữ ký số               | Không. Kèm ảnh hướng dẫn qua SmartScreen                                                                                              | Cân nhắc khi phát rộng                                                           |
 
 ---
 
@@ -121,9 +129,9 @@ Chốt 20/11/2026: mục tiêu là app vận hành được cho CTV, không làm
 Bạn không cần tự code, nhưng cần nắm mấy điều này để ra lệnh cho AI đúng và không bị lạc.
 
 1. **App desktop có 2 nửa.**
-   - *Phần lõi* (main process) chạy Node, được làm mọi thứ: chạy lệnh, đọc ghi file, mở Codex, git.
-   - *Phần giao diện* (renderer) chỉ là một trang web React.
-   - Hai nửa nói chuyện qua *IPC*. Giao diện không tự chạy lệnh mà nhờ phần lõi làm hộ.
+   - _Phần lõi_ (main process) chạy Node, được làm mọi thứ: chạy lệnh, đọc ghi file, mở Codex, git.
+   - _Phần giao diện_ (renderer) chỉ là một trang web React.
+   - Hai nửa nói chuyện qua _IPC_. Giao diện không tự chạy lệnh mà nhờ phần lõi làm hộ.
    - Hiểu điểm này thì đọc được AI đang sửa chỗ nào.
 2. **"Chạy trên máy mình" khác "chạy trên máy CTV".** Máy bạn có sẵn Node, Git, Python, Codex nên cái gì cũng chạy. Máy CTV thì trống trơn. Mọi bản phát hành phải được thử trên **một máy Windows sạch**. Windows 11 Home không có Windows Sandbox, nên dùng máy ảo VirtualBox (miễn phí) hoặc mượn máy một CTV.
 3. **Đóng gói là một việc riêng, khá mất công.** Từ code ra file `Setup.exe`, rồi chữ ký số, rồi tự cập nhật. Phải làm từ tuần đầu, đừng để cuối.
@@ -153,19 +161,19 @@ Bạn không cần tự code, nhưng cần nắm mấy điều này để ra l�
 
 ## 4. Tech stack
 
-| Thành phần | Là gì / làm gì ở đây | Vì sao chọn | Phương án khác |
-| :--- | :--- | :--- | :--- |
-| **Electron** | Khung làm app desktop bằng web (VS Code, Slack, Codex app cũng dùng). Lo cửa sổ, chạy tiến trình, file. | Mọi thứ cần gọi (Codex, npm, Remotion) đều là Node. AI viết Electron rất thạo vì có nhiều code mẫu nhất. | **Tauri**: app nhẹ hơn (~10 MB so với ~100 MB) nhưng phần lõi viết bằng Rust, AI hay sai hơn. App đằng nào cũng mang theo Node nên lợi thế nhẹ không còn. |
-| **electron-vite** | Bộ khung dựng sẵn cho Electron + React + TypeScript. | Có sẵn cấu trúc main/renderer chuẩn, sửa code thấy ngay. | Electron Forge: cũng tốt, ít tích hợp Vite hơn. |
-| **React + TypeScript** | Giao diện. | Cùng React với Remotion trong repo. TypeScript giúp AI ít sai kiểu dữ liệu. | Vue/Svelte: không lợi gì thêm ở đây. |
-| **Tailwind + shadcn/ui** | Bộ giao diện đẹp sẵn (nút, thẻ, hộp thoại, tiến trình). | UI đẹp ngay mà không cần tự thiết kế; AI dùng rất thạo. | Mantine, Ant Design: nặng và "công sở" hơn. |
-| **Codex app-server** (`@openai/codex`, ghim cố định phiên bản) | Lõi trợ lý AI mà extension VS Code cũng dùng. App chạy `codex app-server` rồi nói chuyện qua stdin/stdout (JSON-RPC). | Có sẵn đăng nhập ChatGPT, lịch sử hội thoại, xin quyền chạy lệnh/sửa file, luồng chữ chạy dần, thu gọn hội thoại, đọc lượt dùng. App chỉ cần vẽ giao diện. | **Codex SDK** (`@openai/codex-sdk`): gọn hơn nhưng OpenAI khuyên dùng cho tự động hoá. Không có luồng xin quyền và đăng nhập cho app tự làm. |
-| **Node 22 portable** (đóng gói kèm) | Chạy `npm`, Remotion, các script `.mjs`. | CTV không phải cài. Bản zip của nodejs.org giải nén là chạy. | Bắt CTV tự cài: chính là cái đang muốn bỏ. |
-| **Python 3.12 embeddable** (đóng gói kèm) | Chạy `check_script.py`, `vivibe_tts.py`… | Các script chỉ dùng thư viện chuẩn (đã kiểm tra), nên bản embeddable ~15 MB là đủ. | Cài Python bằng winget: cần quyền admin, dễ lỗi PATH. |
-| **dugite** | Git đóng gói sẵn (GitHub Desktop đang dùng). | Git thật, nên skill `phien-ban` và Codex chạy lệnh `git` bình thường. | isomorphic-git: Git viết bằng JS, thiếu lệnh, Codex không dùng được. |
-| **electron-builder** (NSIS, cài theo từng người dùng) | Đóng gói ra `Setup.exe`. | Cài vào thư mục người dùng nên **không hỏi quyền admin**. | MSIX, Squirrel: rắc rối hơn với auto-update. |
-| **electron-updater** | App tự cập nhật từ GitHub Releases. | Đi cặp với electron-builder, gần như không phải cấu hình. | Tự viết: không đáng. |
-| **electron-store, electron-log, chokidar** | Lưu cài đặt; ghi log; theo dõi file đổi (kịch bản, storyboard mới). | Nhỏ, phổ biến. | — |
+| Thành phần                                                     | Là gì / làm gì ở đây                                                                                                  | Vì sao chọn                                                                                                                                                | Phương án khác                                                                                                                                            |
+| :------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Electron**                                                   | Khung làm app desktop bằng web (VS Code, Slack, Codex app cũng dùng). Lo cửa sổ, chạy tiến trình, file.               | Mọi thứ cần gọi (Codex, npm, Remotion) đều là Node. AI viết Electron rất thạo vì có nhiều code mẫu nhất.                                                   | **Tauri**: app nhẹ hơn (~10 MB so với ~100 MB) nhưng phần lõi viết bằng Rust, AI hay sai hơn. App đằng nào cũng mang theo Node nên lợi thế nhẹ không còn. |
+| **electron-vite**                                              | Bộ khung dựng sẵn cho Electron + React + TypeScript.                                                                  | Có sẵn cấu trúc main/renderer chuẩn, sửa code thấy ngay.                                                                                                   | Electron Forge: cũng tốt, ít tích hợp Vite hơn.                                                                                                           |
+| **React + TypeScript**                                         | Giao diện.                                                                                                            | Cùng React với Remotion trong repo. TypeScript giúp AI ít sai kiểu dữ liệu.                                                                                | Vue/Svelte: không lợi gì thêm ở đây.                                                                                                                      |
+| **Tailwind + shadcn/ui**                                       | Bộ giao diện đẹp sẵn (nút, thẻ, hộp thoại, tiến trình).                                                               | UI đẹp ngay mà không cần tự thiết kế; AI dùng rất thạo.                                                                                                    | Mantine, Ant Design: nặng và "công sở" hơn.                                                                                                               |
+| **Codex app-server** (`@openai/codex`, ghim cố định phiên bản) | Lõi trợ lý AI mà extension VS Code cũng dùng. App chạy `codex app-server` rồi nói chuyện qua stdin/stdout (JSON-RPC). | Có sẵn đăng nhập ChatGPT, lịch sử hội thoại, xin quyền chạy lệnh/sửa file, luồng chữ chạy dần, thu gọn hội thoại, đọc lượt dùng. App chỉ cần vẽ giao diện. | **Codex SDK** (`@openai/codex-sdk`): gọn hơn nhưng OpenAI khuyên dùng cho tự động hoá. Không có luồng xin quyền và đăng nhập cho app tự làm.              |
+| **Node 22 portable** (đóng gói kèm)                            | Chạy `npm`, Remotion, các script `.mjs`.                                                                              | CTV không phải cài. Bản zip của nodejs.org giải nén là chạy.                                                                                               | Bắt CTV tự cài: chính là cái đang muốn bỏ.                                                                                                                |
+| **Python 3.12 embeddable** (đóng gói kèm)                      | Chạy `check_script.py`, `vivibe_tts.py`…                                                                              | Các script chỉ dùng thư viện chuẩn (đã kiểm tra), nên bản embeddable ~15 MB là đủ.                                                                         | Cài Python bằng winget: cần quyền admin, dễ lỗi PATH.                                                                                                     |
+| **dugite**                                                     | Git đóng gói sẵn (GitHub Desktop đang dùng).                                                                          | Git thật, nên skill `phien-ban` và Codex chạy lệnh `git` bình thường.                                                                                      | isomorphic-git: Git viết bằng JS, thiếu lệnh, Codex không dùng được.                                                                                      |
+| **electron-builder** (NSIS, cài theo từng người dùng)          | Đóng gói ra `Setup.exe`.                                                                                              | Cài vào thư mục người dùng nên **không hỏi quyền admin**.                                                                                                  | MSIX, Squirrel: rắc rối hơn với auto-update.                                                                                                              |
+| **electron-updater**                                           | App tự cập nhật từ GitHub Releases.                                                                                   | Đi cặp với electron-builder, gần như không phải cấu hình.                                                                                                  | Tự viết: không đáng.                                                                                                                                      |
+| **electron-store, electron-log, chokidar**                     | Lưu cài đặt; ghi log; theo dõi file đổi (kịch bản, storyboard mới).                                                   | Nhỏ, phổ biến.                                                                                                                                             | —                                                                                                                                                         |
 
 ---
 
@@ -206,12 +214,12 @@ Bạn không cần tự code, nhưng cần nắm mấy điều này để ra l�
   - App bắt các yêu cầu `item/commandExecution/requestApproval` và `item/fileChange/requestApproval` rồi hiện thẻ tiếng Việt.
   - Có bảng dịch các lệnh quen thuộc:
 
-    | Lệnh | Hiện cho CTV |
-    | :--- | :--- |
-    | `vivibe_tts.py` | "Tạo giọng đọc (tốn credit)" |
-    | `remotion render` | "Xuất video" |
-    | `git switch` | "Đổi phiên bản" |
-    | lệnh lạ | Hiện nguyên văn kèm "AI muốn chạy lệnh này" |
+    | Lệnh              | Hiện cho CTV                                |
+    | :---------------- | :------------------------------------------ |
+    | `vivibe_tts.py`   | "Tạo giọng đọc (tốn credit)"                |
+    | `remotion render` | "Xuất video"                                |
+    | `git switch`      | "Đổi phiên bản"                             |
+    | lệnh lạ           | Hiện nguyên văn kèm "AI muốn chạy lệnh này" |
 
   - **Không bao giờ để mặc định toàn quyền.**
 - **Đổi phiên bản theo 2 tầng.**
@@ -219,11 +227,11 @@ Bạn không cần tự code, nhưng cần nắm mấy điều này để ra l�
   - Nếu có file của bộ công cụ bị sửa (CTV đã dạy Codex sửa skill hoặc `Root.tsx`): mở một thread riêng gọi `$phien-ban cập nhật lên bản <số>`. Skill này đã viết sẵn cách cất bài và gộp an toàn.
 - **Ba thứ cập nhật độc lập:**
 
-  | Cập nhật cái gì | Khi nào | Cách |
-  | :--- | :--- | :--- |
+  | Cập nhật cái gì                     | Khi nào                                    | Cách                                                           |
+  | :---------------------------------- | :----------------------------------------- | :------------------------------------------------------------- |
   | Bộ công cụ (skill, luật, component) | Thường xuyên, mỗi lần bạn phát hành tag số | Nút "Cập nhật" trong app (D). **Không cần phát hành app mới.** |
-  | App (giao diện, tính năng app) | Khi sửa app | electron-updater tự tải, CTV bấm khởi động lại |
-  | Codex | Khi OpenAI đổi giao thức hoặc model | Đổi số phiên bản ghim, test, phát hành app mới |
+  | App (giao diện, tính năng app)      | Khi sửa app                                | electron-updater tự tải, CTV bấm khởi động lại                 |
+  | Codex                               | Khi OpenAI đổi giao thức hoặc model        | Đổi số phiên bản ghim, test, phát hành app mới                 |
 
 ### Cấu trúc thư mục repo app (`9study-video-app`)
 
@@ -276,13 +284,13 @@ Thiết kế giao diện (7 màn): https://claude.ai/artifact/XA873CwpU1C2dhJZUE
 
 Cách làm: AI viết toàn bộ code; bạn chỉ cài bản mới lên máy sạch, bấm thử, chụp màn hình chỗ hỏng (khoảng 1–2 giờ mỗi ngày). Thời gian chủ yếu nằm ở thử trên máy sạch và sửa lỗi môi trường Windows, không nằm ở viết code. Ước lượng theo phạm vi mục 1b.
 
-| Mốc | Làm gì | Ra được gì | Ngày làm việc |
-| :--- | :--- | :--- | :--- |
-| **0. Thử kỹ thuật** | Chứng minh 3 chỗ rủi ro nhất chạy được trên **máy sạch**, bằng code thử xấu cũng được | Biết chắc hướng đi đúng trước khi làm UI đẹp | 3–4 |
-| **1. Vỏ app và cài đặt** | Khung Electron, màn cài đặt 7 bước, đóng gói `Setup.exe`, tự cập nhật | CTV cài xong, máy sẵn sàng | 5–7 |
-| **2. Làm video** | Danh sách video, form video mới, chat Codex, thẻ xin quyền, tab kịch bản/storyboard/Studio/thành phẩm, nghe thử audio | Làm trọn một video trong app, không mở Terminal | 8–12 |
-| **3. Hoàn thiện** | Phiên bản, thanh lượt dùng, báo lỗi, Cài đặt tối giản, lỗi tiếng Việt kèm nút sửa, đánh bóng UI | Bản 1.0 | 3–5 |
-| **4. Thử thật** | 2–3 CTV dùng 1 tuần, AI sửa song song | Danh sách sửa, rồi phát cho mọi CTV | 1 tuần lịch |
+| Mốc                      | Làm gì                                                                                                                | Ra được gì                                      | Ngày làm việc |
+| :----------------------- | :-------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------- | :------------ |
+| **0. Thử kỹ thuật**      | Chứng minh 3 chỗ rủi ro nhất chạy được trên **máy sạch**, bằng code thử xấu cũng được                                 | Biết chắc hướng đi đúng trước khi làm UI đẹp    | 3–4           |
+| **1. Vỏ app và cài đặt** | Khung Electron, màn cài đặt 7 bước, đóng gói `Setup.exe`, tự cập nhật                                                 | CTV cài xong, máy sẵn sàng                      | 5–7           |
+| **2. Làm video**         | Danh sách video, form video mới, chat Codex, thẻ xin quyền, tab kịch bản/storyboard/Studio/thành phẩm, nghe thử audio | Làm trọn một video trong app, không mở Terminal | 8–12          |
+| **3. Hoàn thiện**        | Phiên bản, thanh lượt dùng, báo lỗi, Cài đặt tối giản, lỗi tiếng Việt kèm nút sửa, đánh bóng UI                       | Bản 1.0                                         | 3–5           |
+| **4. Thử thật**          | 2–3 CTV dùng 1 tuần, AI sửa song song                                                                                 | Danh sách sửa, rồi phát cho mọi CTV             | 1 tuần lịch   |
 
 **Tổng: khoảng 5–7 tuần lịch** (suôn sẻ thì ~4 tuần). Bạn tự làm được một video trong app sau khoảng 3–4 tuần (hết Mốc 2). Làm đủ cả F và G như mục 1 thì khoảng 8–10 tuần.
 
@@ -307,23 +315,24 @@ Code thử nằm ở `spikes/` (`codex-probe.mjs`, `moc0-test.ps1`, `studio-prob
 
 #### Kết quả Mốc 0 trên máy dev (20/11/2026)
 
-| Hạng mục | Kết quả | Hệ quả cho app |
-| :--- | :--- | :--- |
-| Codex `0.171.0` (ghim) | Đăng nhập ChatGPT (cả tài khoản free), thread, luồng chữ, xin quyền đều chạy. Một lượt ngắn mất 14 giây | Giữ hướng `codex app-server`. Kiểu sinh bằng `generate-ts` (không `--experimental`) đã có đủ hàm cần dùng |
-| Mở link đăng nhập | `cmd /c start <url>` cắt link tại dấu `&` → trang báo "thiếu tham số" | App dùng `shell.openExternal` của Electron, không đi qua `cmd` |
+| Hạng mục                                | Kết quả                                                                                                                  | Hệ quả cho app                                                                                                                      |
+| :-------------------------------------- | :----------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| Codex `0.171.0` (ghim)                  | Đăng nhập ChatGPT (cả tài khoản free), thread, luồng chữ, xin quyền đều chạy. Một lượt ngắn mất 14 giây                  | Giữ hướng `codex app-server`. Kiểu sinh bằng `generate-ts` (không `--experimental`) đã có đủ hàm cần dùng                           |
+| Mở link đăng nhập                       | `cmd /c start <url>` cắt link tại dấu `&` → trang báo "thiếu tham số"                                                    | App dùng `shell.openExternal` của Electron, không đi qua `cmd`                                                                      |
 | Xin quyền khi **chưa** chuẩn bị sandbox | Codex hỏi quyền cho **mọi** lệnh, kể cả lệnh chỉ đọc (`git status`). Lệnh được bọc trong `powershell.exe -Command '...'` | Phải chuẩn bị sandbox ở màn cài đặt, không thì CTV bị hỏi liên tục. Bảng dịch lệnh phải bóc lệnh thật ra khỏi `powershell -Command` |
-| Lượt dùng | `account/rateLimits/read` trả `usedPercent`, `resetsAt` (tài khoản free: chu kỳ 30 ngày) | Thanh lượt dùng làm được, rẻ |
-| Node 22.23.5 portable | 100 MB giải nén | — |
-| Python 3.12.10 embeddable | 22 MB. Là bản 3.12 cuối có file cài; 3.12.11+ chỉ vá bảo mật, không có bản embeddable | Dùng 3.12.10. Cân nhắc lên 3.13 sau khi thử script |
-| Git (dugite 3.3.3, git 2.56.1) | 106 MB | — |
-| Shim `py.cmd` | Codex gọi `py scripts/...` chạy đúng Python đóng gói | Giữ |
-| Thời gian trên PATH sạch | `npm ci` 139 s, tải trình duyệt render 17 s, storyboard nháp `tiem-can` 112 s, render 2 giây 14 s | Bước "Cài thư viện" cần thanh tiến trình thật, ~2–3 phút |
-| `remotion compositions` | Lỗi cả repo khi một video chưa có audio (`public/audio` không commit) | App **không** dùng lệnh này để liệt kê video; quét `src/videos/*/script.json` như đã định |
-| `storyboard.mjs` | Ưu tiên Chrome cài sẵn trên máy, máy CTV không có thì dùng trình duyệt Remotion | Phải xác nhận trên máy sạch (không Chrome) |
-| Dung lượng Codex | `codex.exe` 407 MB, `codex-code-mode-host.exe` 81 MB, `codex-resources` 46 MB (riêng phần giọng nói ~20 MB) | Bản cài ước ~300–350 MB nén, ~1 GB sau cài. Thử bỏ phần giọng nói và `code-mode-host` ở Mốc 1 |
-| `tar` của Git Bash | Hiểu `D:` là máy từ xa | Script build dùng `C:\Windows\System32\tar.exe` |
+| Lượt dùng                               | `account/rateLimits/read` trả `usedPercent`, `resetsAt` (tài khoản free: chu kỳ 30 ngày)                                 | Thanh lượt dùng làm được, rẻ                                                                                                        |
+| Node 22.23.5 portable                   | 100 MB giải nén                                                                                                          | —                                                                                                                                   |
+| Python 3.12.10 embeddable               | 22 MB. Là bản 3.12 cuối có file cài; 3.12.11+ chỉ vá bảo mật, không có bản embeddable                                    | Dùng 3.12.10. Cân nhắc lên 3.13 sau khi thử script                                                                                  |
+| Git (dugite 3.3.3, git 2.56.1)          | 106 MB                                                                                                                   | —                                                                                                                                   |
+| Shim `py.cmd`                           | Codex gọi `py scripts/...` chạy đúng Python đóng gói                                                                     | Giữ                                                                                                                                 |
+| Thời gian trên PATH sạch                | `npm ci` 139 s, tải trình duyệt render 17 s, storyboard nháp `tiem-can` 112 s, render 2 giây 14 s                        | Bước "Cài thư viện" cần thanh tiến trình thật, ~2–3 phút                                                                            |
+| `remotion compositions`                 | Lỗi cả repo khi một video chưa có audio (`public/audio` không commit)                                                    | App **không** dùng lệnh này để liệt kê video; quét `src/videos/*/script.json` như đã định                                           |
+| `storyboard.mjs`                        | Ưu tiên Chrome cài sẵn trên máy, máy CTV không có thì dùng trình duyệt Remotion                                          | Phải xác nhận trên máy sạch (không Chrome)                                                                                          |
+| Dung lượng Codex                        | `codex.exe` 407 MB, `codex-code-mode-host.exe` 81 MB, `codex-resources` 46 MB (riêng phần giọng nói ~20 MB)              | Bản cài ước ~300–350 MB nén, ~1 GB sau cài. Thử bỏ phần giọng nói và `code-mode-host` ở Mốc 1                                       |
+| `tar` của Git Bash                      | Hiểu `D:` là máy từ xa                                                                                                   | Script build dùng `C:\Windows\System32\tar.exe`                                                                                     |
 
 ### Mốc 1 — vỏ app và cài đặt
+
 - [x] Tạo dự án bằng electron-vite (React + TS strict), Tailwind 4, nút/thanh tiến trình kiểu shadcn/ui, khung IPC có kiểu (`src/shared/types.ts`, chỉ các kênh liệt kê mới gọi được).
 - [x] `RuntimeService` (`src/main/services/runtime.ts`) + `scripts/fetch-runtimes.mjs`: gom Node, Python, git, Codex vào `resources/runtimes/`, PATH sạch cho tiến trình con, bộ nhớ đệm npm và thư mục tạm đặt cạnh thư mục dự án (không ở ổ C, không dấu).
 - [x] `SetupService` (`src/main/services/setup.ts`): 7 bước, mỗi bước `check()` + `run()`, báo tiến trình thật (git theo %, npm đếm gói, trình duyệt render theo %), mã lỗi thay cho chuỗi lỗi thô.
@@ -361,6 +370,17 @@ Quy ước repo video cần bám (đọc từ `AGENTS.md` bản 3): kịch bản
 
 Cách thử tự động đã dùng (để làm lại khi cần): chạy app với `NINESTUDY_USER_DATA=<thư mục thử>` và `--remote-debugging-port=9222`, rồi điều khiển giao diện qua Chrome DevTools Protocol (chạy JS, bấm, chụp màn hình). Thư mục thử có `settings.json` trỏ tới repo thử của Mốc 0, không đụng cài đặt thật.
 
+### Mốc 3b — làm đủ theo thiết kế và kế hoạch (chốt 21/11/2026)
+
+Người dùng đổi ý: bản 1 phải đủ như thiết kế, kể cả phần trước đây để sau (mục 1b không còn áp dụng cho G và F).
+
+- [ ] **Góp ý — phía CTV** (G, thiết kế `Feedback`): nút "Góp ý cho đội" ở thanh màn làm video và ở tab Thành phẩm ("Góp ý tại đây" lấy giây đang xem). Tra giây → cảnh/câu từ `<id>.timeline.json`. Form: chỗ lỗi, loại lỗi (Hình / Giọng đọc / Nội dung kiến thức / Lỗi app), mô tả, nên sửa ở đâu (luật chung / chỉ video này), gửi kèm (đoạn 20 giây cắt bằng ffmpeg của Remotion, ảnh storyboard câu đó, audio câu đó, kịch bản và nguồn video, điều đã dạy AI = thay đổi trong `.agents/` + `FEEDBACK.md`, cả video tuỳ chọn). Gói ghi vào thư mục góp ý chung trên Drive (`9Study_GopY`), có `index.html` để mở bằng trình duyệt; không bao giờ có `.env`/key. Danh sách "Góp ý đã gửi" kèm trạng thái.
+- [ ] **Góp ý — người bảo trì** (thiết kế `Inbox`, `InboxBatch`): bật "Chế độ người bảo trì" trong Cài đặt → mục "Góp ý" có số góp ý mới; danh sách theo trạng thái (Mới / Đang sửa / Xong), chi tiết (đoạn video, ảnh storyboard, audio, lời CTV, những gì AI trên máy CTV đã học), đổi trạng thái ("Đã sửa trong bản N"), "Chuyển thành việc sửa skill" (mở Codex kèm gói, trên nhánh `all_fix_…`), "Mở thư mục gói". Gộp nhiều góp ý: chỗ sửa dự kiến theo loại lỗi + môn, tên lần sửa, tên nhánh `[môn]_fix_[mô tả]`, đưa vào bản, "Mở Codex với N góp ý", "Lưu lần sửa, làm sau".
+- [ ] **Cài đặt đầy đủ** (thiết kế `Settings`): chuyển thư mục dự án sang ổ khác, kiểm tra lại key, giọng mặc định theo nhóm môn, tốc độ đọc chung (`tts_config.json`), khi nào AI phải hỏi trước, tự dọn bộ nhớ AI sau mỗi bước, quay lại bản trước, tự tải bản app mới, Ổ đĩa (dung lượng ảnh nháp/storyboard, file tạm, nút dọn, cảnh báo ổ C), Góp ý (thư mục chung, tên của bạn, góp ý đã gửi, luôn gửi kèm cả video, chế độ người bảo trì), Hỗ trợ (xem hướng dẫn).
+- [ ] **Hướng dẫn**: mục trên thanh đầu, trang hướng dẫn ngắn (cài, làm một video, khi gặp lỗi).
+- [ ] Nút "Đọc sai" ở tab Nghe thử; nút "Nghe mẫu" giọng trong form.
+- [x] Logo 9Study trên thanh đầu, icon app từ biểu tượng 9Study (`build/icon.png` 512×512), ô "Usage" hiện từng hạn mức (5 giờ / tuần / 30 ngày) kèm thanh và giờ làm mới, ảnh storyboard làm hình thu nhỏ, bỏ chân trang và dòng mô tả thừa.
+
 ### Mốc 3 — hoàn thiện (chia việc 20/11/2026)
 
 - [x] **VersionService** (`version.ts`): bản đang dùng / bản mới nhất / có gì mới đọc từ `CHANGELOG.md` của bản mới; đổi bản tầng 1 khi sạch (`git switch --detach refs/tags/<N>`, `npm install` khi `package-lock.json` đổi); tầng 2 mở cuộc trò chuyện `$phien-ban`; đọc `app-compat.json` của bản mới để chặn khi cần app mới hơn. Bài thử: đọc CHANGELOG (cả bản thật), xét an toàn, so sánh phiên bản.
@@ -378,18 +398,18 @@ Cách thử tự động đã dùng (để làm lại khi cần): chạy app v�
 
 ## 8. Rủi ro và cách giảm
 
-| Rủi ro | Mức | Cách giảm |
-| :--- | :--- | :--- |
-| **Giao thức Codex app-server thay đổi** (một phần còn "experimental") | Cao | Ghim phiên bản Codex trong app. Sinh kiểu TS bằng `codex app-server generate-ts`. Không dùng API experimental. Mỗi lần nâng Codex chạy lại bài thử mốc 0. |
-| **Sandbox Codex trên Windows** cần cài đặt thêm hoặc quyền admin | Cao, chưa rõ | Thử ở mốc 0 trên máy sạch. Nếu vướng thì đưa bước chuẩn bị sandbox vào màn cài đặt. |
-| **SmartScreen** chặn app chưa ký ("Windows đã bảo vệ máy tính của bạn") | Chắc chắn gặp | Bản 1: chấp nhận, kèm ảnh hướng dẫn bấm "Thêm thông tin → Vẫn chạy" (chỉ lần cài đầu). Sau đó cân nhắc chữ ký số: chứng chỉ OV vài trăm USD/năm, hoặc dịch vụ ký trên cloud (cần kiểm tra cá nhân ở VN có đăng ký được không). |
-| **Đường dẫn có dấu hoặc dấu cách** (`C:\Users\Nguyễn…`, `Video AI`) làm npm/Python lỗi | Trung bình | Mặc định thư mục không dấu, không cách. Bật `git config core.longpaths true`. Đặt `TEMP` và cache npm vào thư mục không dấu nếu tên người dùng có dấu. |
-| **Hết ổ C**: bundle tạm của Remotion từng ăn 5,2 GB (xem `scripts/lib/bundle.mjs`) | Trung bình | Màn cài đặt kiểm tra dung lượng trống. Thêm nút dọn `out/_lam-viec` và thư mục tạm cũ. |
-| **Hết lượt ChatGPT Plus**: skill rất dài (`viet-kich-ban` ~53 KB, `dung-video` ~55 KB, `lessons.md` ~51 KB) | Trung bình | Thanh lượt dùng, tự thu gọn sau mỗi bước, mỗi video một thread. Về lâu dài nên tỉa skill (lợi cho cả người không dùng app). |
-| **CTV tự sửa file bộ công cụ** rồi cập nhật bị xung đột | Thấp | Tầng 2 của đổi phiên bản: giao cho skill `phien-ban`, vốn đã có quy trình cất bài và gộp. |
-| **Repo video đổi cấu trúc**, app cũ đọc sai | Trung bình | File `app-compat.json`. Khi đổi chỗ để `script.json`, `out/`, storyboard thì phải tăng `minAppVersion`. |
-| **Code AI viết mà bạn không đọc được** | Trung bình | Mỗi service một file, TypeScript strict. Bắt AI viết bài thử nhỏ cho `SetupService`, `VersionService`. Luôn thử trên máy sạch trước khi phát. Commit nhỏ. |
-| **Phình phạm vi** ("đầy đủ tiện nghi") | Cao | Chỉ làm đúng danh sách tính năng bản 1. Ý mới ghi vào mục "Để sau", làm sau khi CTV đã dùng thật. |
+| Rủi ro                                                                                                      | Mức           | Cách giảm                                                                                                                                                                                                                      |
+| :---------------------------------------------------------------------------------------------------------- | :------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Giao thức Codex app-server thay đổi** (một phần còn "experimental")                                       | Cao           | Ghim phiên bản Codex trong app. Sinh kiểu TS bằng `codex app-server generate-ts`. Không dùng API experimental. Mỗi lần nâng Codex chạy lại bài thử mốc 0.                                                                      |
+| **Sandbox Codex trên Windows** cần cài đặt thêm hoặc quyền admin                                            | Cao, chưa rõ  | Thử ở mốc 0 trên máy sạch. Nếu vướng thì đưa bước chuẩn bị sandbox vào màn cài đặt.                                                                                                                                            |
+| **SmartScreen** chặn app chưa ký ("Windows đã bảo vệ máy tính của bạn")                                     | Chắc chắn gặp | Bản 1: chấp nhận, kèm ảnh hướng dẫn bấm "Thêm thông tin → Vẫn chạy" (chỉ lần cài đầu). Sau đó cân nhắc chữ ký số: chứng chỉ OV vài trăm USD/năm, hoặc dịch vụ ký trên cloud (cần kiểm tra cá nhân ở VN có đăng ký được không). |
+| **Đường dẫn có dấu hoặc dấu cách** (`C:\Users\Nguyễn…`, `Video AI`) làm npm/Python lỗi                      | Trung bình    | Mặc định thư mục không dấu, không cách. Bật `git config core.longpaths true`. Đặt `TEMP` và cache npm vào thư mục không dấu nếu tên người dùng có dấu.                                                                         |
+| **Hết ổ C**: bundle tạm của Remotion từng ăn 5,2 GB (xem `scripts/lib/bundle.mjs`)                          | Trung bình    | Màn cài đặt kiểm tra dung lượng trống. Thêm nút dọn `out/_lam-viec` và thư mục tạm cũ.                                                                                                                                         |
+| **Hết lượt ChatGPT Plus**: skill rất dài (`viet-kich-ban` ~53 KB, `dung-video` ~55 KB, `lessons.md` ~51 KB) | Trung bình    | Thanh lượt dùng, tự thu gọn sau mỗi bước, mỗi video một thread. Về lâu dài nên tỉa skill (lợi cho cả người không dùng app).                                                                                                    |
+| **CTV tự sửa file bộ công cụ** rồi cập nhật bị xung đột                                                     | Thấp          | Tầng 2 của đổi phiên bản: giao cho skill `phien-ban`, vốn đã có quy trình cất bài và gộp.                                                                                                                                      |
+| **Repo video đổi cấu trúc**, app cũ đọc sai                                                                 | Trung bình    | File `app-compat.json`. Khi đổi chỗ để `script.json`, `out/`, storyboard thì phải tăng `minAppVersion`.                                                                                                                        |
+| **Code AI viết mà bạn không đọc được**                                                                      | Trung bình    | Mỗi service một file, TypeScript strict. Bắt AI viết bài thử nhỏ cho `SetupService`, `VersionService`. Luôn thử trên máy sạch trước khi phát. Commit nhỏ.                                                                      |
+| **Phình phạm vi** ("đầy đủ tiện nghi")                                                                      | Cao           | Chỉ làm đúng danh sách tính năng bản 1. Ý mới ghi vào mục "Để sau", làm sau khi CTV đã dùng thật.                                                                                                                              |
 
 ---
 

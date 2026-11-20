@@ -18,6 +18,8 @@ export interface VideoInfo {
   /** Lan sua cuoi (ms) */
   updatedAt: number
   storyboardHtml?: string
+  /** Anh lam hinh thu nho: mot anh trong thu muc storyboard */
+  thumb?: string
   finalMp4?: string
   /** Video co cuoc tro chuyen da luu trong app */
   hasChat: boolean

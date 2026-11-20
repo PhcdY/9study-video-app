@@ -221,7 +221,7 @@ export const copy = {
       const d = new Date(ms)
       return d.toDateString() === new Date().toDateString()
         ? d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-        : d.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit' })
+        : `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
     },
     toolkit: (v?: string) => (v ? `Bộ công cụ bản ${v}` : 'Bộ công cụ'),
     savedAt: (p: string) => `Video lưu tại ${p}`,
@@ -425,14 +425,37 @@ export const copy = {
 
   // ---------- Moc 3 ----------
   usage: {
-    pill: (n: number) => `Lượt AI còn ${n}%`,
+    title: 'Usage',
+    chatgpt: 'Tài khoản ChatGPT',
+    plan: (p?: string) => (p ? `Gói ${p.charAt(0).toUpperCase()}${p.slice(1)}` : 'Gói ChatGPT'),
+    // Do dai cua so tinh luot: 300 phut = 5 gio, 10080 = tuan, 43200 = 30 ngay
+    windowShort: (m: number | null) =>
+      !m
+        ? ''
+        : m <= 60 * 24
+          ? `${Math.round(m / 60)}h`
+          : m <= 60 * 24 * 7
+            ? 'Tuần'
+            : `${Math.round(m / 1440)} ngày`,
+    windowLong: (m: number | null) =>
+      !m
+        ? 'Hạn mức'
+        : m <= 60 * 24
+          ? `Hạn mức ${Math.round(m / 60)} giờ`
+          : m <= 60 * 24 * 7
+            ? 'Hạn mức tuần'
+            : `Hạn mức ${Math.round(m / 1440)} ngày`,
+    used: (n: number) => `Đã dùng ${n}%`,
     resets: (ms: number) => {
       const d = new Date(ms)
       const same = d.toDateString() === new Date().toDateString()
       const t = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-      return same ? `làm mới lúc ${t}` : `làm mới ${t} ngày ${d.toLocaleDateString('vi-VN')}`
+      return same
+        ? `Làm mới lúc ${t} hôm nay`
+        : `Làm mới ${t} ngày ${d.toLocaleDateString('vi-VN')}`
     },
-    low: 'Sắp hết lượt ChatGPT. Làm nốt việc đang dở, việc mới để sau giờ làm mới.'
+    unknown: 'Chưa đọc được lượt dùng.',
+    manage: 'Xem trong Cài đặt'
   },
   version: {
     banner: (v: string) => `Bản ${v} đã sẵn sàng.`,
