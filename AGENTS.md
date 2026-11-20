@@ -15,7 +15,7 @@ Thiết kế giao diện: https://claude.ai/artifact/XA873CwpU1C2dhJZUE7rSk
 ## Quy ước
 - Chỉ Windows. Đường dẫn mặc định không dấu, không dấu cách (`D:\9Study\VideoAI`).
 - Phần lõi (`src/main/`) chia theo service, mỗi service một file. Giao diện (`src/renderer/`) không chạy lệnh, chỉ gọi IPC có kiểu.
-- **Chữ trên giao diện:** tiếng Việt, gom hết vào `src/renderer/lib/copy.ts`. Không dùng thuật ngữ kỹ thuật (git, stash, terminal, slug, commit) trên UI; nói "bản", "lấy bản mới", "bài của bạn".
+- **Chữ trên giao diện:** tiếng Việt, gom hết vào `src/renderer/src/lib/copy.ts`. Không dùng thuật ngữ kỹ thuật (git, stash, terminal, slug, commit) trên UI; nói "bản", "lấy bản mới", "bài của bạn".
 - Lỗi hiện cho người dùng: nói chuyện gì xảy ra và đưa nút sửa (Thử lại, Sửa giúp tôi, Gửi báo lỗi). Không hiện chuỗi lỗi thô.
 - Không bao giờ ghi key (`VIVIBE_API_KEY`, token) vào log hay gói góp ý.
 - Tiến trình con (Codex, `npm run dev`) phải tắt sạch cả cây tiến trình khi thoát app.

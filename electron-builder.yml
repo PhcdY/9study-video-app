@@ -1,0 +1,39 @@
+appId: vn.9study.video
+productName: 9Study Video
+directories:
+  buildResources: build
+  output: release
+files:
+  - '!**/.vscode/*'
+  - '!src/*'
+  - '!electron.vite.config.{js,ts,mjs,cjs}'
+  - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md,AGENTS.md,PLAN.md}'
+  - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
+  - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json,vitest.config.mts}'
+  - '!{spikes,tests,scripts,.cache,release}/**'
+  - '!resources/runtimes/**'
+# Node, Python, git, Codex di kem, nam ngoai asar: resources/runtimes -> <app>/resources/runtimes
+extraResources:
+  - from: resources/runtimes
+    to: runtimes
+win:
+  executableName: 9study-video
+  target:
+    - nsis
+# Cai theo tung nguoi dung, khong hoi quyen admin
+nsis:
+  oneClick: true
+  perMachine: false
+  allowElevation: false
+  artifactName: 9study-video-setup-${version}.${ext}
+  shortcutName: 9Study Video
+  uninstallDisplayName: 9Study Video
+  createDesktopShortcut: always
+  createStartMenuShortcut: true
+  deleteAppDataOnUninstall: false
+npmRebuild: false
+# App tu cap nhat tu GitHub Releases cua repo app (repo phai public)
+publish:
+  provider: github
+  owner: PhcdY
+  repo: 9study-video-app

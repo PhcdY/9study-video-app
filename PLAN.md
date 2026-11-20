@@ -1,6 +1,6 @@
 # App làm video cho cộng tác viên — Kế hoạch
 
-> Trạng thái: Mốc 0 xong trên máy dev, chờ thử trên máy ảo sạch. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
+> Trạng thái: Mốc 0 và phần lớn Mốc 1 xong trên máy dev; cả hai chờ thử trên máy ảo sạch. Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
 > Tên tạm của app: **9Study Video** (đổi sau).
 
 ---
@@ -294,7 +294,7 @@ Rủi ro lớn nhất về thời gian: sandbox Codex trên Windows cần quyề
 
 ### Mốc 0 — thử kỹ thuật (làm chi tiết)
 
-Code thử nằm ở `spikes/` (`codex-probe.mjs`, `fetch-runtimes.mjs`, `moc0-test.ps1`, `studio-probe.mjs`, bộ chạy máy ảo `chay-thu.cmd`).
+Code thử nằm ở `spikes/` (`codex-probe.mjs`, `moc0-test.ps1`, `studio-probe.mjs`, bộ chạy máy ảo `chay-thu.cmd`).
 
 - [x] **Codex**: `initialize` → `account/login/start` (`chatgpt`) → mở `authUrl` → `account/login/completed` → `thread/start` + `turn/start`. Chạy được trên máy dev (20/11).
 - [x] **Thẻ xin quyền**: bắt được `item/commandExecution/requestApproval`, trả `accept` thì lệnh chạy.
@@ -324,13 +324,18 @@ Code thử nằm ở `spikes/` (`codex-probe.mjs`, `fetch-runtimes.mjs`, `moc0-t
 | `tar` của Git Bash | Hiểu `D:` là máy từ xa | Script build dùng `C:\Windows\System32\tar.exe` |
 
 ### Mốc 1 — vỏ app và cài đặt
-- [ ] Tạo dự án bằng electron-vite (React + TS), thêm Tailwind + shadcn/ui, dựng khung IPC có kiểu.
-- [ ] Viết `RuntimeService`: tải và giải nén runtime khi đóng gói (script build), dựng PATH cho tiến trình con.
-- [ ] Viết `SetupService`: 7 bước. Mỗi bước có hàm `check()` (đã xong chưa) và `run()` (làm), báo tiến trình.
-- [ ] Làm màn cài đặt theo mockup: bước sáng lần lượt, "App tự làm / Bạn chỉ cần", lỗi tiếng Việt kèm nút thử lại.
-- [ ] Ghi `.env` an toàn: giữ dòng cũ, không bao giờ ghi key vào log.
-- [ ] Đóng gói bằng electron-builder (NSIS per-user), cài thử trên máy sạch.
-- [ ] Gắn electron-updater: phát bản 0.1.0 rồi 0.1.1, kiểm tra máy sạch tự lên 0.1.1.
+- [x] Tạo dự án bằng electron-vite (React + TS strict), Tailwind 4, nút/thanh tiến trình kiểu shadcn/ui, khung IPC có kiểu (`src/shared/types.ts`, chỉ các kênh liệt kê mới gọi được).
+- [x] `RuntimeService` (`src/main/services/runtime.ts`) + `scripts/fetch-runtimes.mjs`: gom Node, Python, git, Codex vào `resources/runtimes/`, PATH sạch cho tiến trình con, bộ nhớ đệm npm và thư mục tạm đặt cạnh thư mục dự án (không ở ổ C, không dấu).
+- [x] `SetupService` (`src/main/services/setup.ts`): 7 bước, mỗi bước `check()` + `run()`, báo tiến trình thật (git theo %, npm đếm gói, trình duyệt render theo %), mã lỗi thay cho chuỗi lỗi thô.
+- [x] Màn cài đặt theo mockup: cột bước, "App tự làm / Bạn chỉ cần", lỗi tiếng Việt kèm nút Thử lại, màn "Máy bạn đã sẵn sàng". Xem từng trạng thái trong trình duyệt bằng dữ liệu giả: `npm run dev` rồi mở `http://localhost:5173/?state=dangNhap` (các trạng thái: xem `src/renderer/src/lib/mock-api.ts`).
+- [x] Ghi `.env` an toàn (`env-file.ts`): giữ dòng cũ và chữ thích, ghi qua file tạm. Key Vivibe kiểm bằng `vivibe_tts.py --list-voices`, truyền qua biến môi trường, che trong log (`redact.ts`).
+- [x] Bước đăng nhập chuẩn bị luôn sandbox Windows (chế độ không cần admin); chưa sẵn sàng thì chỉ cảnh báo ở bước Kiểm tra máy.
+- [x] Đóng gói bằng electron-builder (NSIS cài theo người dùng): `npm run build:win` ra `release/9study-video-setup-0.1.0.exe` **321 MB** (1,1 GB sau cài). Bản đóng gói chạy được Codex đi kèm; đóng app thì không còn tiến trình con nào.
+- [ ] Cài thử `Setup.exe` và chạy đủ 7 bước trên **máy sạch** (chờ máy ảo).
+- [ ] Gắn electron-updater: đã có code (`updater.ts`, nguồn GitHub Releases của `PhcdY/9study-video-app`). Hiện báo 404 vì chưa có bản phát hành nào (hoặc repo đang private). Còn: để repo public, phát 0.1.0 rồi 0.1.1, xem máy sạch tự lên 0.1.1.
+- [ ] Thử bỏ `codex-code-mode-host.exe` (81 MB) khỏi bản cài.
+
+Bài thử: `npm test` (13 bài: luật thư mục, chọn bản, tiến trình git/npm, `.env`, che key, trích tham số). Chưa có bài thử chạy thật các bước tải/cài (cần mạng, làm trên máy ảo).
 
 ### Mốc 2, 3: chia việc chi tiết khi xong mốc 1, dựa trên kết quả mốc 0.
 
