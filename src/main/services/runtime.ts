@@ -1,7 +1,7 @@
 // Duong dan toi Node/Python/Git/Codex dong goi kem app, va moi truong cho moi tien trinh con.
 import { app } from 'electron'
 import path from 'node:path'
-import { mkdirSync } from 'node:fs'
+import { mkdirSync, existsSync, readFileSync, appendFileSync } from 'node:fs'
 
 export function runtimeRoot(): string {
   return app.isPackaged
@@ -82,4 +82,21 @@ export function childEnv(
     BROWSER: 'none',
     ...extra
   }
+}
+
+/**
+ * Danh dau thu muc bo cong cu la "tin cay" trong cau hinh Codex rieng cua app, de Codex nap
+ * cau hinh rieng cua repo (vd agent hoc-sinh-ao trong .codex/). Chi ghi them, khong sua dong cu.
+ */
+export function trustProject(projectDir: string): void {
+  // Codex ghi duong dan voi chu o dia viet thuong (vd d:\9Study\VideoAI)
+  const norm = path
+    .resolve(projectDir)
+    .replace(/^([A-Z]):/, (_m, d: string) => `${d.toLowerCase()}:`)
+  const header = `[projects.${JSON.stringify(norm)}]`
+  const file = path.join(codexHome(), 'config.toml')
+  const text = existsSync(file) ? readFileSync(file, 'utf8') : ''
+  if (text.includes(header)) return
+  const sep = text && !text.endsWith('\n') ? '\n' : ''
+  appendFileSync(file, `${sep}\n${header}\ntrust_level = "trusted"\n`)
 }

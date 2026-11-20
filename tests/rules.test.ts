@@ -99,6 +99,9 @@ describe('redact', () => {
       'https://auth.openai.com/cb?code=***&state=***'
     )
     expect(redact('loi: key vb_mysecretkey sai', ['vb_mysecretkey'])).toBe('loi: key *** sai')
+    expect(redact('{"email":"ctv.thu+1@gmail.com","planType":"free"}')).toBe(
+      '{"email":"***","planType":"free"}'
+    )
   })
 })
 
