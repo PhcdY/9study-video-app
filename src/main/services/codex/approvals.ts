@@ -62,6 +62,29 @@ export function describeApproval(rawCommand: string, reason?: string | null): Ap
   return { title: 'lenhLa', costly: false, command: c }
 }
 
+/**
+ * Khoa "loai viec" cho nut "Luon cho phep viec nay". Codex chi nho dung nguyen cau lenh da duyet
+ * (acceptForSession), con AI thuong chay lai cung cong cu voi tham so khac (`--estimate`,
+ * `--list-voices`, bo cau khac...) nen hoi lai. App tu nho theo loai viec nay.
+ * Tra ve null khi viec phai hoi tung lan (ton credit, lenh la).
+ */
+export function approvalKey(info: ApprovalInfo, rawCommand: string): string | null {
+  if (info.costly || info.title === 'lenhLa') return null
+  const argv = splitArgs(unwrapCommand(rawCommand))
+  switch (info.title) {
+    case 'congCu':
+      return info.label ? `congCu:${info.label}` : null
+    case 'doiBan':
+      // git switch khac git reset: moi kieu doi ban duyet rieng
+      return `doiBan:${argv[1] ?? ''}`
+    case 'mang':
+      // Cung chuong trinh, cung script (vd "py scripts/x.py ...")
+      return argv.length ? `mang:${argv.slice(0, 2).join(' ')}` : null
+    default:
+      return info.title
+  }
+}
+
 /** Tach dong lenh thanh tham so (ton trong dau ngoac kep / don). */
 export function splitArgs(cmd: string): string[] {
   const out: string[] = []

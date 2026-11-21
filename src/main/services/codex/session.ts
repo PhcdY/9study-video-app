@@ -28,7 +28,7 @@ import {
 } from '../../../shared/ai-model'
 import { CodexClient } from './client'
 import { trustProject } from '../runtime'
-import { describeApproval, estimateVoice, statusLabelFor } from './approvals'
+import { approvalKey, describeApproval, estimateVoice, statusLabelFor } from './approvals'
 import { parseVoiceRun } from '../../../shared/vivibe'
 import log from '../../log'
 import { getSettings } from '../settings'
@@ -46,8 +46,10 @@ interface Chat {
   items: ChatItem[]
   busy: boolean
   createdAt: number
-  /** Cho tra loi the xin quyen: id the -> ham tra loi */
-  waiting: Map<string, (decision: ApprovalDecision) => void>
+  /** Cho tra loi the xin quyen: id the -> loai viec + ham tra loi */
+  waiting: Map<string, { key: string | null; answer: (decision: ApprovalDecision) => void }>
+  /** Loai viec nguoi dung da chon "Luon cho phep" trong buoi nay (xem approvalKey) */
+  allowed: Set<string>
   emitTimer?: NodeJS.Timeout
   loaded: boolean
   /** Ham goi khi luot dang chay cua thread xong (ke ca luot thu gon) */
@@ -289,6 +291,7 @@ export class CodexSession extends EventEmitter {
         busy: false,
         createdAt: Date.now(),
         waiting: new Map(),
+        allowed: new Set(),
         loaded: false,
         turnWaiters: []
       }
@@ -498,7 +501,7 @@ export class CodexSession extends EventEmitter {
   async interrupt(key: string): Promise<void> {
     const chat = this.chats.get(key)
     if (!chat?.threadId || !chat.turnId || !this.client) return
-    for (const resolve of chat.waiting.values()) resolve('decline')
+    for (const w of [...chat.waiting.values()]) w.answer('decline')
     await this.client
       .request('turn/interrupt', { threadId: chat.threadId, turnId: chat.turnId })
       .catch((e) => log.warn(`[chat] dung loi: ${String(e)}`))
@@ -526,7 +529,7 @@ export class CodexSession extends EventEmitter {
 
   approve(key: string, itemId: string, decision: ApprovalDecision): void {
     const chat = this.chats.get(key)
-    chat?.waiting.get(itemId)?.(decision)
+    chat?.waiting.get(itemId)?.answer(decision)
   }
 
   // ---------- noi bo ----------
@@ -587,8 +590,10 @@ export class CodexSession extends EventEmitter {
     const chat = p.threadId ? this.byThread.get(p.threadId) : undefined
     if (!chat) return Promise.reject(new Error('khong ro video'))
     let card: ChatItem
+    let key: string | null
     if (req.method === 'item/commandExecution/requestApproval') {
       const info = describeApproval(p.command ?? '', p.reason)
+      key = approvalKey(info, p.command ?? '')
       card = {
         kind: 'approval',
         id: `ap-${String(req.id)}`,
@@ -597,6 +602,7 @@ export class CodexSession extends EventEmitter {
         state: 'pending'
       }
     } else if (req.method === 'item/fileChange/requestApproval') {
+      key = 'suaFile'
       card = {
         kind: 'approval',
         id: `ap-${String(req.id)}`,
@@ -607,6 +613,11 @@ export class CodexSession extends EventEmitter {
       }
     } else {
       return Promise.reject(new Error(`chua ho tro ${req.method}`))
+    }
+    // Loai viec da "Luon cho phep" trong buoi nay: tu dong y, khong hien the hoi lai
+    if (key && chat.allowed.has(key)) {
+      log.info(`[chat] tu cho phep (${key}) theo lua chon truoc trong buoi`)
+      return Promise.resolve({ decision: 'acceptForSession' })
     }
     chat.items.push(card)
     this.emitNow(chat)
@@ -620,8 +631,8 @@ export class CodexSession extends EventEmitter {
       })
     }
     return new Promise((resolve) => {
-      chat.waiting.set(card.id, (decision) => {
-        chat.waiting.delete(card.id)
+      const answer = (decision: ApprovalDecision): void => {
+        if (!chat.waiting.delete(card.id)) return
         if (card.kind === 'approval')
           card.state =
             decision === 'accept'
@@ -629,9 +640,15 @@ export class CodexSession extends EventEmitter {
               : decision === 'acceptForSession'
                 ? 'acceptedForSession'
                 : 'declined'
-        this.emitNow(chat)
         resolve({ decision })
-      })
+        if (decision === 'acceptForSession' && key) {
+          chat.allowed.add(key)
+          // The cung loai dang cho (AI hoi nhieu viec mot luc): dong y luon
+          for (const w of [...chat.waiting.values()]) if (w.key === key) w.answer(decision)
+        }
+        this.emitNow(chat)
+      }
+      chat.waiting.set(card.id, { key, answer })
     })
   }
 
