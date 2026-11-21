@@ -613,6 +613,23 @@ export const copy = {
     accepted: 'Đã đồng ý',
     acceptedAlways: 'Đã cho phép cho cả buổi làm việc',
     declined: 'Đã từ chối',
+    // Cot lua chon noi canh khung chat
+    tray: {
+      ask: 'AI đang chờ bạn chọn',
+      hint: 'Hoặc gõ ý khác vào ô nhắn',
+      collapse: 'Thu gọn',
+      expand: 'Mở lại',
+      collapsedAsk: 'AI đang chờ bạn chọn',
+      collapsedApproval: 'AI đang chờ bạn cho phép',
+      more: (n: number) => `Còn ${n} yêu cầu nữa sau yêu cầu này`,
+      markerAsk: 'Đang chờ bạn chọn',
+      markerApproval: 'Đang chờ bạn cho phép',
+      yes: 'Có',
+      no: 'Không',
+      replyYes: 'Có, bạn làm tiếp nhé.',
+      replyNo: 'Không.',
+      reply: (key: string, label: string) => `Mình chọn ${key}. ${label}`
+    },
     errors: {
       hetLuot: 'Đã dùng hết Usage của ChatGPT. Chờ tới giờ Usage làm mới rồi nhắn lại.',
       mang: 'Mất kết nối mạng giữa chừng. Kiểm tra wifi rồi nhắn lại.',
