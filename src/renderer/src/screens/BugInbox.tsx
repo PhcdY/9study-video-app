@@ -6,6 +6,7 @@ import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { BugStatusBadge } from '@/components/BugReport'
+import { Sender } from '@/components/Sender'
 
 const t = copy.bug
 const STATUSES: BugStatus[] = ['moi', 'dangXem', 'daXuLy']
@@ -62,7 +63,7 @@ export function BugInbox({
                 </span>
                 <span className="flex items-center gap-2 pl-4 text-[13px] text-phu">
                   <span className="min-w-0 flex-1 truncate">
-                    {t.meta(b.author, t.when(b.createdAt), b.appVersion, b.toolkitVersion)}
+                    {t.meta(b.author, t.when(b.createdAt))}
                   </span>
                   {b.state.status !== 'moi' && <BugStatusBadge status={b.state.status} />}
                 </span>
@@ -109,11 +110,9 @@ function BugDetail({
   return (
     <article className="box-border flex min-w-0 flex-[999_1_560px] flex-col gap-4 rounded-xl border border-vien bg-white px-6 py-5">
       <div className="flex flex-wrap items-start gap-3">
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <div className="flex min-w-0 flex-1 flex-col gap-3">
           <h2 className="m-0 text-xl font-bold">{bug.desc || t.noDesc}</h2>
-          <span className="text-[13px] text-phu">
-            {t.sentAt(bug.author, t.when(bug.createdAt))}
-          </span>
+          <Sender name={bug.author} at={bug.createdAt} />
         </div>
         <label className="flex flex-col gap-1 text-xs font-semibold text-phu">
           {t.statusLabel}

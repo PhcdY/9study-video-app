@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useState } from 'react'
-import { ChevronRight, CircleCheck, FolderOpen, Play, X } from 'lucide-react'
+import {
+  AppWindow,
+  BookOpen,
+  ChevronRight,
+  CircleCheck,
+  Film,
+  FolderOpen,
+  Mic,
+  Package,
+  Play,
+  X,
+  type LucideIcon
+} from 'lucide-react'
 import type { FeedbackItem, FeedbackStatus } from '../../../shared/feedback'
 import type { FixDetail } from '../../../shared/fix-notes'
 import {
@@ -9,6 +21,7 @@ import {
   headline,
   mmss,
   nextVersion,
+  readableVoice,
   spotLabel
 } from '../../../shared/feedback-rules'
 import { subjectName } from '../../../shared/prompt'
@@ -19,6 +32,7 @@ import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input, Select } from '@/components/ui/layout'
+import { Sender } from '@/components/Sender'
 
 const t = copy.inbox
 const f = copy.feedback
@@ -53,18 +67,28 @@ export function InboxScreen(props: InboxProps): React.JSX.Element {
   const [kind, setKind] = useState<'gopY' | 'baoLoi'>('gopY')
   const newFb = list?.items.filter((i) => i.state.status === 'moi').length ?? 0
   const newBugs = list?.bugs.filter((b) => b.state.status === 'moi').length ?? 0
-  const tab = (k: 'gopY' | 'baoLoi', label: string): React.JSX.Element => (
+  // So moi hien thanh cham do nho canh ten tab (kieu thong bao), khong chen vao chu
+  const tab = (k: 'gopY' | 'baoLoi', label: string, n: number): React.JSX.Element => (
     <button
       type="button"
       role="tab"
       aria-selected={kind === k}
+      aria-label={n ? `${label}, ${copy.bug.newCount(n)}` : undefined}
       onClick={() => setKind(k)}
       className={cn(
-        'h-9 cursor-pointer rounded-lg px-3.5 text-sm',
+        'inline-flex h-9 cursor-pointer items-center gap-1.5 rounded-lg px-3.5 text-sm whitespace-nowrap',
         kind === k ? 'bg-cham-nhat font-bold text-cham' : 'font-semibold text-phu hover:text-navy'
       )}
     >
       {label}
+      {n > 0 && (
+        <span
+          aria-hidden
+          className="inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-loi px-1 text-[11px] leading-none font-bold text-white tabular-nums"
+        >
+          {n > 99 ? '99+' : n}
+        </span>
+      )}
     </button>
   )
   return (
@@ -75,8 +99,8 @@ export function InboxScreen(props: InboxProps): React.JSX.Element {
           aria-label={copy.inbox.nav}
           className="inline-flex gap-1 rounded-[10px] border border-vien bg-white p-1"
         >
-          {tab('gopY', copy.bug.tabFeedback(newFb))}
-          {tab('baoLoi', copy.bug.tabBugs(newBugs))}
+          {tab('gopY', copy.bug.tabFeedback, newFb)}
+          {tab('baoLoi', copy.bug.tabBugs, newBugs)}
         </div>
       </div>
       {kind === 'gopY' ? (
@@ -304,20 +328,9 @@ function Detail({
   return (
     <>
       <div className="flex flex-wrap items-start gap-3">
-        <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-1">
+        <div className="flex min-w-0 flex-[1_1_320px] flex-col gap-3">
           <h1 className="m-0 text-xl font-bold">{head}</h1>
-          <p className="m-0 text-[13px] text-phu">
-            {[
-              t.sentBy(it.author, when(it.createdAt)),
-              `"${it.title}"`,
-              classOf(it),
-              it.toolkitVersion && t.version(it.toolkitVersion),
-              t.app(it.appVersion),
-              it.voice && t.voice(it.voice)
-            ]
-              .filter(Boolean)
-              .join(' · ')}
-          </p>
+          <Sender name={it.author} at={it.createdAt} />
         </div>
         {done ? (
           <Button variant="outline" size="sm" onClick={() => setShowOrig((v) => !v)}>
@@ -343,6 +356,8 @@ function Detail({
           </>
         )}
       </div>
+
+      <InfoStrip it={it} />
 
       {done && (
         <FixedSection it={it} onOpenChat={onOpenChat} onReopen={() => setStatus(reopenTo)} />
@@ -451,6 +466,49 @@ function Detail({
         </>
       )}
     </>
+  )
+}
+
+/** Thong tin goi gop y: moi o mot nhan ro rang (Video, Mon, Giong doc...) thay cho mot dong dai. */
+function InfoStrip({ it }: { it: FeedbackItem }): React.JSX.Element {
+  const i = t.info
+  const voice = readableVoice(it.voice)
+  const cells: { icon: LucideIcon; label: string; value: string; wide?: boolean }[] = [
+    { icon: Film, label: i.video, value: it.title, wide: true },
+    { icon: BookOpen, label: i.subject, value: classOf(it) },
+    ...(voice ? [{ icon: Mic, label: i.voice, value: voice }] : []),
+    ...(it.toolkitVersion
+      ? [{ icon: Package, label: i.kit, value: i.kitValue(it.toolkitVersion) }]
+      : []),
+    { icon: AppWindow, label: i.app, value: it.appVersion }
+  ]
+  return (
+    <dl
+      aria-label={i.label}
+      className="m-0 flex flex-wrap gap-px overflow-hidden rounded-xl border border-vien bg-vien"
+    >
+      {cells.map(({ icon: Icon, label, value, wide }) => (
+        <div
+          key={label}
+          className={cn(
+            'flex min-w-0 flex-col gap-1 bg-white px-4 py-2.5',
+            // Ten video dai: mot dong rieng, hien du; cac o con lai chia deu hang duoi
+            wide ? 'basis-full' : 'flex-[1_1_110px]'
+          )}
+        >
+          <dt className="flex items-center gap-1.5 text-xs text-phu">
+            <Icon aria-hidden className="size-3.5" />
+            {label}
+          </dt>
+          <dd
+            className={cn('m-0 text-sm font-semibold text-navy', !wide && 'truncate')}
+            title={value}
+          >
+            {value}
+          </dd>
+        </div>
+      ))}
+    </dl>
   )
 }
 

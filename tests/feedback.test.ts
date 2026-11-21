@@ -9,6 +9,7 @@ import {
   lineAt,
   mmss,
   packageFolderName,
+  readableVoice,
   slugify,
   spotLabel
 } from '../src/shared/feedback-rules'
@@ -68,5 +69,12 @@ describe('gop y', () => {
     expect(batchName(['A', 'B', 'C'])).toBe('A và 2 góp ý khác')
     expect(nextVersion('3')).toBe('4')
     expect(nextVersion(undefined)).toBeUndefined()
+  })
+
+  it('ten giong: hien ten, bo ma giong', () => {
+    expect(readableVoice('nam - c Bình')).toBe('nam - c Bình')
+    expect(readableVoice('anh-male')).toBe('anh-male')
+    expect(readableVoice('qzVeAh5fVgdi41wrdb7P6J')).toBeUndefined()
+    expect(readableVoice('  ')).toBeUndefined()
   })
 })
