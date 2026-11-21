@@ -1,5 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { errorLines } from '../src/shared/bugs'
+import { errorLines, imageExt } from '../src/shared/bugs'
+
+describe('imageExt', () => {
+  it('nhan anh theo ten file, khong phan biet hoa thuong', () => {
+    expect(imageExt('Chup man hinh.PNG')).toBe('.png')
+    expect(imageExt('a.jpeg')).toBe('.jpg')
+    expect(imageExt('b.webp')).toBe('.webp')
+  })
+  it('anh dan tu clipboard: dung kieu MIME khi ten khong co duoi', () => {
+    expect(imageExt('', 'image/png')).toBe('.png')
+    expect(imageExt('image', 'image/jpeg')).toBe('.jpg')
+  })
+  it('khong phai anh thi null', () => {
+    expect(imageExt('bao-cao.pdf', 'application/pdf')).toBeNull()
+    expect(imageExt('x.svg', 'image/svg+xml')).toBeNull()
+    expect(imageExt('noduoi')).toBeNull()
+  })
+})
 
 describe('errorLines', () => {
   it('dem dong loi va lay vai dong loi / canh bao gan nhat, bo moc thoi gian', () => {

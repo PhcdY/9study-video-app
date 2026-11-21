@@ -32,7 +32,7 @@ import type {
 import type { VivibeUsage } from './vivibe'
 import type { FixDetail } from './fix-notes'
 import type { LegacyChat, LegacyMessage, LegacyOptions, LegacyResult, LegacyScan } from './legacy'
-import type { BugSendInput, BugStatus, ErrorShot } from './bugs'
+import type { AddImageResult, BugSendInput, BugStatus, ErrorShot } from './bugs'
 import type { AiChoice, AiModelOption } from './ai-model'
 
 export type SetupStepId =
@@ -275,6 +275,9 @@ export interface InvokeMap {
   'app:errorShown': { args: [key: string, label: string]; ret: void }
   /** Anh app tu chup luc loi, moi nhat truoc */
   'bugs:shots': { args: []; ret: ErrorShot[] }
+  /** CTV them anh tu may (chon file, dan, keo tha) vao o bao loi */
+  'bugs:addImage': { args: [name: string, mime: string, data: Uint8Array]; ret: AddImageResult }
+  'bugs:removeImage': { args: [id: string]; ret: void }
   'bugs:send': {
     args: [input: BugSendInput]
     ret: { ok: true } | { ok: false; code: 'chuaCoThuMuc' | 'loi' }

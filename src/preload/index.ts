@@ -62,6 +62,8 @@ const INVOKE: InvokeChannel[] = [
   'vivibe:usage',
   'app:errorShown',
   'bugs:shots',
+  'bugs:addImage',
+  'bugs:removeImage',
   'bugs:send',
   'bugs:setState',
   'bugs:askAi',
