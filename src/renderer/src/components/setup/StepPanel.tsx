@@ -9,12 +9,13 @@ import {
   TriangleAlert,
   XCircle
 } from 'lucide-react'
-import type { SetupSnapshot, SetupStepId, StepState } from '../../../../shared/types'
+import type { SetupInput, SetupSnapshot, SetupStepId, StepState } from '../../../../shared/types'
 import { OPTIONAL_STEPS, STEP_TASKS } from '../../../../shared/types'
 import { TaskList } from './TaskList'
+import { LegacyChoices, LegacyResultTiles } from '@/components/Legacy'
 import { ErrorSnap } from '@/components/ErrorSnap'
 import { copy } from '@/lib/copy'
-import { api } from '@/lib/api'
+import { api, useLegacyScan } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
 
@@ -27,6 +28,10 @@ interface Props {
 export function StepPanel({ snap, step, index }: Props): React.JSX.Element {
   const t = copy.steps[step.id]
   const running = step.status === 'running'
+  // Buoc 2 dang nhan du lieu cu tu bo cong cu cu: man rieng (tim thay / dang nhan / da nhan)
+  const legacy = step.id === 'taiDuAn' && snap.legacy ? snap.legacy : undefined
+  if (legacy && (legacy.pending || (step.status === 'done' && legacy.result)))
+    return <LegacyStep snap={snap} step={step} index={index} />
   const appDoes =
     step.id === 'noiLuu'
       ? snap.driveFound
@@ -93,6 +98,75 @@ export function StepPanel({ snap, step, index }: Props): React.JSX.Element {
   )
 }
 
+/** Buoc 2 khi nguoi dung chon bo cong cu cu: chon nhan gi, roi tien do, roi tong ket. */
+function LegacyStep({ snap, step, index }: Props): React.JSX.Element {
+  const l = copy.legacy
+  const legacy = snap.legacy!
+  const running = step.status === 'running'
+  const done = step.status === 'done' && !!legacy.result
+  const { scan, progress } = useLegacyScan(undefined, !done && !running)
+  const pickOther = async (): Promise<void> => {
+    const dir = await api.invoke('dialog:pickFolder', legacy.source)
+    if (dir) run('thuMuc', { dir, fromExisting: true })
+  }
+  return (
+    <main className="box-border flex min-w-0 max-w-[820px] flex-[999_1_560px] flex-col gap-6 rounded-xl border border-vien bg-white px-10 py-9">
+      <div className="flex flex-col gap-2">
+        <div className="text-sm font-semibold text-cham">
+          {copy.stepOf(index + 1, snap.steps.length)}
+        </div>
+        <h1 className="m-0 flex items-center gap-3 text-[28px] font-extrabold">
+          {done && <CheckCircle2 aria-hidden className="size-7 text-xong" />}
+          {done ? l.doneTitle : running ? l.running : l.title}
+        </h1>
+        {!done && !running && (
+          <p className="m-0 text-base leading-relaxed text-[#3d4466]">{l.found(legacy.source)}</p>
+        )}
+      </div>
+
+      {step.status === 'error' && step.error && (
+        <div
+          role="alert"
+          className="flex items-start gap-3 rounded-[10px] border border-loi/30 bg-loi-nen px-4 py-3.5"
+        >
+          <AlertCircle aria-hidden className="mt-0.5 size-5 shrink-0 text-loi" />
+          <ErrorSnap id={`setup-${step.id}-${step.error}`} label={copy.errors[step.error]} />
+          <div className="text-[15px] leading-normal text-navy">{copy.errors[step.error]}</div>
+        </div>
+      )}
+
+      {running || done ? (
+        <>
+          {running && step.progress !== undefined && (
+            <Progress value={step.progress} label={l.running} />
+          )}
+          <TaskList step={step} />
+          {done && <LegacyResultTiles result={legacy.result!} />}
+        </>
+      ) : (
+        <LegacyChoices
+          scan={scan}
+          progress={progress}
+          mode="setup"
+          onTake={(opts) => run('taiDuAn', { legacy: opts })}
+        >
+          <Button variant="outline" size="lg" onClick={() => void pickOther()}>
+            {l.pickOther}
+          </Button>
+          <Button
+            variant="ghost"
+            size="lg"
+            className="ml-auto"
+            onClick={() => run('taiDuAn', { noLegacy: true })}
+          >
+            {l.fresh}
+          </Button>
+        </LegacyChoices>
+      )}
+    </main>
+  )
+}
+
 function runningLabel(step: StepState): string {
   const current = step.tasks?.find((t) => t.status === 'running')
   if (current) return `${copy.tasks[current.id].label}…`
@@ -128,7 +202,7 @@ function Role({
   )
 }
 
-function run(id: SetupStepId, input?: { dir?: string; key?: string }): void {
+function run(id: SetupStepId, input?: SetupInput): void {
   void api.invoke('setup:run', id, input)
 }
 
@@ -312,7 +386,11 @@ function ExistingRepoHint({ dir }: { dir: string }): React.JSX.Element {
       <div className="min-w-0 flex-1 text-[15px]">
         <b>{t.existingTitle}</b> <span className="text-sm text-phu">{dir}</span>
       </div>
-      <Button variant="outline" size="md" onClick={() => run('thuMuc', { dir })}>
+      <Button
+        variant="outline"
+        size="md"
+        onClick={() => run('thuMuc', { dir, fromExisting: true })}
+      >
         {t.useExisting}
       </Button>
     </div>
@@ -387,7 +465,10 @@ function ProjectFolderStep({
         ))}
       </fieldset>
       <Actions>
-        <Button disabled={busy || !chosen} onClick={() => run('thuMuc', { dir: chosen })}>
+        <Button
+          disabled={busy || !chosen}
+          onClick={() => run('thuMuc', { dir: chosen, fromExisting: true })}
+        >
           {busy ? <Loader2 aria-hidden className="size-4 animate-spin" /> : null}
           {t.useExisting}
         </Button>

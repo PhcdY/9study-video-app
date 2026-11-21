@@ -32,7 +32,8 @@ import {
   threadOf,
   unboundNewChats
 } from './codex/session'
-import { dropDrafts, readDrafts, recoverDraft, saveDraft } from './drafts'
+import { dropDrafts, findRollout, readDrafts, recoverDraft, saveDraft } from './drafts'
+import { addLegacyChat, bringCodexRollout, legacyChats, removeLegacyChat } from './legacy'
 import { recordVoiceRun } from './vivibe-usage'
 import type { VoiceRunInfo } from '../../shared/vivibe'
 import { StudioService } from './studio'
@@ -195,6 +196,45 @@ export class VideosService extends EventEmitter {
   }
 
   // ---------- chat ----------
+
+  /** Mo tiep cuoc Codex cu trong video: cuoc dang co trong app chuyen vao "Tro chuyen cu". */
+  async resumeLegacy(key: string, id: string): Promise<boolean> {
+    const dir = this.projectDir
+    const old = legacyChats(dir).find((c) => c.id === id)
+    if (!old || old.source !== 'codex' || !old.threadId) return false
+    try {
+      if (old.file && existsSync(old.file)) await bringCodexRollout(old.file, codexHome())
+    } catch (e) {
+      log.warn(`[du lieu cu] khong chep duoc ${old.file}: ${String(e)}`)
+      return false
+    }
+    const s = this.chat()
+    const prev = threadOf(dir, key)
+    const prevText = s.textItems(key)
+    const ok = await s.switchThread(key, old.threadId)
+    if (!ok) return false
+    removeLegacyChat(dir, id)
+    if (prev && prev !== old.threadId) {
+      const now = Date.now()
+      addLegacyChat(
+        dir,
+        {
+          id: `codex-${prev}`,
+          source: 'codex',
+          title:
+            prevText.find((m) => m.role === 'user')?.text.slice(0, 70) || 'Trò chuyện trước đó',
+          startedAt: now,
+          endedAt: now,
+          slug: key.startsWith('moi-') ? undefined : key,
+          messages: prevText.length,
+          threadId: prev,
+          file: findRollout(path.join(codexHome(), 'sessions'), prev)
+        },
+        prevText.map((m) => ({ ...m, at: now }))
+      )
+    }
+    return true
+  }
 
   /** Trang thai AI tung bai (khong khoi dong Codex neu chua chay). */
   aiStatuses(): Record<string, AiStatus> {

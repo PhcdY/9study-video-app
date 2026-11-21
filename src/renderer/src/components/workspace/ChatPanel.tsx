@@ -8,6 +8,8 @@ import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Markdown } from './Markdown'
+import { LegacyChatList, LegacyTranscript } from '@/components/Legacy'
+import type { LegacyChat } from '../../../../shared/legacy'
 
 const c = copy.chat
 
@@ -33,6 +35,26 @@ export function ChatPanel({
   const listRef = useRef<HTMLDivElement>(null)
   const busy = !!chat?.busy
   const items = useMemo(() => chat?.items ?? [], [chat])
+
+  // Tro chuyen cu (truoc khi co app) cua video nay: xem lai, hoac mo tiep cuoc Codex
+  const [oldChats, setOldChats] = useState<LegacyChat[]>([])
+  const [viewing, setViewing] = useState<LegacyChat | null>(null)
+  const [resuming, setResuming] = useState<string | null>(null)
+  const [resumeFail, setResumeFail] = useState(false)
+  const loadOld = (): void => {
+    if (slug) void api.invoke('legacy:chats', slug).then(setOldChats)
+  }
+  useEffect(loadOld, [slug])
+  const resume = async (old: LegacyChat): Promise<void> => {
+    setResuming(old.id)
+    setResumeFail(false)
+    const ok = await api.invoke('legacy:resume', chatKey, old.id)
+    setResuming(null)
+    if (ok) {
+      setViewing(null)
+      loadOld()
+    } else setResumeFail(true)
+  }
 
   // Tu cuon xuong cuoi khi co noi dung moi (tru khi nguoi dung dang cuon len doc)
   useEffect(() => {
@@ -62,19 +84,52 @@ export function ChatPanel({
       )}
     >
       {!wide && <ResizeHandle width={width} onChange={setWidth} />}
-      <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-5">
-        {items.length === 0 && !busy && <p className="m-0 text-sm text-phu">{c.empty}</p>}
-        {items.map((it) => (
-          <Item key={it.id} item={it} chatKey={chatKey} />
-        ))}
-        {busy &&
-          !items.some(
-            (i) =>
-              (i.kind === 'status' && i.state === 'running') || (i.kind === 'ai' && i.streaming)
-          ) && <Status label={c.thinking} running />}
-      </div>
+      <LegacyChatList
+        chats={oldChats}
+        label={copy.legacy.oldChats(oldChats.length)}
+        current={viewing?.id}
+        onView={(o) => {
+          setViewing(o)
+          setResumeFail(false)
+        }}
+        onResume={busy ? undefined : (o) => void resume(o)}
+        resuming={resuming}
+      />
+      {viewing ? (
+        <div className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-x-hidden overflow-y-auto bg-[#fbfcff] p-5">
+          {resumeFail && (
+            <p role="alert" className="m-0 text-sm text-loi">
+              {copy.legacy.resumeFail}
+            </p>
+          )}
+          <LegacyTranscript chat={viewing} />
+        </div>
+      ) : (
+        <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-5">
+          {items.length === 0 && !busy && <p className="m-0 text-sm text-phu">{c.empty}</p>}
+          {items.map((it) => (
+            <Item key={it.id} item={it} chatKey={chatKey} />
+          ))}
+          {busy &&
+            !items.some(
+              (i) =>
+                (i.kind === 'status' && i.state === 'running') || (i.kind === 'ai' && i.streaming)
+            ) && <Status label={c.thinking} running />}
+        </div>
+      )}
 
-      {draft && !busy && (
+      {viewing && (
+        <div className="px-5 pt-3 pb-5">
+          <div className="flex items-center gap-2.5 rounded-[10px] border border-vien px-3.5 py-2.5">
+            <span className="flex-1 text-sm text-phu">{copy.legacy.viewing}</span>
+            <Button size="sm" onClick={() => setViewing(null)}>
+              {copy.legacy.back}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {!viewing && draft && !busy && (
         <div className="flex flex-wrap gap-2 px-5 pb-3">
           <button
             type="button"
@@ -86,7 +141,7 @@ export function ChatPanel({
         </div>
       )}
 
-      {slug && !busy && (
+      {!viewing && slug && !busy && (
         <div className="flex flex-wrap gap-2 px-5 pb-3">
           {STAGE_CHIPS[stage].map((chip, i) => (
             <button
@@ -106,7 +161,7 @@ export function ChatPanel({
         </div>
       )}
 
-      <div className="px-5 pb-5">
+      <div className={cn('px-5 pb-5', viewing && 'hidden')}>
         <div className="flex items-end gap-2 rounded-[10px] border-[1.5px] border-vien-dam py-2 pr-2 pl-3.5 focus-within:border-cham">
           <label htmlFor="nhan-ai" className="sr-only">
             {c.label}

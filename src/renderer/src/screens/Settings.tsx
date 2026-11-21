@@ -23,6 +23,7 @@ import {
   useUsage
 } from '@/lib/api'
 import { BusyWarning } from '@/components/UpdatePill'
+import { LegacySettings } from '@/components/Legacy'
 import { headline } from '../../../shared/feedback-rules'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
@@ -191,6 +192,7 @@ export function SettingsScreen({
                 {t.change}
               </Button>
             </SettingRow>
+            <LegacySettings projectDir={snap.projectDir} />
           </SettingsCard>
 
           <SettingsCard id="giong-doc" title={t.voice}>

@@ -40,6 +40,16 @@ import type { FeedbackList } from '../shared/feedback'
 import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
 import { restartToUpdate, startUpdater, updateInfo } from './services/updater'
 import { VideosService } from './services/videos'
+import {
+  copyKey,
+  copyMissingVideos,
+  legacyChats,
+  legacyTranscript,
+  saveChats,
+  scanLegacy
+} from './services/legacy'
+import { importVoiceRuns } from './services/vivibe-usage'
+import { defaultSearchRoots, findVideoRepos } from './services/detect'
 import { handleFileScheme, isInside, registerFileScheme } from './services/files-protocol'
 
 // Thu tu dong: chay voi thu muc du lieu rieng, khong dung toi cai dat that cua nguoi dung
@@ -192,6 +202,49 @@ function registerIpc(): void {
   })
   handle('chat:interrupt', (key) => videos.chat().interrupt(key))
   handle('chat:statuses', () => videos.aiStatuses())
+  handle('legacy:scan', async (dir) => {
+    const s = getSettings()
+    const source = dir ?? s.legacySource
+    if (!source || !s.projectDir) return null
+    try {
+      const full = await scanLegacy(source, s.projectDir, (done, total) =>
+        broadcast('legacy:progress', { done, total })
+      )
+      return full.scan
+    } catch (e) {
+      log.error(`[du lieu cu] quet loi: ${String(e)}`)
+      return null
+    }
+  })
+  handle('legacy:findDirs', () => {
+    const cur = getSettings().projectDir ?? ''
+    return findVideoRepos(defaultSearchRoots()).filter((d) => d.toLowerCase() !== cur.toLowerCase())
+  })
+  handle('legacy:import', async (dir, opts) => {
+    const target = getSettings().projectDir
+    if (!target) return null
+    try {
+      const full = await scanLegacy(dir, target)
+      const videosAdded = opts.videos ? await copyMissingVideos(dir, target) : 0
+      const key = opts.key ? copyKey(dir, target) : false
+      if (opts.chats) saveChats(target, full.parsed)
+      const chars = opts.voice
+        ? importVoiceRuns(
+            target,
+            full.parsed.flatMap((p) => p.runs)
+          )
+        : 0
+      void videos.list().then((snap) => broadcast('videos:changed', snap))
+      void setup.refresh().then((snap) => broadcast('setup:changed', snap))
+      return { videos: videosAdded, chats: opts.chats ? full.scan.chats.length : 0, chars, key }
+    } catch (e) {
+      log.error(`[du lieu cu] nhan loi: ${String(e)}`)
+      return null
+    }
+  })
+  handle('legacy:chats', (slug) => legacyChats(getSettings().projectDir ?? '', slug))
+  handle('legacy:transcript', (id) => legacyTranscript(id))
+  handle('legacy:resume', (key, id) => videos.resumeLegacy(key, id))
   handle('chat:approve', (key, itemId, decision) => videos.chat().approve(key, itemId, decision))
   handle('studio:start', async () => {
     try {

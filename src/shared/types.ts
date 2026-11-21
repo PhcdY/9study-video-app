@@ -30,6 +30,7 @@ import type {
 } from './video'
 import type { VivibeUsage } from './vivibe'
 import type { FixDetail } from './fix-notes'
+import type { LegacyChat, LegacyMessage, LegacyOptions, LegacyResult, LegacyScan } from './legacy'
 import type { BugSendInput, BugStatus, ErrorShot } from './bugs'
 
 export type SetupStepId =
@@ -94,6 +95,9 @@ export type TaskId =
   | 'taiDrive'
   | 'caiDrive'
   | 'dangNhapDrive'
+  | 'chepBoCongCu'
+  | 'nhanTroChuyen'
+  | 'congCredit'
 
 export const STEP_TASKS: Partial<Record<SetupStepId, TaskId[]>> = {
   taiDuAn: ['taiBoCongCu', 'layDanhSachBan', 'chuyenBanMoi'],
@@ -153,6 +157,8 @@ export interface SetupSnapshot {
   driveFound: boolean
   /** Bo cong cu da co san tren may (chi do khi chua chon thu muc), bo day du nhat dung dau */
   existingRepos: ExistingRepo[]
+  /** Dang nhan du lieu cu tu thu muc nay (buoc 2), va ket qua khi xong */
+  legacy?: { source: string; pending: boolean; result?: LegacyResult }
   account?: { email: string; plan: string }
   vivibeKeyMasked?: string
   checks: MachineCheck[]
@@ -162,6 +168,12 @@ export interface SetupSnapshot {
 export interface SetupInput {
   dir?: string
   key?: string
+  /** Buoc 1: chon bo cong cu cu da co tren may (se nhan du lieu cu o buoc 2) */
+  fromExisting?: boolean
+  /** Buoc 2: nhan du lieu cu voi cac lua chon nay */
+  legacy?: LegacyOptions
+  /** Buoc 2: bat dau moi, khong nhan du lieu cu */
+  noLegacy?: boolean
 }
 
 /** Kenh goi (renderer -> main), moi kenh mot cap tham so / ket qua. */
@@ -193,6 +205,17 @@ export interface InvokeMap {
   'chat:send': { args: [key: string, text: string]; ret: void }
   'chat:chip': { args: [key: string, chip: ChipId, slug: string]; ret: void }
   'chat:interrupt': { args: [key: string]; ret: void }
+  /** Quet thu muc bo cong cu cu (mac dinh: thu muc dang nhan o buoc 2) */
+  'legacy:scan': { args: [dir?: string]; ret: LegacyScan | null }
+  /** Thu muc bo cong cu cu khac tren may (de nhan tu Cai dat) */
+  'legacy:findDirs': { args: []; ret: string[] }
+  /** Nhan du lieu cu vao thu muc dang dung (tu Cai dat, khong chep ca bo cong cu) */
+  'legacy:import': { args: [dir: string, opts: LegacyOptions]; ret: LegacyResult | null }
+  /** Tro chuyen cu cua video (slug) hoac tro chuyen chung (slug = '') */
+  'legacy:chats': { args: [slug: string]; ret: LegacyChat[] }
+  'legacy:transcript': { args: [id: string]; ret: LegacyMessage[] }
+  /** Mo tiep cuoc Codex cu trong video; false neu Codex khong mo lai duoc */
+  'legacy:resume': { args: [key: string, id: string]; ret: boolean }
   /** Trang thai AI theo slug / khoa cuoc tro chuyen */
   'chat:statuses': { args: []; ret: Record<string, AiStatus> }
   'chat:approve': {
@@ -259,6 +282,7 @@ export interface EventMap {
   /** Vua tao giong xong: doc lai so credit Vivibe */
   'vivibe:changed': null
   'chat:statuses': Record<string, AiStatus>
+  'legacy:progress': { done: number; total: number }
 }
 
 export type InvokeChannel = keyof InvokeMap

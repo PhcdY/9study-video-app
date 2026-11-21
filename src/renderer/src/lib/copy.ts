@@ -176,8 +176,77 @@ export const copy = {
     cheDoAnToan: { label: 'Bật chế độ an toàn cho trợ lý AI', hint: 'vài giây' },
     taiDrive: { label: 'Tải bộ cài Google Drive', hint: 'khoảng 300 MB' },
     caiDrive: { label: 'Cài Google Drive', hint: 'bấm Có khi Windows hỏi' },
-    dangNhapDrive: { label: 'Đăng nhập Google trên cửa sổ Drive', hint: 'bạn làm' }
+    dangNhapDrive: { label: 'Đăng nhập Google trên cửa sổ Drive', hint: 'bạn làm' },
+    chepBoCongCu: { label: 'Chép bộ công cụ và video sang thư mục mới', hint: 'vài phút' },
+    nhanTroChuyen: { label: 'Gắn trò chuyện cũ vào video', hint: 'vài giây' },
+    congCredit: { label: 'Cộng credit Vivibe đã dùng', hint: 'vài giây' }
   } satisfies Record<TaskId, { label: string; hint: string }>,
+  legacy: {
+    title: 'Bạn đã làm video trước đây',
+    found: (dir: string) => `App tìm thấy bộ công cụ cũ ở ${dir}. Nhận lại những gì bạn muốn giữ:`,
+    scanning: 'Đang tìm dữ liệu cũ…',
+    scanned: (done: number, total: number) => `Đã đọc ${done} / ${total} cuộc trò chuyện`,
+    scanFail: 'Chưa đọc được thư mục này. Thử chọn lại thư mục.',
+    videos: (n: number) => `${n} video bạn đã làm`,
+    videosSub: (unfinished: number) =>
+      unfinished
+        ? `Kịch bản, storyboard, giọng đọc. ${unfinished} video còn dở hiện ở "Bài của bạn" để làm tiếp.`
+        : 'Kịch bản, storyboard, giọng đọc, video đã xuất.',
+    copyVideos: 'Chép các video chưa có sang thư mục đang dùng',
+    key: 'Key giọng đọc Vivibe',
+    keySub: 'Lấy từ file .env của thư mục cũ.',
+    keyHave: 'Đã có',
+    chats: (n: number) => `${n} cuộc trò chuyện với AI`,
+    chatsSub: (codex: number, claude: number) =>
+      [
+        codex ? `${codex} cuộc với Codex mở tiếp được` : '',
+        claude ? `${claude} cuộc với Claude Code chỉ xem lại` : ''
+      ]
+        .filter(Boolean)
+        .join(', ') + '. Gắn vào đúng video.',
+    voice: 'Credit Vivibe đã dùng',
+    voiceSub: (runs: number, since?: number) =>
+      `${runs} lần tạo giọng trong trò chuyện cũ${
+        since
+          ? `, từ ${String(new Date(since).getMonth() + 1).padStart(2, '0')}/${new Date(since).getFullYear()}`
+          : ''
+      }. Cộng vào thống kê theo tháng và theo video.`,
+    chars: (n: number) => `≈ ${n.toLocaleString('vi-VN')} ký tự`,
+    size: (b: number) =>
+      b >= 1024 ** 3
+        ? `${(b / 1024 ** 3).toFixed(1).replace('.', ',')} GB`
+        : `${Math.max(1, Math.round(b / 1024 ** 2))} MB`,
+    copyWarn: (target: string) =>
+      `Tên thư mục cũ có dấu cách hoặc có dấu, dễ lỗi khi xuất video. App chép sang ${target}, thư mục cũ giữ nguyên.`,
+    take: 'Nhận dữ liệu',
+    pickOther: 'Chọn thư mục khác',
+    fresh: 'Bắt đầu mới, không nhận',
+    running: 'Đang nhận dữ liệu cũ',
+    doneTitle: 'Đã nhận dữ liệu cũ',
+    tileVideos: 'video',
+    tileChats: 'cuộc trò chuyện cũ',
+    tileChars: 'ký tự Vivibe đã dùng',
+    tileKey: 'key giọng đọc',
+    keyNone: 'Chưa có',
+    nothing: 'Thư mục này không có video, trò chuyện hay key nào để nhận.',
+    settingsRow: 'Dữ liệu từ thư mục cũ',
+    settingsOpen: 'Nhận dữ liệu cũ',
+    settingsPick: 'Thư mục cũ',
+    settingsBrowse: 'Chọn thư mục…',
+    oldChats: (n: number) => `Trò chuyện cũ · ${n}`,
+    generalChats: (n: number) => `Trò chuyện cũ chung · ${n}`,
+    source: { codex: 'Codex', claude: 'Claude Code' },
+    viewOnly: (src: string, date: string) => `Trò chuyện cũ với ${src} · ${date} · chỉ xem`,
+    back: 'Về trò chuyện hiện tại',
+    resume: 'Mở tiếp',
+    resuming: 'Đang mở…',
+    resumeFail: 'Codex không mở lại được cuộc này. Bạn vẫn xem lại được.',
+    viewing: 'Đang xem trò chuyện cũ',
+    view: 'Xem',
+    close: 'Đóng',
+    you: 'Bạn',
+    ai: 'AI'
+  },
   taskStatus: {
     waiting: 'Chờ',
     skipped: 'Máy đã có sẵn',
@@ -730,6 +799,11 @@ export const copy = {
             t: 'Làm theo từng bước',
             d: 'App tự tải bộ công cụ và cài thư viện. Bước nào lỗi thì bấm "Thử lại" hoặc "Sửa giúp tôi".',
             shot: 'setup'
+          },
+          {
+            t: 'Đã làm video trước khi có app?',
+            d: 'App tìm thấy thư mục bộ công cụ cũ thì hỏi bạn nhận lại video, key Vivibe, trò chuyện cũ với AI và credit Vivibe đã dùng. Làm lại được ở Cài đặt › Thư mục › "Nhận dữ liệu cũ".',
+            tip: 'Trò chuyện cũ với Codex mở tiếp được ngay trong video. Trò chuyện với Claude Code chỉ xem lại được.'
           },
           {
             t: 'Đăng nhập ChatGPT',

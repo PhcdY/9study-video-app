@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { AiStatus, ChatState, VideosSnapshot } from '../../../shared/video'
+import type { LegacyScan } from '../../../shared/legacy'
 import type { AppUpdate, Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
 import type { FeedbackList } from '../../../shared/feedback'
 import type { VivibeUsage } from '../../../shared/vivibe'
@@ -160,4 +161,28 @@ export function useAiStatuses(): Record<string, AiStatus> {
     return off
   }, [])
   return s
+}
+
+/** Quet thu muc bo cong cu cu (kem tien do doc tro chuyen). undefined = dang quet, null = loi. */
+export function useLegacyScan(
+  dir?: string,
+  enabled = true
+): {
+  scan: LegacyScan | null | undefined
+  progress: { done: number; total: number } | null
+} {
+  const key = dir ?? ''
+  const [res, setRes] = useState<{ key: string; scan: LegacyScan | null } | null>(null)
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null)
+  useEffect(() => {
+    if (!enabled) return
+    let on = true
+    const off = api.on('legacy:progress', (p) => on && setProgress(p))
+    void api.invoke('legacy:scan', dir).then((s) => on && setRes({ key, scan: s }))
+    return () => {
+      on = false
+      off()
+    }
+  }, [dir, enabled, key])
+  return { scan: res && res.key === key ? res.scan : undefined, progress }
 }

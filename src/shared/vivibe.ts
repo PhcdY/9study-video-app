@@ -61,6 +61,8 @@ export interface VoiceRun extends VoiceRunInfo {
   projectDir: string
   /** Ten video luc tao (video bi xoa sau do van hien dung ten) */
   title?: string
+  /** Lan tao nhan tu tro chuyen cu: khoa chong cong trung */
+  src?: string
 }
 
 /**

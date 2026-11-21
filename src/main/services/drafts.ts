@@ -66,7 +66,7 @@ export function dropDrafts(projectDir: string, keys: string[]): void {
 }
 
 /** Tim file ghi cuoc tro chuyen cua Codex (CODEX_HOME/sessions/.../rollout-...-<thread>.jsonl). */
-function findRollout(root: string, threadId: string): string | undefined {
+export function findRollout(root: string, threadId: string): string | undefined {
   if (!existsSync(root)) return undefined
   for (const d of readdirSync(root, { withFileTypes: true })) {
     const p = path.join(root, d.name)

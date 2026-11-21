@@ -46,6 +46,9 @@ import {
   openDriveSetup
 } from './google-drive'
 import { FEEDBACK_FOLDER, feedbackDir } from './feedback'
+import { copyRepo, needsCopy, saveChats, scanLegacy } from './legacy'
+import { importVoiceRuns } from './vivibe-usage'
+import type { LegacyOptions } from '../../shared/legacy'
 import log from '../log'
 
 export const VIDEO_REPO_URL = 'https://github.com/PhcdY/remotion_claudecode.git'
@@ -133,6 +136,13 @@ export class SetupService extends EventEmitter {
         : path.join(path.dirname(this.projectDir || defaultProjectDir()), 'VideoXuat'),
       driveFound: !!this.driveDir,
       existingRepos: this.existingRepos,
+      legacy: getSettings().legacySource
+        ? {
+            source: getSettings().legacySource!,
+            pending: !!getSettings().legacyPending,
+            result: getSettings().legacyResult
+          }
+        : undefined,
       account: this.account,
       vivibeKeyMasked: key ? maskKey(key) : undefined,
       checks: this.checks,
@@ -211,7 +221,8 @@ export class SetupService extends EventEmitter {
       case 'thuMuc':
         return !!dir && validateProjectDir(dir, { existing: isVideoRepo(dir) }) === null
       case 'taiDuAn':
-        return !!dir && isVideoRepo(dir)
+        // Dang cho nguoi dung chon nhan du lieu cu: chua xong
+        return !!dir && isVideoRepo(dir) && !getSettings().legacyPending
       case 'caiThuVien':
         // Da cai (boi app hay boi nguoi dung tu `npm install`) va da co trinh duyet render
         return !!dir && librariesInstalled(dir) && renderBrowserInstalled(dir)
@@ -313,8 +324,14 @@ export class SetupService extends EventEmitter {
   private async doStep(id: SetupStepId, input: SetupInput, signal: AbortSignal): Promise<void> {
     switch (id) {
       case 'thuMuc':
-        return this.stepThuMuc(input.dir ?? this.snapshot().suggestedProjectDir)
+        return input.fromExisting && input.dir
+          ? this.stepThuMucCu(input.dir)
+          : this.stepThuMuc(input.dir ?? this.snapshot().suggestedProjectDir)
       case 'taiDuAn':
+        if (getSettings().legacyPending) {
+          if (input.legacy) return this.stepNhanDuLieuCu(input.legacy, signal)
+          if (input.noLegacy) updateSettings({ legacyPending: false, legacySource: undefined })
+        }
         return this.stepTaiDuAn(signal)
       case 'caiThuVien':
         return this.stepCaiThuVien(signal)
@@ -407,6 +424,81 @@ export class SetupService extends EventEmitter {
     // Bo co san thi da chiem cho roi, chi can du cho cho video
     if (freeGb(dir) < (existing ? 5 : MIN_FREE_GB)) throw new StepError('khongDuCho')
     updateSettings({ projectDir: path.resolve(dir) })
+  }
+
+  /** Buoc 1, chon bo cong cu cu: thu muc co dau cach / co dau thi buoc 2 chep sang thu muc moi. */
+  private stepThuMucCu(source: string): void {
+    if (!isVideoRepo(source)) throw new StepError('khongRo', `khong phai bo cong cu: ${source}`)
+    let target = source
+    if (needsCopy(source)) {
+      // Thu muc mac dinh da co gi (vd bo cong cu khac) thi dung VideoAI2, VideoAI3...
+      const base = defaultProjectDir()
+      target = base
+      for (let i = 2; existsSync(target) && readdirSync(target).length > 0; i++)
+        target = `${base}${i}`
+      if (!canWriteTo(path.dirname(target)))
+        throw new StepError('khongGhiDuoc', `khong ghi duoc vao ${path.dirname(target)}`)
+      if (freeGb(path.dirname(target)) < MIN_FREE_GB) throw new StepError('khongDuCho')
+    }
+    updateSettings({
+      projectDir: path.resolve(target),
+      legacySource: path.resolve(source),
+      legacyPending: true,
+      legacyResult: undefined
+    })
+  }
+
+  /** Buoc 2, nhan du lieu cu: chep bo cong cu (neu can), ghi tro chuyen cu, cong credit Vivibe. */
+  private async stepNhanDuLieuCu(opts: LegacyOptions, signal: AbortSignal): Promise<void> {
+    const source = getSettings().legacySource!
+    const target = this.projectDir
+    this.set('taiDuAn', {
+      tasks: (['chepBoCongCu', 'nhanTroChuyen', 'congCredit'] as const).map((t) => ({
+        id: t,
+        status: 'waiting'
+      }))
+    })
+    const full = await scanLegacy(source, target)
+
+    if (path.resolve(source) !== path.resolve(target) && !isVideoRepo(target)) {
+      this.task('taiDuAn', 'chepBoCongCu', { status: 'running', progress: 0 })
+      await copyRepo(
+        source,
+        target,
+        (done, total) =>
+          this.task('taiDuAn', 'chepBoCongCu', {
+            progress: Math.floor((done / Math.max(1, total)) * 100)
+          }),
+        signal
+      )
+      this.task('taiDuAn', 'chepBoCongCu', { status: 'done' })
+    } else this.task('taiDuAn', 'chepBoCongCu', { status: 'skipped' })
+
+    let chats = 0
+    if (opts.chats) {
+      this.task('taiDuAn', 'nhanTroChuyen', { status: 'running' })
+      chats = saveChats(target, full.parsed)
+      this.task('taiDuAn', 'nhanTroChuyen', { status: 'done' })
+    } else this.task('taiDuAn', 'nhanTroChuyen', { status: 'skipped' })
+
+    let chars = 0
+    if (opts.voice) {
+      this.task('taiDuAn', 'congCredit', { status: 'running' })
+      const runs = full.parsed.flatMap((p) => p.runs)
+      chars = importVoiceRuns(target, runs)
+      this.task('taiDuAn', 'congCredit', { status: 'done' })
+    } else this.task('taiDuAn', 'congCredit', { status: 'skipped' })
+
+    updateSettings({
+      legacyPending: false,
+      legacyResult: {
+        videos: full.scan.ownVideos,
+        chats: opts.chats ? full.scan.chats.length : 0,
+        chars,
+        key: !!readEnvFile(path.join(target, '.env')).get('VIVIBE_API_KEY')
+      }
+    })
+    log.info(`[du lieu cu] da nhan tu ${source}: ${chats} tro chuyen moi, ${chars} ky tu Vivibe`)
   }
 
   private git(

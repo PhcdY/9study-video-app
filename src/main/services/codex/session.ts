@@ -182,6 +182,37 @@ export class CodexSession extends EventEmitter {
     return c
   }
 
+  /** Gan cuoc tro chuyen cua video vao thread khac roi mo lai. false (va giu nguyen) neu Codex khong mo duoc. */
+  async switchThread(key: string, threadId: string): Promise<boolean> {
+    const prev = readStore()[this.projectDir]?.[key]
+    const old = this.chats.get(key)
+    if (old?.busy) return false
+    saveThread(this.projectDir, key, threadId)
+    this.chats.delete(key)
+    const st = await this.open(key)
+    if (this.chats.get(key)?.threadId === threadId) {
+      this.emitNow(this.chats.get(key)!)
+      return true
+    }
+    // Khong mo duoc: tra lai nhu cu
+    if (prev) saveThread(this.projectDir, key, prev)
+    else forgetThread(this.projectDir, key)
+    this.chats.delete(key)
+    if (old) this.chats.set(key, old)
+    void st
+    return false
+  }
+
+  /** Cac tin nhan chu (nguoi dung, AI) cua cuoc tro chuyen dang mo, de luu lai khi bi thay. */
+  textItems(key: string): { role: 'user' | 'ai'; text: string }[] {
+    const out: { role: 'user' | 'ai'; text: string }[] = []
+    for (const it of this.chats.get(key)?.items ?? []) {
+      if (it.kind === 'user') out.push({ role: 'user', text: it.text })
+      else if (it.kind === 'ai') out.push({ role: 'ai', text: it.text })
+    }
+    return out
+  }
+
   /** Trang thai AI theo khoa cuoc tro chuyen va theo slug video (chi cac cuoc da mo trong lan chay nay). */
   statuses(): Record<string, AiStatus> {
     const out: Record<string, AiStatus> = {}

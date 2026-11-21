@@ -30,6 +30,27 @@ export function recordVoiceRun(projectDir: string, info: VoiceRunInfo): void {
   renameSync(file() + '.tmp', file())
 }
 
+/** Cong cac lan tao giong cu (nhan du lieu cu). Bo qua lan da cong (theo src). Tra ve so ky tu moi cong. */
+export function importVoiceRuns(
+  projectDir: string,
+  runs: (VoiceRunInfo & { at: number; src: string })[]
+): number {
+  const all = readRuns()
+  const seen = new Set(all.map((r) => r.src).filter(Boolean))
+  let added = 0
+  for (const r of runs) {
+    if (seen.has(r.src)) continue
+    seen.add(r.src)
+    const title = r.slug ? readScript(projectDir, r.slug)?.title : undefined
+    all.push({ ...r, title, projectDir })
+    added += r.chars
+  }
+  all.sort((a, b) => a.at - b.at)
+  writeFileSync(file() + '.tmp', JSON.stringify({ runs: all }, null, 2))
+  renameSync(file() + '.tmp', file())
+  return added
+}
+
 /** So ky tu cua cac cau dang co audio trong video (lay loi doc tu script.json). */
 function usedChars(
   projectDir: string,
