@@ -27,6 +27,7 @@ import type {
   VideosSnapshot
 } from './video'
 import type { VivibeUsage } from './vivibe'
+import type { BugSendInput, BugStatus, ErrorShot } from './bugs'
 
 export type SetupStepId =
   | 'thuMuc'
@@ -222,6 +223,15 @@ export interface InvokeMap {
   'disk:usage': { args: []; ret: DiskUsage }
   /** Credit Vivibe da dung theo thang ("YYYY-MM"; bo trong = thang nay) */
   'vivibe:usage': { args: [month?: string]; ret: VivibeUsage }
+  /** Giao dien vua hien thong bao loi: app chup cua so (key: moi loi mot lan) */
+  'app:errorShown': { args: [key: string, label: string]; ret: void }
+  /** Anh app tu chup luc loi, moi nhat truoc */
+  'bugs:shots': { args: []; ret: ErrorShot[] }
+  'bugs:send': {
+    args: [input: BugSendInput]
+    ret: { ok: true } | { ok: false; code: 'chuaCoThuMuc' | 'loi' }
+  }
+  'bugs:setState': { args: [id: string, status: BugStatus]; ret: void }
   'disk:clean': { args: [which: 'drafts' | 'temp']; ret: DiskUsage }
 }
 

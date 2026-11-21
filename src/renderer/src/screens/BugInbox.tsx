@@ -1,0 +1,193 @@
+import { useState } from 'react'
+import type { BugItem, BugStatus } from '../../../shared/bugs'
+import { api, fileUrl } from '@/lib/api'
+import { copy } from '@/lib/copy'
+import { cn } from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { BugStatusBadge } from '@/components/BugReport'
+
+const t = copy.bug
+const STATUSES: BugStatus[] = ['moi', 'dangXem', 'daXuLy']
+
+/** Hop thu bao loi app cho nguoi bao tri: danh sach ben trai, chi tiet ben phai. */
+export function BugInbox({ bugs }: { bugs: BugItem[] }): React.JSX.Element {
+  const [current, setCurrent] = useState<string | null>(null)
+  const cur = bugs.find((b) => b.id === current) ?? bugs[0]
+  if (!bugs.length)
+    return <div className="flex flex-1 items-center justify-center text-phu">{t.empty}</div>
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-wrap gap-5">
+      <ul
+        aria-label={t.listLabel}
+        className="m-0 box-border flex max-w-[400px] min-w-0 flex-[1_1_320px] list-none flex-col self-start overflow-hidden rounded-xl border border-vien bg-white p-0"
+      >
+        {bugs.map((b) => {
+          const on = b.id === cur?.id
+          return (
+            <li key={b.id} className="border-b border-[#EEF1F8] last:border-b-0">
+              <button
+                type="button"
+                aria-current={on ? 'true' : undefined}
+                onClick={() => setCurrent(b.id)}
+                className={cn(
+                  'flex w-full cursor-pointer flex-col gap-1 px-4 py-3.5 text-left',
+                  on ? 'bg-cham-nhat' : 'hover:bg-nen'
+                )}
+              >
+                <span className="flex items-center gap-2">
+                  <span
+                    aria-hidden
+                    className={cn(
+                      'size-2 shrink-0 rounded-full',
+                      b.state.status === 'moi' ? 'bg-cham' : 'bg-transparent'
+                    )}
+                  />
+                  <b
+                    className={cn(
+                      'min-w-0 flex-1 truncate text-[15px]',
+                      b.state.status !== 'moi' && 'font-semibold'
+                    )}
+                  >
+                    {b.desc || t.noDesc}
+                  </b>
+                </span>
+                <span className="flex items-center gap-2 pl-4 text-[13px] text-phu">
+                  <span className="min-w-0 flex-1 truncate">
+                    {t.meta(b.author, t.when(b.createdAt), b.appVersion, b.toolkitVersion)}
+                  </span>
+                  {b.state.status !== 'moi' && <BugStatusBadge status={b.state.status} />}
+                </span>
+              </button>
+            </li>
+          )
+        })}
+      </ul>
+      {cur && <BugDetail bug={cur} />}
+    </div>
+  )
+}
+
+function Tile({
+  label,
+  value,
+  warn
+}: {
+  label: string
+  value: string
+  warn?: boolean
+}): React.JSX.Element {
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-0.5 rounded-[10px] border px-3 py-2.5',
+        warn ? 'border-[#FDE0BD] bg-credit-nen text-credit' : 'border-vien'
+      )}
+    >
+      <span className={cn('text-xs', !warn && 'text-phu')}>{label}</span>
+      <b className="text-[15px]">{value}</b>
+    </div>
+  )
+}
+
+function BugDetail({ bug }: { bug: BugItem }): React.JSX.Element {
+  const setStatus = (s: BugStatus): void => void api.invoke('bugs:setState', bug.id, s)
+  return (
+    <article className="box-border flex min-w-0 flex-[999_1_560px] flex-col gap-4 rounded-xl border border-vien bg-white px-6 py-5">
+      <div className="flex flex-wrap items-start gap-3">
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <h2 className="m-0 text-xl font-bold">{bug.desc || t.noDesc}</h2>
+          <span className="text-[13px] text-phu">
+            {t.sentAt(bug.author, t.when(bug.createdAt))}
+          </span>
+        </div>
+        <label className="flex flex-col gap-1 text-xs font-semibold text-phu">
+          {t.statusLabel}
+          <select
+            value={bug.state.status}
+            onChange={(e) => setStatus(e.target.value as BugStatus)}
+            className="h-9 cursor-pointer rounded-lg border border-vien-dam bg-white px-2 text-sm text-navy"
+          >
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {t.status[s]}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        <Tile label={t.tileApp} value={bug.appVersion} />
+        <Tile label={t.tileKit} value={t.tileKitValue(bug.toolkitVersion)} />
+        <Tile
+          label={t.tileC}
+          value={bug.cFreeGb === undefined ? '?' : copy.gb(String(bug.cFreeGb))}
+          warn={bug.cFreeGb !== undefined && bug.cFreeGb < 10}
+        />
+        <Tile label={t.tileErrors} value={t.times(bug.errorCount)} />
+      </div>
+
+      {bug.shotPaths.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-sm font-bold">{t.shots}</span>
+          <div className="flex flex-wrap gap-3">
+            {bug.shotPaths.map((p, i) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => void api.invoke('shell:openPath', p)}
+                className="flex w-[240px] cursor-pointer flex-col gap-1 text-left"
+              >
+                <img
+                  src={fileUrl(p)}
+                  alt={t.shotAlt(t.time(bug.shots[i]?.at ?? bug.createdAt))}
+                  className="aspect-video w-full rounded-lg border border-vien object-cover object-top"
+                  draggable={false}
+                />
+                <span className="truncate text-xs text-phu">
+                  {t.time(bug.shots[i]?.at ?? bug.createdAt)} · {bug.shots[i]?.label}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex flex-col gap-1.5">
+        <span className="text-sm font-bold">{t.lastErrors}</span>
+        {bug.lastErrors.length ? (
+          <pre className="m-0 rounded-[10px] bg-navy px-3.5 py-3 font-mono text-[12.5px] leading-relaxed whitespace-pre-wrap text-[#DFE4FF]">
+            {bug.lastErrors.join('\n')}
+          </pre>
+        ) : (
+          <span className="text-sm text-phu">{t.noErrors}</span>
+        )}
+      </div>
+
+      <div className="mt-auto flex flex-wrap gap-2.5">
+        {bug.logFile && (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => void api.invoke('shell:openPath', bug.logFile!)}
+          >
+            {t.openLog}
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="md"
+          onClick={() => void api.invoke('shell:openPath', bug.dir)}
+        >
+          {t.openFolder}
+        </Button>
+        {bug.state.status !== 'daXuLy' && (
+          <Button className="ml-auto" onClick={() => setStatus('daXuLy')}>
+            {t.markDone}
+          </Button>
+        )}
+      </div>
+    </article>
+  )
+}

@@ -3,6 +3,7 @@ import { AlertCircle, Check, CircleAlert, Loader2, Send, Square, TriangleAlert }
 import type { ApprovalDecision, ChatItem, ChatState, VideoStage } from '../../../../shared/video'
 import { STAGE_CHIPS } from '../../../../shared/prompt'
 import { api } from '@/lib/api'
+import { ErrorSnap } from '@/components/ErrorSnap'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -175,6 +176,7 @@ function Item({ item, chatKey }: { item: ChatItem; chatKey: string }): React.JSX
         >
           <AlertCircle aria-hidden className="mt-0.5 size-4 shrink-0 text-loi" />
           {c.errors[item.code]}
+          <ErrorSnap id={`chat-${item.id}`} label={c.errors[item.code]} />
         </div>
       )
   }

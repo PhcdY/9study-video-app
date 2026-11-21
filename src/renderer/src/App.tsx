@@ -44,7 +44,9 @@ function App(): React.JSX.Element {
     current?.name === 'video' || current?.name === 'assistant' || current?.name === 'feedback'
   const [prefs] = usePrefs()
   const [feedback] = useFeedback()
-  const newFeedback = feedback?.items.filter((it) => it.state.status === 'moi').length ?? 0
+  const newFeedback =
+    (feedback?.items.filter((it) => it.state.status === 'moi').length ?? 0) +
+    (feedback?.bugs.filter((b) => b.state.status === 'moi').length ?? 0)
   const ready = !!current && current.name !== 'ready'
   const [version, reloadVersion] = useVersion()
 

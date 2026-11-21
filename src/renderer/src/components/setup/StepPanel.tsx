@@ -12,6 +12,7 @@ import {
 import type { SetupSnapshot, SetupStepId, StepState } from '../../../../shared/types'
 import { OPTIONAL_STEPS, STEP_TASKS } from '../../../../shared/types'
 import { TaskList } from './TaskList'
+import { ErrorSnap } from '@/components/ErrorSnap'
 import { copy } from '@/lib/copy'
 import { api } from '@/lib/api'
 import { Button } from '@/components/ui/button'
@@ -68,6 +69,7 @@ export function StepPanel({ snap, step, index }: Props): React.JSX.Element {
           className="flex items-start gap-3 rounded-[10px] border border-loi/30 bg-loi-nen px-4 py-3.5"
         >
           <AlertCircle aria-hidden className="mt-0.5 size-5 shrink-0 text-loi" />
+          <ErrorSnap id={`setup-${step.id}-${step.error}`} label={copy.errors[step.error]} />
           <div className="text-[15px] leading-normal text-navy">{copy.errors[step.error]}</div>
         </div>
       )}

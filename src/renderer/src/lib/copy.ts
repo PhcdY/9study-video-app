@@ -506,6 +506,63 @@ export const copy = {
     hint: 'Di chuột hoặc bấm để xem đủ các hạn mức',
     manage: 'Xem trong Cài đặt'
   },
+  bug: {
+    descLabel: 'Chuyện gì xảy ra?',
+    optional: '(không bắt buộc)',
+    descPh: 'Ví dụ: bấm Xuất video thì chạy tới 80% rồi báo lỗi, thử 2 lần vẫn vậy.',
+    shotsTitle: 'Ảnh app tự chụp lúc báo lỗi',
+    noShots: 'Chưa có ảnh nào. Mỗi khi app hiện thông báo lỗi, app tự chụp cửa sổ app.',
+    shotsHint:
+      'App chỉ chụp cửa sổ của app (không chụp màn hình khác), giữ 3 lần gần nhất. Bỏ tick ảnh nào không muốn gửi.',
+    shotAlt: (t: string) => `Cửa sổ app lúc ${t}`,
+    shotPick: (t: string) => `Gửi kèm ảnh lúc ${t}`,
+    time: (ms: number) => {
+      const d = new Date(ms)
+      const hm = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      return d.toDateString() === new Date().toDateString()
+        ? hm
+        : `${hm} ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+    },
+    when: (ms: number) => {
+      const d = new Date(ms)
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} · ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`
+    },
+    privacy:
+      'Gửi vào thư mục chung, mục Báo lỗi (khác chỗ góp ý). Gồm nhật ký của app và thông tin máy. Key Vivibe và mật khẩu đã được che.',
+    noDir:
+      'Chưa có thư mục góp ý chung nên chưa gửi thẳng được. Bấm "Lưu ra Desktop" rồi gửi file cho người phụ trách.',
+    send: 'Gửi cho người phụ trách',
+    sending: 'Đang gửi…',
+    saveDesktop: 'Lưu ra Desktop thay vì gửi',
+    sent: 'Đã gửi báo lỗi. Người phụ trách sẽ thấy khi Drive đồng bộ xong.',
+    fail: 'Chưa gửi được. Thử lại sau ít phút, hoặc bấm "Lưu ra Desktop".',
+    mine: (n: number) => `Báo lỗi đã gửi · ${n}`,
+    noDesc: '(Không có mô tả)',
+    status: { moi: 'Chưa xem', dangXem: 'Đang xem', daXuLy: 'Đã xử lý' },
+    // Hop thu nguoi bao tri
+    tabFeedback: (n: number) => `Góp ý về video${n ? ` · ${n} mới` : ''}`,
+    tabBugs: (n: number) => `Báo lỗi app${n ? ` · ${n} mới` : ''}`,
+    empty: 'Chưa có báo lỗi nào.',
+    listLabel: 'Danh sách báo lỗi',
+    meta: (who: string, when: string, app: string, kit?: string) =>
+      [`${who} · ${when}`, `app ${app}`, kit ? `bộ công cụ bản ${kit}` : '']
+        .filter(Boolean)
+        .join(' · '),
+    sentAt: (who: string, when: string) => `${who} gửi lúc ${when}`,
+    statusLabel: 'Trạng thái',
+    tileApp: 'App',
+    tileKit: 'Bộ công cụ',
+    tileKitValue: (v?: string) => (v ? `Bản ${v}` : 'Chưa rõ'),
+    tileC: 'Ổ C còn trống',
+    tileErrors: 'Lỗi trong nhật ký',
+    times: (n: number) => `${n} lần`,
+    lastErrors: 'Dòng lỗi gần nhất trong nhật ký',
+    noErrors: 'Nhật ký không có dòng lỗi nào.',
+    shots: 'Ảnh lúc báo lỗi',
+    openLog: 'Mở cả nhật ký',
+    openFolder: 'Mở thư mục',
+    markDone: 'Đánh dấu đã xử lý'
+  },
   vivibe: {
     title: 'Đã dùng',
     popTitle: 'VIVIBE · GIỌNG ĐỌC',
@@ -764,7 +821,7 @@ export const copy = {
     rechecking: 'Đang kiểm tra…',
     bugReport: 'Gửi báo lỗi',
     bugReportDesc:
-      '"Gửi báo lỗi" gom nhật ký thành một file trên Desktop để bạn gửi cho người phụ trách. Key và mật khẩu không nằm trong đó.',
+      'App gặp lỗi lạ thì bấm "Gửi báo lỗi". App gửi nhật ký, thông tin máy và ảnh lúc lỗi cho người phụ trách. Key và mật khẩu đã được che.',
     bugReportDone: (p: string) => `Đã tạo ${p}. Gửi file này cho người phụ trách.`,
     bugReportFail: 'Chưa tạo được file báo lỗi. Thử lại sau ít phút.',
     working: 'Đang làm…',

@@ -1,4 +1,5 @@
 // Gop y cho doi: goi gop y CTV gui vao thu muc chung tren Drive, nguoi bao tri xem va sua skill.
+import type { BugItem } from './bugs'
 
 export type FeedbackKind = 'hinh' | 'giong' | 'noiDung' | 'loiApp'
 export type FeedbackScope = 'chung' | 'video'
@@ -109,6 +110,8 @@ export interface BatchInput {
 
 export interface FeedbackList {
   items: FeedbackItem[]
+  /** Bao loi app (thu muc _BaoLoi), tach khoi gop y */
+  bugs: BugItem[]
   /** Ma may nay: loc "gop y cua toi" */
   me: string
   /** Thu muc gop y dang dung; khong co thi chua dat */

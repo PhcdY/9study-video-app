@@ -13,6 +13,7 @@ import {
 import { subjectName } from '../../../shared/prompt'
 import type { VersionInfo } from '../../../shared/app'
 import { api, fileUrl, useFeedback } from '@/lib/api'
+import { BugInbox } from '@/screens/BugInbox'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -43,8 +44,53 @@ const shortTarget = (p: string): string =>
     .replace(/^\.agents\//, '')
     .replace(/^scripts\//, '')
 
-/** Hop thu gop y cho nguoi bao tri: danh sach + chi tiet, tick nhieu de gop thanh mot lan sua. */
-export function InboxScreen({
+type InboxProps = { version: VersionInfo | null; onOpenChat: (key: string) => void }
+
+/** Hop thu nguoi bao tri: hai tab "Gop y ve video" va "Bao loi app" (tach rieng, khong gop thanh lan sua). */
+export function InboxScreen(props: InboxProps): React.JSX.Element {
+  const [list] = useFeedback()
+  const [kind, setKind] = useState<'gopY' | 'baoLoi'>('gopY')
+  const newFb = list?.items.filter((i) => i.state.status === 'moi').length ?? 0
+  const newBugs = list?.bugs.filter((b) => b.state.status === 'moi').length ?? 0
+  const tab = (k: 'gopY' | 'baoLoi', label: string): React.JSX.Element => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={kind === k}
+      onClick={() => setKind(k)}
+      className={cn(
+        'h-9 cursor-pointer rounded-lg px-3.5 text-sm',
+        kind === k ? 'bg-cham-nhat font-bold text-cham' : 'font-semibold text-phu hover:text-navy'
+      )}
+    >
+      {label}
+    </button>
+  )
+  return (
+    <div className="flex min-h-0 flex-1 flex-col">
+      <div className="border-b border-vien bg-white px-6 py-2.5">
+        <div
+          role="tablist"
+          aria-label={copy.inbox.nav}
+          className="inline-flex gap-1 rounded-[10px] border border-vien bg-white p-1"
+        >
+          {tab('gopY', copy.bug.tabFeedback(newFb))}
+          {tab('baoLoi', copy.bug.tabBugs(newBugs))}
+        </div>
+      </div>
+      {kind === 'gopY' ? (
+        <FeedbackInbox {...props} />
+      ) : (
+        <div className="flex min-h-0 flex-1 overflow-y-auto bg-nen px-8 py-6">
+          <BugInbox bugs={list?.bugs ?? []} />
+        </div>
+      )}
+    </div>
+  )
+}
+
+/** Gop y ve video: danh sach + chi tiet, tick nhieu de gop thanh mot lan sua. */
+function FeedbackInbox({
   version,
   onOpenChat
 }: {

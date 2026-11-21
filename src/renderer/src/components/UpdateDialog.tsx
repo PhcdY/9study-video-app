@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { ArrowUpCircle, Check, Loader2, ShieldCheck, X } from 'lucide-react'
 import type { ChangelogEntry, UpdateResult, UpdateStep, VersionInfo } from '../../../shared/app'
 import { api } from '@/lib/api'
+import { ErrorSnap } from '@/components/ErrorSnap'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
 import { Markdown } from '@/components/workspace/Markdown'
@@ -170,6 +171,7 @@ export function UpdateDialog({
               className="rounded-lg border border-loi/30 bg-loi-nen px-4 py-3 text-sm"
             >
               {t.errors[result.code]}
+              <ErrorSnap id={`update-${result.code}`} label={t.errors[result.code]} />
             </div>
           )}
           {result?.ok && (

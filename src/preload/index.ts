@@ -44,6 +44,10 @@ const INVOKE: InvokeChannel[] = [
   'voice:setSpeed',
   'disk:usage',
   'vivibe:usage',
+  'app:errorShown',
+  'bugs:shots',
+  'bugs:send',
+  'bugs:setState',
   'disk:clean'
 ]
 const EVENTS: EventChannel[] = [

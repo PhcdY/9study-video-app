@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { ChangelogBody } from '@/components/UpdateDialog'
 import { VivibeSettingsBlock } from '@/components/VivibeUsage'
+import { BugReportPanel, MyBugs } from '@/components/BugReport'
 import type { DiskUsage, VersionInfo } from '../../../shared/app'
 import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
@@ -40,7 +41,7 @@ export function SettingsScreen({
   const [editKey, setEditKey] = useState(false)
   const [key, setKey] = useState('')
   const [confirmLogout, setConfirmLogout] = useState(false)
-  const [report, setReport] = useState<'idle' | 'busy' | { path: string | null }>('idle')
+  const [showBug, setShowBug] = useState(false)
   const [active, setActive] = useState('thu-muc')
   const [prefs, savePrefs] = usePrefs()
   const [fb] = useFeedback()
@@ -106,10 +107,6 @@ export function SettingsScreen({
     setCleaning(which)
     setDisk(await api.invoke('disk:clean', which))
     setCleaning(null)
-  }
-  const bugReport = async (): Promise<void> => {
-    setReport('busy')
-    setReport({ path: await api.invoke('app:bugReport') })
   }
 
   const sections: { id: string; title: string }[] = [
@@ -681,25 +678,22 @@ export function SettingsScreen({
                 <Button
                   variant="outline"
                   size="md"
-                  disabled={report === 'busy'}
-                  onClick={() => void bugReport()}
+                  aria-expanded={showBug}
+                  className={cn(showBug && 'border-cham bg-cham-nhat text-cham')}
+                  onClick={() => setShowBug((v) => !v)}
                 >
-                  {report === 'busy' && <Loader2 aria-hidden className="size-4 animate-spin" />}
                   {t.bugReport}
                 </Button>
                 <Button variant="outline" size="md" onClick={onOpenGuide}>
                   {t.guide}
                 </Button>
               </div>
-              <p className="m-0 text-[13px] leading-normal text-phu">{t.bugReportDesc}</p>
-              {typeof report === 'object' &&
-                (report.path ? (
-                  <p className="m-0 text-sm font-semibold text-xong">
-                    {t.bugReportDone(report.path)}
-                  </p>
-                ) : (
-                  <Alert>{t.bugReportFail}</Alert>
-                ))}
+              {showBug ? (
+                <BugReportPanel onClose={() => setShowBug(false)} />
+              ) : (
+                <p className="m-0 text-[13px] leading-normal text-phu">{t.bugReportDesc}</p>
+              )}
+              <MyBugs />
               {snap.checks.length > 0 && !checking && (
                 <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0">
                   {snap.checks.map((c) => {

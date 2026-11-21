@@ -10,6 +10,14 @@ import { logout, readUsage, reopenLoginPage, stopAccountClient } from './service
 import { VersionService } from './services/version'
 import { vivibeUsage } from './services/vivibe-usage'
 import { TEAM_FEEDBACK_FOLDER_URL } from '../shared/team'
+import {
+  allowedShotRoot,
+  captureError,
+  listBugs,
+  listShots,
+  sendBugReport,
+  setBugState
+} from './services/bugs'
 import { makeBugReport } from './services/report'
 import { getSettings, updateSettings } from './services/settings'
 import {
@@ -58,7 +66,7 @@ let mainWindow: BrowserWindow | null = null
 /** Noi giao dien duoc mo file: du an, noi luu video, thu muc gop y. */
 function allowedRoots(): string[] {
   const fb = feedbackDir()
-  return [...videos.allowedRoots(), ...(fb ? [fb] : [])]
+  return [...videos.allowedRoots(), ...(fb ? [fb] : []), allowedShotRoot()]
 }
 
 function prefsSnapshot(): PrefsSnapshot {
@@ -80,7 +88,7 @@ function prefsSnapshot(): PrefsSnapshot {
 }
 
 function feedbackList(): FeedbackList {
-  return { items: listFeedback(), me: machineId(), dir: feedbackDir() }
+  return { items: listFeedback(), bugs: listBugs(), me: machineId(), dir: feedbackDir() }
 }
 
 // Theo doi thu muc gop y (Drive dong bo ve): bao giao dien doc lai
@@ -255,6 +263,22 @@ function registerIpc(): void {
   })
   handle('disk:usage', () => diskUsage(getSettings().projectDir ?? ''))
   handle('vivibe:usage', (month) => vivibeUsage(getSettings().projectDir ?? '', month))
+  handle('app:errorShown', async (key, label) => {
+    const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
+    if (win) await captureError(win.webContents, key, label)
+  })
+  handle('bugs:shots', () => listShots())
+  handle('bugs:send', async (input) => {
+    const res = await sendBugReport(input, {
+      toolkitVersion: lastVersion ?? (await videos.toolkitVersion())
+    })
+    if (res.ok) broadcast('feedback:changed', feedbackList())
+    return res
+  })
+  handle('bugs:setState', (id, status) => {
+    setBugState(id, status)
+    broadcast('feedback:changed', feedbackList())
+  })
   handle('disk:clean', (which) => cleanDisk(getSettings().projectDir ?? '', which))
   handle('feedback:draft', (slug, time, beatLine) =>
     feedbackDraft(getSettings().projectDir ?? '', slug, time, beatLine)
