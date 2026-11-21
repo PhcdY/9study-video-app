@@ -26,6 +26,7 @@ import type {
   Lesson,
   NewVideoInput,
   ScriptData,
+  StoryFrame,
   SubjectId,
   RemoveVideoResult,
   VideosSnapshot
@@ -198,6 +199,7 @@ export interface InvokeMap {
   'videos:list': { args: []; ret: VideosSnapshot }
   'videos:script': { args: [slug: string]; ret: ScriptData | null }
   'videos:audio': { args: [slug: string]; ret: AudioLine[] }
+  'videos:storyFrames': { args: [slug: string]; ret: StoryFrame[] }
   'videos:lessons': { args: [subject: SubjectId, lop: number]; ret: Lesson[] }
   /** Tao cuoc tro chuyen moi va gui yeu cau viet kich ban; tra ve khoa cuoc tro chuyen */
   'videos:create': { args: [input: NewVideoInput]; ret: string }

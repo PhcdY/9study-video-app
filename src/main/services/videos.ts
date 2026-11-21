@@ -19,6 +19,7 @@ import type {
   Lesson,
   NewVideoInput,
   ScriptData,
+  StoryFrame,
   RemoveVideoResult,
   VideosSnapshot
 } from '../../shared/video'
@@ -33,7 +34,9 @@ import {
   outputBase,
   readScript,
   sampleSlugsFrom,
-  scanVideos
+  scanVideos,
+  listStoryFrames,
+  storyboardDir
 } from './project'
 import {
   CodexSession,
@@ -247,6 +250,9 @@ export class VideosService extends EventEmitter {
   }
   audio(slug: string): AudioLine[] {
     return listAudio(this.projectDir, slug)
+  }
+  storyFrames(slug: string): StoryFrame[] {
+    return listStoryFrames(storyboardDir(this.projectDir, slug), readScript(this.projectDir, slug))
   }
   lessons(subject: string, lop: number): Lesson[] {
     return listLessons(this.projectDir, subject, lop)

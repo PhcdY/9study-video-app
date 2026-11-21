@@ -30,6 +30,7 @@ import { CodexClient } from './client'
 import { trustProject } from '../runtime'
 import { approvalKey, describeApproval, estimateVoice, statusLabelFor } from './approvals'
 import { parseVoiceRun } from '../../../shared/vivibe'
+import { splitPicks, type PickTag } from '../../../shared/picks'
 import { CHOICE_INSTRUCTIONS } from '../../../shared/choices'
 import log from '../../log'
 import { getSettings } from '../settings'
@@ -421,7 +422,7 @@ export class CodexSession extends EventEmitter {
       chat.ai ??= { ...(getSettings().defaultAi ?? {}) }
       saveAiChoice(chat.threadId, chat.ai)
     }
-    chat.items.push({ kind: 'user', id: `u-${Date.now()}`, text: displayText(text) })
+    chat.items.push({ kind: 'user', id: `u-${Date.now()}`, ...displayText(text) })
     chat.busy = true
     this.emitNow(chat)
     const threadId = chat.threadId
@@ -688,8 +689,9 @@ export class CodexSession extends EventEmitter {
 }
 
 /** Cau lenh cua app (bat dau bang $skill) hien gon tren giao dien: bo dong goi skill. */
-function displayText(text: string): string {
-  return text.replace(/^\$[a-z0-9-]+\s*\n?/, '').trim()
+function displayText(text: string): { text: string; picks?: PickTag[] } {
+  const r = splitPicks(text.replace(/^\$[a-z0-9-]+\s*\n?/, '').trim())
+  return r.picks.length ? { text: r.text.trim(), picks: r.picks } : { text: r.text }
 }
 
 /** Doi item trong lich su sang dong chat; lenh lien nhau gom lai. */
@@ -701,7 +703,7 @@ export function historyItems(items: ThreadItem[]): ChatItem[] {
         .map((c) => (c.type === 'text' ? c.text : ''))
         .join('\n')
         .trim()
-      if (text) out.push({ kind: 'user', id: it.id, text: displayText(text) })
+      if (text) out.push({ kind: 'user', id: it.id, ...displayText(text) })
     } else if (it.type === 'agentMessage') {
       if (it.text.trim()) out.push({ kind: 'ai', id: it.id, text: it.text })
     } else if (it.type === 'commandExecution' || it.type === 'fileChange') {

@@ -526,7 +526,13 @@ export const copy = {
 
   // ---------- Man mot video ----------
   workspace: {
-    readWrong: 'Đọc sai',
+    readWrong: 'Góp ý cho đội',
+    pickHintStoryboard:
+      'Bấm vào ảnh để nhờ AI sửa đúng câu đó. Giữ Ctrl rồi bấm để chọn nhiều ảnh.',
+    pickHintAudio: 'Bấm vào câu để nhờ AI sửa giọng câu đó. Giữ Ctrl rồi bấm để chọn nhiều câu.',
+    picked: 'Đang chọn',
+    frameCount: (n: number) => `${n} ảnh`,
+    feedbackFrame: (label: string) => `Góp ý cho đội về ảnh ${label}`,
     back: 'Về Video của tôi',
     newTitle: 'Video mới',
     newSub: 'AI đang soạn Bảng nội dung',
@@ -560,6 +566,20 @@ export const copy = {
   chat: {
     label: 'Trò chuyện với trợ lý AI',
     placeholder: 'Nhắn cho AI, ví dụ: cảnh 3 đổi màu đường cong sang chàm',
+    picking: 'Đang sửa:',
+    unpick: (label: string) => `Bỏ chọn ${label}`,
+    pickKind: { hinh: 'Ảnh', giong: 'Giọng đọc' },
+    pickPlaceholder: (hinh: number, giong: number) =>
+      giong === 0
+        ? hinh > 1
+          ? `Muốn sửa gì ở ${hinh} ảnh này? Ví dụ: cùng đổi màu đường cong sang chàm`
+          : 'Muốn sửa gì ở ảnh này? Ví dụ: đẩy nhãn ra xa đồ thị'
+        : hinh === 0
+          ? giong > 1
+            ? `${giong} câu này đọc sai chỗ nào? Ví dụ: đọc chậm lại`
+            : 'Câu này đọc sai chỗ nào? Ví dụ: đọc chậm lại, lên giọng ở cuối câu'
+          : `Muốn sửa gì ở ${hinh + giong} câu đã chọn?`,
+    pickCost: 'Tạo lại giọng câu đã chọn sẽ tốn credit. AI hỏi bạn trước khi tạo.',
     send: 'Gửi',
     stop: 'Dừng',
     thinking: 'AI đang làm…',
@@ -996,7 +1016,7 @@ export const copy = {
           },
           {
             t: 'Nghe thử giọng đọc',
-            d: 'AI tạo giọng (tốn credit Vivibe, app hỏi trước). Câu nào đọc sai thì bấm "Đọc sai" ở tab Nghe thử.',
+            d: 'AI tạo giọng (tốn credit Vivibe, app hỏi trước). Câu nào đọc chưa ổn thì bấm vào câu đó ở tab Nghe thử rồi nói cần sửa gì.',
             shot: 'audio'
           },
           {
@@ -1097,7 +1117,7 @@ export const copy = {
           },
           {
             t: 'Nhắn AI sửa hình',
-            d: 'Ví dụ "cảnh 3 đổi màu đường cong sang chấm". Sửa xong bấm "Xuất lại storyboard" để xem ảnh mới.'
+            d: 'Bấm vào ảnh cần sửa rồi nhắn, ví dụ "đổi màu đường cong sang chàm". Giữ Ctrl để chọn nhiều ảnh. Không chọn ảnh thì nói rõ cảnh nào.'
           },
           {
             t: 'Xem chuyển động',
@@ -1123,7 +1143,7 @@ export const copy = {
           },
           {
             t: 'Nghe thử',
-            d: 'Tab Nghe thử có từng câu. Câu nào đọc sai thì bấm "Đọc sai" ngay cạnh câu đó.',
+            d: 'Tab Nghe thử có từng câu. Câu nào đọc sai thì bấm vào câu đó rồi nhắn AI cần sửa gì, ví dụ "đọc chậm lại".',
             shot: 'audio'
           },
           {

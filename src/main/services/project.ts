@@ -1,7 +1,15 @@
 // Doc danh sach video trong repo video va suy ra moi video dang o buoc nao, chi tu file co san.
 import path from 'node:path'
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
-import type { AudioLine, Lesson, ScriptData, VideoInfo, VideoStage } from '../../shared/video'
+import type {
+  AudioLine,
+  Lesson,
+  ScriptData,
+  StoryFrame,
+  VideoInfo,
+  VideoStage
+} from '../../shared/video'
+import { lineId, lineLabels } from '../../shared/picks'
 import { readEnvFile } from './env-file'
 
 /** Ten thu muc mon trong out/ (giong scripts/lib/paths.mjs cua repo video). */
@@ -180,18 +188,61 @@ export function listAudio(projectDir: string, slug: string): AudioLine[] {
   const dir = path.join(projectDir, 'public', 'audio', slug)
   if (!existsSync(dir)) return []
   const s = readScript(projectDir, slug)
-  const speak = new Map<string, string>()
+  const labels = lineLabels(s?.beats)
+  const info = new Map<string, { speak: string; label?: string }>()
   for (const b of s?.beats ?? [])
-    (b.lines ?? []).forEach((l, i) =>
-      speak.set(`${b.id}-l${String(i + 1).padStart(2, '0')}`, l.speak ?? '')
-    )
+    (b.lines ?? []).forEach((l, i) => {
+      const id = lineId(b.id, i)
+      info.set(id, { speak: l.speak ?? '', label: labels.get(id) })
+    })
   return readdirSync(dir)
     .filter((f) => /^b\d+-l\d+\.mp3$/i.test(f))
     .sort()
     .map((f) => {
       const id = f.replace(/\.mp3$/i, '')
-      return { id, file: path.join(dir, f), speak: speak.get(id) }
+      const i = info.get(id)
+      return { id, file: path.join(dir, f), speak: i?.speak, label: i?.label }
     })
+}
+
+/** Thu muc storyboard cua video: <out>/_lam-viec/<id composition>/storyboard. */
+export function storyboardDir(projectDir: string, slug: string): string {
+  const tsx = path.join(projectDir, 'src', 'videos', slug, 'Video.tsx')
+  const id = existsSync(tsx) ? (compositionIdFrom(readFileSync(tsx, 'utf8')) ?? slug) : slug
+  return path.join(workDir(projectDir, id), 'storyboard')
+}
+
+/**
+ * Anh storyboard tung cau (<beat>-lNN.png) theo thu tu kich ban. Chi lay cau con trong kich ban
+ * va co anh; anh cu cua cau da xoa thi bo qua.
+ */
+export function listStoryFrames(dir: string, s: ScriptData | null): StoryFrame[] {
+  let files: Set<string>
+  try {
+    files = new Set(readdirSync(dir).filter((f) => /\.png$/i.test(f)))
+  } catch {
+    return []
+  }
+  const labels = lineLabels(s?.beats)
+  const out: StoryFrame[] = []
+  for (const b of s?.beats ?? [])
+    (b.lines ?? []).forEach((l, i) => {
+      const id = lineId(b.id, i)
+      if (!files.has(`${id}.png`)) return
+      const file = path.join(dir, `${id}.png`)
+      out.push({
+        id,
+        beatId: b.id,
+        scene: b.scene,
+        section: b.section,
+        keyword: b.keyword,
+        label: labels.get(id) ?? id,
+        speak: l.speak,
+        file,
+        version: mtime(file)
+      })
+    })
+  return out
 }
 
 /** The bai hoc co san: references/<mon>/lop-<lop>/**\/bai-NN-*.md, tieu de lay tu dong # dau tien. */
