@@ -298,7 +298,7 @@ export const copy = {
     part2: 'Giọng đọc Vivibe',
     part2Hint: 'Đổi được tới trước khi tạo giọng ở bước 3',
     part3: 'Tuỳ chọn nâng cao',
-    part3Hint: 'Không bắt buộc. Điền càng nhiều, video càng sát ý bạn và AI càng ít phải hỏi lại.',
+    part3Hint: 'Không bắt buộc',
     subject: 'Môn',
     lop: 'Lớp',
     loai: 'Loại video',
@@ -726,6 +726,57 @@ export const copy = {
         ]
       },
       {
+        title: 'Điền form "Làm video mới"',
+        steps: [
+          'Bước 1 và 2 (kịch bản, hình) không tốn credit giọng đọc. Giọng chỉ được tạo ở bước 3, sau khi bạn đồng ý.',
+          'Ý bản chất để trống thì AI đề xuất 2–3 góc nhìn cho bạn chọn.',
+          'Giọng đọc đổi được tới trước khi tạo giọng ở bước 3.',
+          'Phần "Thêm chi tiết" không bắt buộc. Điền càng nhiều, video càng sát ý bạn và AI càng ít hỏi lại.',
+          '"Học sinh đã học / chưa học": học sinh ảo dùng đúng hai ô này để đọc thử kịch bản như người xem thật.',
+          '"Video trước trong chuỗi": AI đọc video đó để không dạy lại và nối tiếp đúng chỗ.',
+          '"Lỗi hay mắc" thành đoạn "Bẫy thường gặp", "Dạng bài thi" thành đoạn "Trong đề thi".'
+        ]
+      },
+      {
+        title: 'Gửi báo lỗi app',
+        steps: [
+          'Mỗi khi app hiện thông báo lỗi, app tự chụp cửa sổ app (không chụp màn hình khác), giữ 3 lần gần nhất.',
+          'Cài đặt › Hỗ trợ › "Gửi báo lỗi": viết vài chữ, tick ảnh muốn gửi, bấm "Gửi cho người phụ trách".',
+          'Báo lỗi vào thư mục chung, mục Báo lỗi (khác chỗ góp ý). Key Vivibe và mật khẩu đã được che.',
+          'Chưa có thư mục chung thì bấm "Lưu ra Desktop" rồi gửi file cho người phụ trách.'
+        ]
+      },
+      {
+        title: 'Cài đặt',
+        steps: [
+          'Thư mục dự án: bộ công cụ và các bài bạn đang làm. Key Vivibe chỉ lưu trên máy bạn.',
+          'Giọng mặc định theo môn: màn "Làm video mới" chọn sẵn giọng này, đổi từng video vẫn được.',
+          'Tốc độ đọc chung: chỉ đổi khi nghe cả bài thấy nhanh hoặc chậm. Đoạn nào nhanh quá thì nhờ AI chia câu ngắn hơn.',
+          'Khi nào AI hỏi trước: "Việc tốn credit hoặc cần mạng" thì sửa kịch bản, dựng hình AI tự làm; "Mọi lệnh" chắc nhất nhưng phải bấm đồng ý nhiều lần.',
+          'Tự dọn bộ nhớ AI sau mỗi bước: AI nhanh hơn, đỡ tốn Usage ChatGPT; quyết định quan trọng vẫn được giữ.',
+          'Phiên bản: bấm tên bản để xem bản đó có gì. Đổi bản thì bài của bạn vẫn giữ nguyên. Bản app mới tải ngầm, cài khi mở lại app.',
+          'Ổ đĩa: ảnh nháp và storyboard tạo lại được bất cứ lúc nào; file tạm xoá được khi không đang xuất video.',
+          'Credit Vivibe: "Đã tạo" là số ký tự app gửi Vivibe mỗi lần tạo giọng (kể cả video bỏ dở), "Đang dùng" là số ký tự các câu đang nằm trong video. Số dư xem trên trang Vivibe.'
+        ]
+      },
+      {
+        title: 'Thư mục góp ý chung',
+        steps: [
+          'Cài đặt › Góp ý cho đội › "Mở thư mục của đội", xin quyền nếu Drive hỏi.',
+          'Chuột phải vào thư mục › Sắp xếp › Thêm lối tắt › Drive của tôi. App tự thấy sau khoảng nửa phút.',
+          'Tên của bạn hiện trong góp ý để đội biết ai gửi. Mặc định chỉ gửi đoạn 20 giây quanh chỗ lỗi cho nhẹ Drive.'
+        ]
+      },
+      {
+        title: 'Người bảo trì: xử lý góp ý',
+        steps: [
+          'Bật "Chế độ người bảo trì" trong Cài đặt › Góp ý cho đội (chỉ trên máy người phụ trách bộ công cụ).',
+          'Tick nhiều góp ý để gộp thành một lần sửa. "Chỗ sửa dự kiến" app đoán theo loại lỗi và môn, Codex tự kiểm lại.',
+          'Tên nhánh tự đặt theo quy ước [môn]_fix_[mô tả]. "Đưa vào bản" chọn bản chưa phát hành, hoặc "+ Tạo bản mới".',
+          '"Lưu lần sửa, làm sau": các góp ý chuyển sang "Đang sửa", CTV thấy trạng thái này. Phát hành bản đó xong, app tự đổi sang "Đã sửa trong bản N".'
+        ]
+      },
+      {
         title: 'Lên bản mới của bộ công cụ',
         steps: [
           'Có bản mới thì trang Video hiện thông báo. Bấm "Xem bản mới" để đọc có gì mới.',
@@ -775,6 +826,9 @@ export const copy = {
     branchHint: 'Tự đặt theo quy ước [môn]_fix_[mô tả].',
     target: 'Đưa vào bản',
     targetOpt: (v: string) => `Bản ${v} (chưa phát hành)`,
+    newVersion: '+ Tạo bản mới…',
+    newVersionLabel: 'Số của bản mới',
+    createVersion: 'Tạo',
     targetHint: (n: number, v: string) =>
       `Phát hành xong, đổi ${n} góp ý sang "Đã sửa trong bản ${v}".`,
     codexGets: 'Codex sẽ nhận',
@@ -839,8 +893,7 @@ export const copy = {
     feedback: 'Góp ý cho đội',
     feedbackDir: 'Thư mục góp ý chung',
     feedbackDirOk: 'Đã kết nối · thư mục do đội chia sẻ',
-    feedbackDirNone:
-      'Chưa thấy. Bấm "Mở thư mục của đội", rồi chuột phải vào thư mục › Sắp xếp › Thêm lối tắt › Drive của tôi.',
+    feedbackDirNone: 'Chưa kết nối',
     pick: 'Chọn',
     authorName: 'Tên của bạn',
     authorNameDesc: 'Hiện trong góp ý để đội biết ai gửi.',

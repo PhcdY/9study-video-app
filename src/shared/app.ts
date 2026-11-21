@@ -84,6 +84,8 @@ export interface Prefs {
   autoCompact?: boolean
   /** Tu tai ban app moi (mac dinh bat) */
   autoUpdateApp?: boolean
+  /** Ban chua phat hanh nguoi bao tri tu tao de gom cac lan sua (vd "5") */
+  plannedVersions?: string[]
   /** Giong mac dinh theo nhom mon (man Lam video moi chon san) */
   defaultVoices?: { tuNhien?: string; xaHoi?: string; anh?: string }
 }

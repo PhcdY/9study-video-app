@@ -81,6 +81,7 @@ function prefsSnapshot(): PrefsSnapshot {
     autoCompact: s.autoCompact,
     autoUpdateApp: s.autoUpdateApp,
     defaultVoices: s.defaultVoices,
+    plannedVersions: s.plannedVersions,
     feedbackDirInUse: feedbackDir(),
     projectDir: dir,
     outputDir: dir ? outputBase(dir) : undefined

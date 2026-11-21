@@ -173,7 +173,6 @@ export function VivibeSettingsBlock(): React.JSX.Element {
           </table>
         </div>
       )}
-      <p className="m-0 text-[13px] leading-normal text-phu">{v.how}</p>
     </div>
   )
 }

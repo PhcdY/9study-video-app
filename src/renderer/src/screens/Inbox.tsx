@@ -12,7 +12,7 @@ import {
 } from '../../../shared/feedback-rules'
 import { subjectName } from '../../../shared/prompt'
 import type { VersionInfo } from '../../../shared/app'
-import { api, fileUrl, useFeedback } from '@/lib/api'
+import { api, fileUrl, useFeedback, usePrefs } from '@/lib/api'
 import { BugInbox } from '@/screens/BugInbox'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
@@ -222,9 +222,6 @@ function FeedbackInbox({
               </div>
             )
           })}
-          {shown.length > 0 && (
-            <p className="m-0 px-4 py-3 text-xs leading-normal text-phu">{t.tickHint}</p>
-          )}
         </div>
       </nav>
 
@@ -286,7 +283,6 @@ function Detail({
   const label = spotLabel(it.spot)
   const head = headline(it.desc)
   const status = it.state.status === 'daSua' ? `daSua:${it.state.fixedIn ?? ''}` : it.state.status
-  const branch = it.state.batch?.branch ?? branchName([it.subject], head)
   const taughtLines = (it.taught ?? '').split(/\r?\n/).slice(0, 40)
   const taughtCount = taughtLines.filter((l) => /^\+\+\+ /.test(l)).length
   const fixedIn = it.state.fixedIn ?? next
@@ -422,7 +418,6 @@ function Detail({
         <Button variant="ghost" size="sm" onClick={() => void api.invoke('shell:openPath', it.dir)}>
           <FolderOpen aria-hidden className="size-4" /> {t.openFolder}
         </Button>
-        <span className="flex-[1_1_260px] text-right text-xs text-phu">{t.toFixHint(branch)}</span>
       </div>
     </>
   )
@@ -486,6 +481,31 @@ function Batch({
   const [branchEdited, setBranchEdited] = useState(false)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
+  // Ban dua vao: ban ke tiep, cac ban dang co lan sua cho, va ban nguoi bao tri tu tao
+  const [fbList] = useFeedback()
+  const [prefs, savePrefs] = usePrefs()
+  const released = Number(next ?? 1) - 1
+  const versions = [
+    ...new Set(
+      [
+        next,
+        ...(fbList?.items ?? []).map((it) => it.state.batch?.target),
+        ...(prefs?.plannedVersions ?? [])
+      ].filter((v): v is string => !!v && /^\d+$/.test(v) && Number(v) > released)
+    )
+  ].sort((a, b) => Number(a) - Number(b))
+  const [target, setTarget] = useState<string | undefined>(next)
+  const [creating, setCreating] = useState(false)
+  const [newV, setNewV] = useState('')
+  const suggestNew = String(Math.max(released, ...versions.map(Number)) + 1)
+  const createVersion = (): void => {
+    const v = (newV || suggestNew).trim()
+    if (!/^\d+$/.test(v) || Number(v) <= released) return
+    void savePrefs({ plannedVersions: [...new Set([...(prefs?.plannedVersions ?? []), v])] })
+    setTarget(v)
+    setCreating(false)
+    setNewV('')
+  }
   const shownName = nameEdited ? name : autoName
   const autoBranch = branchName(
     items.map((it) => it.subject),
@@ -504,7 +524,7 @@ function Batch({
       ids: items.map((it) => it.id),
       name: shownName,
       branch: shownBranch,
-      target: next,
+      target,
       openNow
     })
     setBusy(false)
@@ -546,7 +566,6 @@ function Batch({
             </button>
           </div>
         ))}
-        <div className="px-4 py-2.5 text-xs text-phu">{t.guessHint}</div>
       </section>
 
       <section className="grid grid-cols-2 gap-3.5 rounded-xl border border-vien bg-white p-4">
@@ -577,16 +596,49 @@ function Batch({
             }}
             className="h-10 font-[Consolas,monospace] text-[13px]"
           />
-          <span className="text-xs text-phu">{t.branchHint}</span>
         </div>
         <div className="flex flex-col gap-1.5">
           <label htmlFor="ban" className="text-[13px] font-bold">
             {t.target}
           </label>
-          <Select id="ban" className="h-10 text-sm" disabled={!next}>
-            {next && <option>{t.targetOpt(next)}</option>}
-          </Select>
-          {next && <span className="text-xs text-phu">{t.targetHint(items.length, next)}</span>}
+          {creating ? (
+            <div className="flex items-center gap-2">
+              <Input
+                id="ban"
+                autoFocus
+                inputMode="numeric"
+                value={newV}
+                placeholder={suggestNew}
+                aria-label={t.newVersionLabel}
+                onChange={(e) => setNewV(e.target.value.replace(/\D/g, ''))}
+                onKeyDown={(e) => e.key === 'Enter' && createVersion()}
+                className="h-10 w-24 text-sm"
+              />
+              <Button size="sm" onClick={createVersion}>
+                {t.createVersion}
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setCreating(false)}>
+                {copy.settings.cancel}
+              </Button>
+            </div>
+          ) : (
+            <Select
+              id="ban"
+              className="h-10 text-sm"
+              value={target ?? ''}
+              onChange={(e) => {
+                if (e.target.value === '__moi') setCreating(true)
+                else setTarget(e.target.value)
+              }}
+            >
+              {versions.map((v) => (
+                <option key={v} value={v}>
+                  {t.targetOpt(v)}
+                </option>
+              ))}
+              <option value="__moi">{t.newVersion}</option>
+            </Select>
+          )}
         </div>
       </section>
 
@@ -611,9 +663,7 @@ function Batch({
         >
           {t.saveLater}
         </Button>
-        <span className={cn('text-xs', saved ? 'font-semibold text-xong' : 'text-phu')}>
-          {saved ? t.saved : t.saveHint(items.length)}
-        </span>
+        {saved && <span className="text-xs font-semibold text-xong">{t.saved}</span>}
       </div>
     </div>
   )

@@ -200,13 +200,13 @@ export function NewVideoScreen({
               />
             </Field>
           )}
-          <Field label={t.yBanChat} hint={t.yBanChatHint}>
+          <Field label={t.yBanChat}>
             <TextArea value={v.yBanChat} onChange={(x) => set('yBanChat', x)} />
           </Field>
         </Card>
 
         {/* 2. Giong doc */}
-        <Card n={2} title={t.part2} aside={t.part2Hint}>
+        <Card n={2} title={t.part2}>
           <div className="flex flex-col gap-2">
             {VOICES.map((voice) => {
               const on = v.voice === voice.id
@@ -297,8 +297,7 @@ export function NewVideoScreen({
                   <TextArea value={v.chuaHoc} onChange={(x) => set('chuaHoc', x)} />
                 </Field>
               </div>
-              <Hint>{t.studentHint}</Hint>
-              <Field label={t.videoTruoc} hint={t.videoTruocHint}>
+              <Field label={t.videoTruoc}>
                 <select
                   value={v.videoTruoc ?? ''}
                   onChange={(e) => set('videoTruoc', e.target.value || undefined)}
@@ -353,10 +352,10 @@ export function NewVideoScreen({
               </Field>
             </Group>
             <Group title={t.examContent}>
-              <Field label={t.loiHayMac} hint={t.loiHayMacHint}>
+              <Field label={t.loiHayMac}>
                 <TextArea value={v.loiHayMac} onChange={(x) => set('loiHayMac', x)} />
               </Field>
-              <Field label={t.dangBaiThi} hint={t.dangBaiThiHint}>
+              <Field label={t.dangBaiThi}>
                 <TextArea value={v.dangBaiThi} onChange={(x) => set('dangBaiThi', x)} />
               </Field>
             </Group>
@@ -425,7 +424,6 @@ export function NewVideoScreen({
             </li>
           ))}
         </ol>
-        <p className="m-0 text-[13px] leading-normal text-phu">{t.whatNextNote}</p>
       </aside>
     </Page>
   )

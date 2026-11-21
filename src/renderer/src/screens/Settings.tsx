@@ -122,7 +122,6 @@ export function SettingsScreen({
     setActive(id)
     document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
-  const isDrive = /my drive|drive của tôi/i.test(snap.outputDir)
   const mine = (fb?.items ?? []).filter((it) => it.machine === fb?.me)
   const mineFixed = mine.filter((it) => it.state.status === 'daSua').length
   const mineWaiting = mine.filter(
@@ -157,7 +156,7 @@ export function SettingsScreen({
 
         <div className="flex min-w-0 flex-[999_1_600px] flex-col gap-5">
           <SettingsCard id="thu-muc" title={t.folders}>
-            <SettingRow label={t.project} value={snap.projectDir} desc={t.projectDesc}>
+            <SettingRow label={t.project} value={snap.projectDir}>
               <Button
                 variant="outline"
                 size="sm"
@@ -166,12 +165,7 @@ export function SettingsScreen({
                 <FolderOpen aria-hidden className="size-4" /> {t.open}
               </Button>
             </SettingRow>
-            <SettingRow
-              label={t.output}
-              value={snap.outputDir || '—'}
-              desc={isDrive ? t.outputDrive : undefined}
-              descTone="ok"
-            >
+            <SettingRow label={t.output} value={snap.outputDir || '—'} descTone="ok">
               {snap.outputDir && (
                 <Button
                   variant="outline"
@@ -200,7 +194,7 @@ export function SettingsScreen({
                 </span>
               }
               value={snap.vivibeKeyMasked}
-              desc={snap.vivibeKeyMasked ? t.keyLocal : t.keyNone}
+              desc={snap.vivibeKeyMasked ? undefined : t.keyNone}
             >
               {!editKey && snap.vivibeKeyMasked && (
                 <Button
@@ -247,7 +241,6 @@ export function SettingsScreen({
             <div className="flex flex-col gap-3 border-b border-[#EEF1F8] py-4">
               <div className="flex flex-col gap-1">
                 <div className="text-[15px] font-bold">{t.defaultVoice}</div>
-                <div className="text-[13px] text-phu">{t.defaultVoiceDesc}</div>
               </div>
               <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-3">
                 {VOICE_GROUPS.map((g) => {
@@ -283,7 +276,6 @@ export function SettingsScreen({
                   <label htmlFor="spd" className="text-[15px] font-bold">
                     {t.speed}
                   </label>
-                  <div className="text-[13px] leading-normal text-phu">{t.speedDesc}</div>
                 </div>
                 <div className="flex flex-[0_1_280px] items-center gap-3">
                   <input
@@ -389,9 +381,6 @@ export function SettingsScreen({
                         </span>
                       )}
                     </span>
-                    <span className="text-[13px] text-phu">
-                      {v === 'tonCredit' ? t.askCreditDesc : t.askAllDesc}
-                    </span>
                   </span>
                 </label>
               ))}
@@ -400,7 +389,6 @@ export function SettingsScreen({
               checked={prefs?.autoCompact !== false}
               onChange={(v) => void savePrefs({ autoCompact: v })}
               label={t.autoCompact}
-              desc={t.autoCompactDesc}
             />
           </SettingsCard>
 
@@ -426,7 +414,6 @@ export function SettingsScreen({
             {!!version?.history.length && (
               <div className="flex flex-col gap-2 border-b border-[#EEF1F8] py-4">
                 <span className="text-[15px] font-bold">{t.allVersions}</span>
-                <span className="text-[13px] text-phu">{t.allVersionsDesc}</span>
                 <ul className="m-0 mt-1 flex list-none flex-col gap-2 p-0">
                   {version.history.map((e) => {
                     const mine = Number(version.current ?? version.base ?? 0)
@@ -524,7 +511,6 @@ export function SettingsScreen({
               checked={prefs?.autoUpdateApp !== false}
               onChange={(v) => void savePrefs({ autoUpdateApp: v })}
               label={t.autoUpdate}
-              desc={t.autoUpdateDesc}
             />
           </SettingsCard>
 
@@ -542,11 +528,7 @@ export function SettingsScreen({
                     <span className="font-semibold text-credit">
                       {t.lowC(Math.floor(disk.cFreeGb))}
                     </span>
-                  ) : which === 'drafts' ? (
-                    t.draftsDesc
-                  ) : (
-                    t.tempDesc
-                  )
+                  ) : undefined
                 }
               >
                 {confirmClean === which ? (
@@ -580,7 +562,7 @@ export function SettingsScreen({
             <SettingRow
               label={t.feedbackDir}
               value={prefs?.feedbackDirInUse ?? '—'}
-              desc={prefs?.feedbackDirInUse ? t.feedbackDirOk : t.feedbackDirNone}
+              desc={prefs?.feedbackDirInUse ? undefined : t.feedbackDirNone}
               descTone={prefs?.feedbackDirInUse ? 'ok' : undefined}
             >
               <Button
@@ -598,7 +580,7 @@ export function SettingsScreen({
                 {prefs?.feedbackDirInUse ? t.change : t.pick}
               </Button>
             </SettingRow>
-            <SettingRow label={t.authorName} desc={t.authorNameDesc}>
+            <SettingRow label={t.authorName}>
               <label className="sr-only" htmlFor="ten-ctv">
                 {t.authorName}
               </label>
@@ -653,13 +635,11 @@ export function SettingsScreen({
               checked={!!prefs?.alwaysFullVideo}
               onChange={(v) => void savePrefs({ alwaysFullVideo: v })}
               label={t.fullVideo}
-              desc={t.fullVideoDesc}
             />
             <CheckRow
               checked={!!prefs?.maintainer}
               onChange={(v) => void savePrefs({ maintainer: v })}
               label={t.maintainer}
-              desc={t.maintainerDesc}
             />
           </SettingsCard>
 
@@ -688,11 +668,7 @@ export function SettingsScreen({
                   {t.guide}
                 </Button>
               </div>
-              {showBug ? (
-                <BugReportPanel onClose={() => setShowBug(false)} />
-              ) : (
-                <p className="m-0 text-[13px] leading-normal text-phu">{t.bugReportDesc}</p>
-              )}
+              {showBug && <BugReportPanel onClose={() => setShowBug(false)} />}
               <MyBugs />
               {snap.checks.length > 0 && !checking && (
                 <ul className="m-0 grid list-none grid-cols-2 gap-2 p-0">

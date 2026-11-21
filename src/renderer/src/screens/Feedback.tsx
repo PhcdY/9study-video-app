@@ -160,7 +160,7 @@ export function FeedbackScreen({
           {(picking || !draft?.finalMp4) && draft && (
             <div className="flex flex-col gap-2 rounded-xl border border-vien bg-white p-3">
               <div className="flex flex-wrap items-center gap-2 px-1">
-                <span className="flex-1 text-[13px] text-phu">{f.pickHint}</span>
+                <span className="flex-1" />
                 {draft.finalMp4 && (
                   <Button
                     size="sm"

@@ -118,7 +118,6 @@ export function BugReportPanel({ onClose }: { onClose: () => void }): React.JSX.
             })}
           </div>
         )}
-        <span className="text-[13px] text-phu">{t.shotsHint}</span>
       </fieldset>
 
       <div className="flex items-start gap-2.5 text-[13px] leading-normal text-phu">
