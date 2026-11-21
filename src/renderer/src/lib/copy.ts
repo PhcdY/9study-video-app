@@ -38,7 +38,14 @@ export const copy = {
       `AI đang làm việc ở bài ${titles.map((x) => `"${x}"`).join(', ')}. Khởi động lại bây giờ sẽ dừng việc đó.`,
     ready: (v: string) => `${v} đã tải xong`,
     whatsNewIn: (v: string) => `Có gì mới trong ${v}`,
-    restart: 'Khởi động lại để cập nhật'
+    restart: 'Khởi động lại để cập nhật',
+    check: 'Tìm bản mới',
+    checking: 'Đang tìm…',
+    latest: 'Bạn đang dùng bản mới nhất.',
+    downloading: (v: string, pct: number) => `Đang tải bản ${v} · ${pct}%`,
+    downloadingDesc: 'Tải xong app sẽ hỏi bạn khởi động lại để cập nhật.',
+    checkFail: 'Chưa tìm được bản mới. Kiểm tra mạng rồi bấm "Thử lại".',
+    retry: 'Thử lại'
   },
 
   steps: {

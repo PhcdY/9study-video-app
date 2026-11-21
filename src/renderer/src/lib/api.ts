@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react'
 import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { AiStatus, ChatState, VideosSnapshot } from '../../../shared/video'
 import type { LegacyScan } from '../../../shared/legacy'
-import type { AppUpdate, Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
+import type {
+  AppUpdate,
+  AppUpdateCheck,
+  Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
 import type { FeedbackDirCheck, FeedbackList } from '../../../shared/feedback'
 import type { VivibeUsage } from '../../../shared/vivibe'
 import type { AiModelOption } from '../../../shared/ai-model'
@@ -31,6 +34,35 @@ export function useAppUpdate(): AppUpdate | null {
     return off
   }, [])
   return v
+}
+
+/**
+ * Nut "Tim ban moi": trang thai tim / tai ban app moi.
+ * `shown`: nguoi dung vua bam, hoac app dang tai ngam (lan tu tim 4 gio loi thi khong bao).
+ */
+export function useAppUpdateCheck(): {
+  status: AppUpdateCheck | null
+  shown: boolean
+  check: () => Promise<void>
+} {
+  const [status, setStatus] = useState<AppUpdateCheck | null>(null)
+  const [asked, setAsked] = useState(false)
+  useEffect(() => {
+    const off = api.on('app:updateStatus', setStatus)
+    void api.invoke('app:updateState').then((s) => s && setStatus(s))
+    return off
+  }, [])
+  const busy = status?.state === 'checking' || status?.state === 'downloading'
+  return {
+    status,
+    shown: asked || status?.state === 'downloading' || status?.state === 'ready',
+    check: async () => {
+      if (busy) return
+      setAsked(true)
+      setStatus({ state: 'checking' })
+      setStatus(await api.invoke('app:checkUpdate'))
+    }
+  }
 }
 
 /** Danh sach video, tu cap nhat khi AI tao / sua file. */

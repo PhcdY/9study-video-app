@@ -123,6 +123,14 @@ export interface AppUpdate {
   url: string
 }
 
+/** Tim ban app moi: dang tim, da moi nhat, dang tai (phan tram), tai xong, loi. */
+export type AppUpdateCheck =
+  | { state: 'checking' }
+  | { state: 'latest' }
+  | { state: 'downloading'; version: string; percent: number }
+  | { state: 'ready' }
+  | { state: 'error' }
+
 /** Lay cac dong gach dau dong tu ghi chu phat hanh (HTML cua GitHub hoac Markdown). */
 export function releaseNoteLines(notes: unknown): string[] {
   const text =
