@@ -286,8 +286,9 @@ export class VideosService extends EventEmitter {
     const s = this.chat()
     await s.open(key)
     // Sang buoc moi: don bo nho AI cho do ton luot (tat duoc trong Cai dat)
+    // (doi don xong moi gui; bam Dung luc dang don thi thoi khong gui)
     if (STAGE_CHANGING_CHIPS.includes(chip) && getSettings().autoCompact !== false)
-      await s.compact(key)
+      if (!(await s.compact(key))) return
     await s.send(key, chipPrompt(chip, slug))
   }
 

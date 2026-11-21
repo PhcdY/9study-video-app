@@ -43,7 +43,14 @@ interface Chat {
   waiting: Map<string, (decision: ApprovalDecision) => void>
   emitTimer?: NodeJS.Timeout
   loaded: boolean
+  /** Ham goi khi luot dang chay cua thread xong (ke ca luot thu gon) */
+  turnWaiters: ((status?: Turn['status']) => void)[]
 }
+
+/** Doi luot thu gon (hoac luot dang chay) xong toi da bao lau truoc khi gui tiep. */
+const TURN_WAIT_MS = 3 * 60_000
+/** Codex tu choi tin moi khi dang chay luot khong chen duoc (vd dang thu gon cuoc tro chuyen). */
+export const isTurnBusyError = (message: string): boolean => /ActiveTurnNotSteerable/i.test(message)
 
 // ---------- luu threadId theo du an + video ----------
 
@@ -153,6 +160,7 @@ export class CodexSession extends EventEmitter {
       if (!chat) return
       chat.busy = false
       chat.turnId = undefined
+      for (const done of chat.turnWaiters.splice(0)) done(p.turn.status)
       for (const it of chat.items) {
         if (it.kind === 'status' && it.state === 'running') it.state = 'done'
         if (it.kind === 'ai') it.streaming = false
@@ -172,6 +180,7 @@ export class CodexSession extends EventEmitter {
     c.on('exit', () => {
       this.client = undefined
       for (const chat of this.chats.values()) {
+        for (const done of chat.turnWaiters.splice(0)) done()
         if (!chat.busy) continue
         chat.busy = false
         chat.items.push({ kind: 'error', id: `err-${Date.now()}`, code: 'khongRo' })
@@ -244,7 +253,8 @@ export class CodexSession extends EventEmitter {
         busy: false,
         createdAt: Date.now(),
         waiting: new Map(),
-        loaded: false
+        loaded: false,
+        turnWaiters: []
       }
       // moi-: video moi chua co slug; he-: cuoc tro chuyen cua app (vd doi phien ban), khong gan video
       if (!key.startsWith('moi-') && !key.startsWith('he-')) chat.slug = key
@@ -307,11 +317,25 @@ export class CodexSession extends EventEmitter {
     chat.items.push({ kind: 'user', id: `u-${Date.now()}`, text: displayText(text) })
     chat.busy = true
     this.emitNow(chat)
-    try {
-      const res = (await c.request('turn/start', {
-        threadId: chat.threadId,
+    const threadId = chat.threadId
+    const start = async (): Promise<TurnStartResponse> =>
+      (await c.request('turn/start', {
+        threadId,
         input: this.toInput(text)
       })) as TurnStartResponse
+    try {
+      let res: TurnStartResponse
+      try {
+        res = await start()
+      } catch (e) {
+        // AI con dang thu gon cuoc tro chuyen: doi xong roi gui lai mot lan
+        if (!isTurnBusyError(String(e))) throw e
+        log.info('[chat] AI dang ban (thu gon), doi xong roi gui lai')
+        await this.waitTurnDone(chat)
+        chat.busy = true
+        this.emitNow(chat)
+        res = await start()
+      }
       chat.turnId = res.turn?.id ?? chat.turnId
     } catch (e) {
       log.warn(`[chat] gui loi: ${String(e)}`)
@@ -321,16 +345,49 @@ export class CodexSession extends EventEmitter {
     }
   }
 
-  /** Thu gon cuoc tro chuyen (thay /compact) truoc khi sang buoc moi, tiet kiem luot. */
-  async compact(key: string): Promise<void> {
+  /**
+   * Thu gon cuoc tro chuyen (thay /compact) truoc khi sang buoc moi, tiet kiem luot.
+   * thread/compact/start tra ve ngay nhung Codex con thu gon trong mot luot rieng;
+   * gui tin trong luc do bi tu choi (ActiveTurnNotSteerable), nen doi luot nay xong moi tra ve.
+   * false neu nguoi dung bam Dung trong luc thu gon (khong gui tiep).
+   */
+  async compact(key: string): Promise<boolean> {
     const chat = this.chats.get(key)
-    if (!chat?.threadId) return
+    if (!chat?.threadId || chat.busy) return true
+    const done = this.waitTurnDone(chat)
+    chat.busy = true
+    this.emitNow(chat)
     try {
       const c = await this.ensureClient()
       await c.request('thread/compact/start', { threadId: chat.threadId })
     } catch (e) {
       log.warn(`[chat] thu gon loi: ${String(e)}`)
+      chat.turnWaiters.splice(0).forEach((f) => f())
+      chat.busy = false
+      this.emitNow(chat)
+      return true
     }
+    const status = await done
+    if (status === 'timeout') log.warn('[chat] thu gon qua lau, gui tiep')
+    return status !== 'interrupted'
+  }
+
+  /** Doi luot dang chay cua cuoc tro chuyen xong: tra ve trang thai luot, hoac 'timeout'. */
+  private waitTurnDone(
+    chat: Chat,
+    ms = TURN_WAIT_MS
+  ): Promise<Turn['status'] | 'timeout' | undefined> {
+    return new Promise((resolve) => {
+      const fn = (status?: Turn['status']): void => {
+        clearTimeout(timer)
+        resolve(status)
+      }
+      const timer = setTimeout(() => {
+        chat.turnWaiters = chat.turnWaiters.filter((f) => f !== fn)
+        resolve('timeout')
+      }, ms)
+      chat.turnWaiters.push(fn)
+    })
   }
 
   async interrupt(key: string): Promise<void> {
