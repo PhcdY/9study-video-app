@@ -1,7 +1,16 @@
 // Dieu phoi man Video cua toi + man mot video: danh sach video, theo doi thu muc, phien chat, Studio.
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
-import { existsSync, watch, type FSWatcher } from 'node:fs'
+import {
+  existsSync,
+  readFileSync,
+  readdirSync,
+  rmdirSync,
+  watch,
+  writeFileSync,
+  type FSWatcher
+} from 'node:fs'
+import { shell } from 'electron'
 import type {
   AiStatus,
   AudioLine,
@@ -10,6 +19,7 @@ import type {
   Lesson,
   NewVideoInput,
   ScriptData,
+  RemoveVideoResult,
   VideosSnapshot
 } from '../../shared/video'
 import { STAGE_CHANGING_CHIPS, chipPrompt, composeNewVideoPrompt } from '../../shared/prompt'
@@ -18,6 +28,7 @@ import { childEnv, codexHome, exe } from './runtime'
 import { run } from './process'
 import {
   listAudio,
+  finalDir,
   listLessons,
   outputBase,
   readScript,
@@ -28,12 +39,14 @@ import {
   CodexSession,
   boundThreads,
   forgetThread,
+  keysOfVideo,
   slugsWithChat,
   threadOf,
   unboundNewChats
 } from './codex/session'
 import { dropDrafts, findRollout, readDrafts, recoverDraft, saveDraft } from './drafts'
 import { addLegacyChat, bringCodexRollout, legacyChats, removeLegacyChat } from './legacy'
+import { isSafeSlug, unregisterVideo, videoPaths } from './remove-video'
 import { recordVoiceRun } from './vivibe-usage'
 import type { VoiceRunInfo } from '../../shared/vivibe'
 import { StudioService } from './studio'
@@ -152,6 +165,75 @@ export class VideosService extends EventEmitter {
     dropDrafts(this.projectDir, [key])
     forgetThread(this.projectDir, key)
     this.changedSoon()
+  }
+
+  /**
+   * Xoa han mot video cua nguoi dung (khong phai video mau): dung AI neu dang lam, go khoi
+   * src/Root.tsx, chuyen thu muc bai, giong doc, anh soat, video thanh pham vao Thung rac,
+   * quen cuoc tro chuyen. Bai chua co thu muc (video moi dang do) thi chi bo nhu truoc.
+   */
+  async removeVideo(slug: string): Promise<RemoveVideoResult> {
+    const dir = this.projectDir
+    if (!dir || !isSafeSlug(slug)) return 'loi'
+    if (readDrafts(dir)[slug] || (slug.startsWith('moi-') && threadOf(dir, slug))) {
+      await this.session?.forgetVideo(slug)
+      this.dropDraft(slug)
+      return 'ok'
+    }
+    const v = (await this.list()).videos.find((x) => x.slug === slug && !x.draft)
+    if (!v) return 'ok'
+    if (v.sample) return 'loi'
+    const script = readScript(dir, slug)
+    const id = v.compositionId ?? slug
+    const paths = videoPaths(dir, slug, id, script)
+    const root = path.join(dir, 'src', 'Root.tsx')
+    const unregister = (): string | null | undefined =>
+      existsSync(root) ? unregisterVideo(readFileSync(root, 'utf8'), slug) : undefined
+    // Khong go sach duoc thi khong dung toi gi ca
+    if (unregister() === null) {
+      log.warn(`[xoa video] khong go duoc ${slug} khoi Root.tsx`)
+      return 'root'
+    }
+
+    // Dung AI truoc de no khong ghi tiep vao bai dang xoa
+    let keys = keysOfVideo(dir, slug)
+    if (this.session) keys = await this.session.forgetVideo(slug)
+    else for (const k of keys) forgetThread(dir, k)
+    dropDrafts(dir, keys)
+
+    // Doc lai sau khi AI dung (AI co the vua sua Root.tsx)
+    const next = unregister()
+    if (next === null) {
+      log.warn(`[xoa video] khong go duoc ${slug} khoi Root.tsx`)
+      return 'root'
+    }
+    if (next !== undefined && next !== readFileSync(root, 'utf8')) writeFileSync(root, next)
+    let failed = false
+    for (const p of paths) {
+      try {
+        await shell.trashItem(p)
+      } catch (e) {
+        failed = true
+        log.warn(`[xoa video] khong chuyen duoc vao Thung rac ${p}: ${String(e)}`)
+      }
+    }
+    // Thu muc bai thanh pham trong thi bo luon (len toi noi luu video)
+    if (script) {
+      const base = path.resolve(outputBase(dir))
+      let d = path.resolve(finalDir(dir, script, id))
+      while (d.startsWith(base + path.sep) && !path.relative(base, d).startsWith('_lam-viec')) {
+        try {
+          if (readdirSync(d).length) break
+          rmdirSync(d)
+        } catch {
+          break
+        }
+        d = path.dirname(d)
+      }
+    }
+    log.info(`[xoa video] da xoa ${slug} (${paths.length} muc)`)
+    this.changedSoon()
+    return failed ? 'files' : 'ok'
   }
 
   /** Ban bo cong cu dang dung (tag so tren commit hien tai). */

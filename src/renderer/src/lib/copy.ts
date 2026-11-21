@@ -395,12 +395,25 @@ export const copy = {
       loi: 'Gặp lỗi'
     } satisfies Record<AiStatus, string>,
     colUpdated: 'Cập nhật',
-    drop: 'Bỏ video',
-    dropTitle: 'Bỏ video đang dở này?',
-    dropDesc: 'Cuộc trò chuyện với AI về video này cũng mất. Không lấy lại được.',
+    drop: 'Xoá video',
+    dropping: 'Đang xoá…',
+    dropTitle: 'Xoá video này?',
+    dropDraftDesc: 'Video chưa có kịch bản. Cuộc trò chuyện với AI về video này cũng mất.',
+    dropDesc:
+      'Xoá hết kịch bản, hình, giọng đọc, video đã xuất và cuộc trò chuyện với AI của bài này. File được chuyển vào Thùng rác của máy.',
+    dropBusy: 'AI đang làm bài này sẽ dừng lại.',
     dropCancel: 'Giữ lại',
+    dropErr: {
+      root: 'App chưa tự gỡ được bài này khỏi danh sách dựng video nên chưa xoá gì. Mở bài và nhờ AI xoá giúp.',
+      files:
+        'Đã xoá bài, nhưng vài file đang mở ở chương trình khác nên chưa vào Thùng rác. Đóng chương trình đó rồi xoá lại trong thư mục video.',
+      loi: 'Chưa xoá được bài này. Bạn thử lại nhé.'
+    },
+    dropOpen: 'Mở bài',
+    dropRetry: 'Thử lại',
+    dropClose: 'Đóng',
     colActions: 'Thao tác',
-    dropLabel: (t: string) => `Bỏ video đang dở: ${t}`,
+    dropLabel: (t: string) => `Xoá video: ${t}`,
     updatedAt: (ms: number) => {
       const d = new Date(ms)
       const now = new Date()

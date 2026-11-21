@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, ChevronDown, Film, Plus, Search, Trash2 } from 'lucide-react'
-import type { AiStatus, VideoInfo, VideoStage } from '../../../shared/video'
+import type { AiStatus, RemoveVideoResult, VideoInfo, VideoStage } from '../../../shared/video'
 import { SUBJECTS, subjectName } from '../../../shared/prompt'
 import { api, fileUrl, useAiStatuses, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
@@ -141,7 +141,7 @@ export function HomeScreen({
             </Button>
           </Card>
         ) : (
-          <VideoTable videos={shown} ai={ai} onOpen={onOpen} />
+          <VideoTable videos={shown} ai={ai} onOpen={onOpen} removable />
         )}
       </section>
 
@@ -246,12 +246,15 @@ function VideoTable({
   videos,
   ai,
   onOpen,
-  flat
+  flat,
+  removable
 }: {
   videos: VideoInfo[]
   ai: Record<string, AiStatus>
   onOpen: (key: string) => void
   flat?: boolean
+  /** Bai cua nguoi dung: co nut xoa (video mau thuoc bo cong cu thi khong) */
+  removable?: boolean
 }): React.JSX.Element {
   return (
     <div className={cn('overflow-x-auto bg-white', !flat && 'rounded-xl border border-vien')}>
@@ -309,7 +312,13 @@ function VideoTable({
                 {copy.home.shortDate(v.updatedAt)}
               </td>
               <td className="border-b border-[#EEF1F8] px-2 py-2.5 text-right">
-                {v.draft && <DropDraft v={v} />}
+                {removable && !v.sample && (
+                  <RemoveVideo
+                    v={v}
+                    busy={!!ai[v.slug] && ai[v.slug] !== 'dung' && ai[v.slug] !== 'loi'}
+                    onOpen={onOpen}
+                  />
+                )}
               </td>
             </tr>
           ))}
@@ -319,19 +328,30 @@ function VideoTable({
   )
 }
 
-/** Bo video moi dang do: nut thung rac hien khi re chuot vao hang, bam thi hoi lai trong o nho. */
-function DropDraft({ v }: { v: VideoInfo }): React.JSX.Element {
+/** Xoa video cua nguoi dung: nut thung rac hien khi re chuot vao hang, bam thi hoi lai trong o nho. */
+function RemoveVideo({
+  v,
+  busy,
+  onOpen
+}: {
+  v: VideoInfo
+  busy: boolean
+  onOpen: (key: string) => void
+}): React.JSX.Element {
   // Vi tri o hoi lai (co dinh theo man hinh de khung bang khong cat mat)
   const [at, setAt] = useState<{ top: number; right: number } | null>(null)
+  const [working, setWorking] = useState(false)
+  const [err, setErr] = useState<Exclude<RemoveVideoResult, 'ok'> | null>(null)
   const open = !!at
   const setOpen = (v: boolean): void => {
     const r = btn.current?.getBoundingClientRect()
     setAt(v && r ? { top: r.bottom + 6, right: window.innerWidth - r.right } : null)
+    setErr(null)
   }
   const box = useRef<HTMLDivElement>(null)
   const btn = useRef<HTMLButtonElement>(null)
   useEffect(() => {
-    if (!open) return
+    if (!open || working) return
     const close = (e: MouseEvent): void => {
       if (!box.current?.contains(e.target as Node)) setAt(null)
     }
@@ -344,19 +364,29 @@ function DropDraft({ v }: { v: VideoInfo }): React.JSX.Element {
       window.removeEventListener('scroll', away, true)
       window.removeEventListener('resize', away)
     }
-  }, [open])
+  }, [open, working])
+  const remove = async (): Promise<void> => {
+    setWorking(true)
+    setErr(null)
+    const res: RemoveVideoResult = await api
+      .invoke('videos:remove', v.slug)
+      .catch(() => 'loi' as const)
+    setWorking(false)
+    if (res === 'ok') setAt(null)
+    else setErr(res)
+  }
   return (
     <div
       ref={box}
       className="relative inline-flex"
-      onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+      onKeyDown={(e) => e.key === 'Escape' && !working && setOpen(false)}
     >
       <button
         type="button"
         aria-label={copy.home.dropLabel(v.title)}
         ref={btn}
         aria-expanded={open}
-        onClick={() => setOpen(!open)}
+        onClick={() => !working && setOpen(!open)}
         className={cn(
           'flex size-8 cursor-pointer items-center justify-center rounded-lg text-phu transition-opacity hover:bg-loi-nen hover:text-loi focus-visible:opacity-100',
           open ? 'bg-loi-nen text-loi opacity-100' : 'opacity-0 group-hover:opacity-100'
@@ -369,23 +399,51 @@ function DropDraft({ v }: { v: VideoInfo }): React.JSX.Element {
           role="dialog"
           aria-label={copy.home.dropTitle}
           style={{ top: at.top, right: at.right }}
-          className="fixed z-50 flex w-64 flex-col gap-3 rounded-xl border border-vien bg-white p-4 text-left shadow-[0_12px_32px_rgba(14,16,70,0.16)]"
+          className="fixed z-50 flex w-72 flex-col gap-3 rounded-xl border border-vien bg-white p-4 text-left shadow-[0_12px_32px_rgba(14,16,70,0.16)]"
         >
           <div className="flex flex-col gap-1">
             <span className="text-sm font-bold text-navy">{copy.home.dropTitle}</span>
-            <span className="text-[13px] leading-snug text-phu">{copy.home.dropDesc}</span>
+            {err ? (
+              <span role="alert" className="text-[13px] leading-snug text-loi">
+                {copy.home.dropErr[err]}
+              </span>
+            ) : (
+              <>
+                <span className="text-[13px] leading-snug text-phu">
+                  {v.draft ? copy.home.dropDraftDesc : copy.home.dropDesc}
+                </span>
+                {busy && (
+                  <span className="text-[13px] leading-snug font-semibold text-credit">
+                    {copy.home.dropBusy}
+                  </span>
+                )}
+              </>
+            )}
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
-              {copy.home.dropCancel}
-            </Button>
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => void api.invoke('videos:dropDraft', v.slug)}
-            >
-              {copy.home.drop}
-            </Button>
+            {err === 'files' ? (
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                {copy.home.dropClose}
+              </Button>
+            ) : err === 'root' ? (
+              <>
+                <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+                  {copy.home.dropCancel}
+                </Button>
+                <Button size="sm" onClick={() => onOpen(v.slug)}>
+                  {copy.home.dropOpen}
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="ghost" size="sm" disabled={working} onClick={() => setOpen(false)}>
+                  {copy.home.dropCancel}
+                </Button>
+                <Button variant="danger" size="sm" disabled={working} onClick={() => void remove()}>
+                  {working ? copy.home.dropping : err ? copy.home.dropRetry : copy.home.drop}
+                </Button>
+              </>
+            )}
           </div>
         </div>
       )}

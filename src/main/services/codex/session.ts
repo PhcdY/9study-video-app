@@ -106,6 +106,12 @@ export function forgetThread(projectDir: string, key: string): void {
   writeFileSync(storeFile() + '.tmp', JSON.stringify(s, null, 2))
   renameSync(storeFile() + '.tmp', storeFile())
 }
+/** Moi khoa cuoc tro chuyen cua mot video: chinh slug va khoa moi- cung thread (luc moi tao bai). */
+export function keysOfVideo(projectDir: string, slug: string): string[] {
+  const all = readStore()[projectDir] ?? {}
+  const thread = all[slug]
+  return Object.keys(all).filter((k) => k === slug || (!!thread && all[k] === thread))
+}
 /** Thread da gan vao mot video (de biet video moi nao da co thu muc). */
 export function boundThreads(projectDir: string): Set<string> {
   return new Set(
@@ -496,6 +502,26 @@ export class CodexSession extends EventEmitter {
     await this.client
       .request('turn/interrupt', { threadId: chat.threadId, turnId: chat.turnId })
       .catch((e) => log.warn(`[chat] dung loi: ${String(e)}`))
+  }
+
+  /** Xoa video: dung AI neu dang lam bai nay, bo cuoc tro chuyen khoi app. Tra ve cac khoa da quen. */
+  async forgetVideo(slug: string): Promise<string[]> {
+    const keys = new Set(keysOfVideo(this.projectDir, slug))
+    for (const c of this.chats.values()) if (c.key === slug || c.slug === slug) keys.add(c.key)
+    const chats = new Set([...keys].map((k) => this.chats.get(k)).filter((c) => !!c))
+    for (const chat of chats) {
+      if (!chat.busy) continue
+      const done = this.waitTurnDone(chat, 15_000)
+      await this.interrupt(chat.key)
+      await done
+    }
+    for (const chat of chats) {
+      this.chats.delete(chat.key)
+      if (chat.slug) this.chats.delete(chat.slug)
+      if (chat.threadId) this.byThread.delete(chat.threadId)
+    }
+    for (const k of keys) forgetThread(this.projectDir, k)
+    return [...keys]
   }
 
   approve(key: string, itemId: string, decision: ApprovalDecision): void {

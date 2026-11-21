@@ -27,6 +27,7 @@ import type {
   NewVideoInput,
   ScriptData,
   SubjectId,
+  RemoveVideoResult,
   VideosSnapshot
 } from './video'
 import type { VivibeUsage } from './vivibe'
@@ -203,6 +204,8 @@ export interface InvokeMap {
   /** Video moi dang do: lam tiep / bo */
   'videos:resumeDraft': { args: [key: string]; ret: void }
   'videos:dropDraft': { args: [key: string]; ret: void }
+  /** Xoa han mot video cua nguoi dung va moi thu lien quan (vao Thung rac) */
+  'videos:remove': { args: [slug: string]; ret: RemoveVideoResult }
   'chat:open': { args: [key: string]; ret: ChatState }
   'chat:send': { args: [key: string, text: string]; ret: void }
   'chat:chip': { args: [key: string, chip: ChipId, slug: string]; ret: void }
