@@ -78,7 +78,7 @@ function fixture(state: string): SetupSnapshot {
     projectDir: at > 0 ? 'D:\\9Study\\VideoAI' : '',
     outputDir: '',
     suggestedProjectDir: 'D:\\9Study\\VideoAI',
-    suggestedOutputDir: 'G:\\My Drive\\9Study Video',
+    suggestedOutputDir: 'G:\\My Drive\\NiniStudio',
     driveFound: true,
     existingRepos:
       state === 'coSan' || state === 'taiDuAnCoSan'

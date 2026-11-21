@@ -1,5 +1,5 @@
 appId: vn.9study.video
-productName: 9Study Video
+productName: NiniStudio
 directories:
   buildResources: build
   output: release
@@ -25,9 +25,9 @@ nsis:
   oneClick: true
   perMachine: false
   allowElevation: false
-  artifactName: 9study-video-setup-${version}.${ext}
-  shortcutName: 9Study Video
-  uninstallDisplayName: 9Study Video
+  artifactName: ninistudio-setup-${version}.${ext}
+  shortcutName: NiniStudio
+  uninstallDisplayName: NiniStudio
   createDesktopShortcut: always
   createStartMenuShortcut: true
   deleteAppDataOnUninstall: false

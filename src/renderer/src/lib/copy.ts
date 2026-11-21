@@ -10,8 +10,9 @@ import type {
 } from '../../../shared/video'
 
 export const copy = {
-  appName: '9Study',
-  appNameAccent: 'Video',
+  appName: 'NiniStudio',
+  appNameMain: 'Nini',
+  appNameAccent: 'Studio',
   setupTitle: 'Chuẩn bị máy',
   progress: (done: number, total: number) => `Xong ${done} / ${total} bước`,
   stepOf: (n: number, total: number) => `Bước ${n} / ${total}`,
@@ -530,6 +531,9 @@ export const copy = {
     colText: 'Chữ trên hình',
     noStoryboard:
       'Chưa có storyboard. Duyệt kịch bản xong, AI sẽ dựng bản nháp và xuất storyboard.',
+    storyboardStale: 'Hình vừa sửa chưa có trong storyboard này. Xuất lại để xem bản mới.',
+    storyboardStaleBusy:
+      'Hình vừa sửa chưa có trong storyboard này. AI làm xong mà vẫn vậy thì bấm "Xuất lại storyboard".',
     studioStart: 'Mở bản xem chuyển động',
     studioStarting: 'Đang mở bản xem chuyển động… lần đầu mất khoảng 10–30 giây.',
     studioError: 'Chưa mở được bản xem chuyển động. Bấm thử lại; nếu vẫn lỗi, hãy gửi báo lỗi.',
@@ -613,6 +617,30 @@ export const copy = {
       xuatVideo: 'Xuất video',
       xuatLaiVideo: 'Xuất lại video'
     } satisfies Record<ChipId, string>
+  },
+
+  // Chon model va muc suy nghi: giu chu tieng Anh nhu app Codex goc
+  ai: {
+    model: 'Model',
+    effort: 'Reasoning effort',
+    defaultModel: 'Default',
+    defaultModelHint: 'Recommended set of models',
+    defaultTag: '(default)',
+    effortName: (id: string): string =>
+      ({
+        none: 'None',
+        minimal: 'Minimal',
+        low: 'Low',
+        medium: 'Medium',
+        high: 'High',
+        xhigh: 'Extra high',
+        max: 'Max',
+        ultra: 'Ultra'
+      })[id] ?? id.charAt(0).toUpperCase() + id.slice(1),
+    settingsTitle: 'AI làm bài',
+    settingsHint: 'Bài mới dùng lựa chọn này. Bài đã chọn riêng trong khung chat thì giữ nguyên.',
+    settingsEmpty:
+      'Chưa lấy được danh sách model. Kiểm tra mạng và đăng nhập ChatGPT rồi mở lại Cài đặt.'
   },
 
   // ---------- Moc 3 ----------
@@ -756,7 +784,7 @@ export const copy = {
     keptDesc: 'các video đang làm và góp ý bạn đã dạy AI. Video đã xuất không bị đụng tới.',
     needAi:
       'Bạn đã dạy AI sửa một số file của bộ công cụ (hoặc đang dùng bản thử nghiệm). Để giữ an toàn bài của bạn, AI sẽ cùng bạn cập nhật trong một cuộc trò chuyện.',
-    needApp: (v: string) => `Bản mới cần app 9Study Video ${v} trở lên. Hãy cập nhật app trước.`,
+    needApp: (v: string) => `Bản mới cần app NiniStudio ${v} trở lên. Hãy cập nhật app trước.`,
     later: 'Để sau',
     update: 'Cập nhật, khoảng 1 phút',
     updateWithAi: 'Nhờ AI cập nhật',
@@ -1320,7 +1348,7 @@ export const copy = {
     logoutConfirm: 'Đăng xuất khỏi ChatGPT? Muốn dùng trợ lý AI lại thì phải đăng nhập lại.',
     versions: 'Phiên bản',
     toolkit: 'Bộ công cụ làm video',
-    appName: (v: string) => `App 9Study Video · ${v}`,
+    appName: (v: string) => `App NiniStudio · ${v}`,
     viewUpdate: 'Xem bản mới',
     support: 'Hỗ trợ',
     recheck: 'Chạy lại kiểm tra máy',

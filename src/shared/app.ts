@@ -1,4 +1,5 @@
 // Kieu dung chung cho phien ban bo cong cu, luot ChatGPT, bao loi.
+import type { AiChoice } from './ai-model'
 
 export interface ChangelogGroup {
   /** "Chung (mọi môn)", "Tiếng Anh"... */
@@ -88,6 +89,8 @@ export interface Prefs {
   plannedVersions?: string[]
   /** Giong mac dinh theo nhom mon (man Lam video moi chon san) */
   defaultVoices?: { tuNhien?: string; xaHoi?: string; anh?: string }
+  /** Model + muc suy nghi cho cuoc tro chuyen moi (bo trong = Codex tu chon) */
+  defaultAi?: AiChoice
 }
 
 /** Dung luong file tao lai duoc, de don. */

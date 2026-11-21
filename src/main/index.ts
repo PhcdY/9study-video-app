@@ -1,3 +1,4 @@
+import './app-identity'
 import { app, shell, BrowserWindow } from 'electron'
 import { join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -106,6 +107,7 @@ function prefsSnapshot(): PrefsSnapshot {
     autoCompact: s.autoCompact,
     autoUpdateApp: s.autoUpdateApp,
     defaultVoices: s.defaultVoices,
+    defaultAi: s.defaultAi,
     plannedVersions: s.plannedVersions,
     feedbackDirInUse: feedbackDir(),
     projectDir: dir,
@@ -145,7 +147,7 @@ function createWindow(): void {
     minWidth: 1024,
     minHeight: 680,
     show: false,
-    title: '9Study Video',
+    title: 'NiniStudio',
     backgroundColor: '#F6F8FE',
     autoHideMenuBar: true,
     webPreferences: {
@@ -205,6 +207,8 @@ function registerIpc(): void {
     void videos.chip(key, chip, slug)
   })
   handle('chat:interrupt', (key) => videos.chat().interrupt(key))
+  handle('chat:setAi', (key, choice) => videos.chat().setAi(key, choice))
+  handle('ai:models', () => (videos.projectDir ? videos.chat().models() : []))
   handle('chat:statuses', () => videos.aiStatuses())
   handle('legacy:scan', async (dir) => {
     const s = getSettings()

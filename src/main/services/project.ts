@@ -72,6 +72,20 @@ function mtime(p: string): number {
   }
 }
 
+/** Lan sua moi nhat cua mot file trong thu muc (tinh ca thu muc con). */
+export function newestMtime(dir: string): number {
+  let newest = 0
+  try {
+    for (const d of readdirSync(dir, { withFileTypes: true })) {
+      const p = path.join(dir, d.name)
+      newest = Math.max(newest, d.isDirectory() ? newestMtime(p) : mtime(p))
+    }
+  } catch {
+    // thu muc mat giua chung: coi nhu khong co file
+  }
+  return newest
+}
+
 export function readScript(projectDir: string, slug: string): ScriptData | null {
   try {
     return JSON.parse(
@@ -126,6 +140,10 @@ export function scanVideos(
         mtime(mp4)
       ),
       storyboardHtml: facts.hasStoryboard ? storyboard : undefined,
+      // AI sua hinh roi chi xuat anh rut gon (--review) thi index.html van la ban cu
+      storyboardStale: facts.hasStoryboard
+        ? newestMtime(path.join(root, slug)) > mtime(storyboard)
+        : undefined,
       thumb: facts.hasStoryboard ? pickThumb(path.dirname(storyboard)) : undefined,
       finalMp4: facts.hasMp4 ? mp4 : undefined,
       hasChat: chatSlugs.has(slug)

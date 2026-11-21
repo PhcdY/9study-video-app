@@ -97,20 +97,32 @@ export function HomeScreen({
               <label className="sr-only" htmlFor="loc-mon">
                 {copy.home.allSubjects}
               </label>
-              <select
-                id="loc-mon"
-                value={mon}
-                onChange={(e) => setMon(e.target.value)}
-                className="h-[38px] cursor-pointer rounded-lg border border-vien-dam bg-white px-2.5 text-sm font-medium outline-none focus:border-cham"
+              <div className="relative">
+                <select
+                  id="loc-mon"
+                  value={mon}
+                  onChange={(e) => setMon(e.target.value)}
+                  className="h-[38px] cursor-pointer appearance-none rounded-lg border border-vien-dam bg-white pr-9 pl-3 text-sm font-medium outline-none focus:border-cham"
+                >
+                  <option value="">{copy.home.allSubjects}</option>
+                  {SUBJECTS.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  aria-hidden
+                  className="pointer-events-none absolute top-1/2 right-3 size-4 -translate-y-1/2 text-phu"
+                />
+              </div>
+              {/* Nut chinh cua man la Lam tiep; nut nay nhat mau cham de van noi bat */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-[38px] rounded-lg border-[1.5px] border-cham bg-cham-nhat font-semibold text-cham hover:bg-[#DFE2FD]"
+                onClick={onNew}
               >
-                <option value="">{copy.home.allSubjects}</option>
-                {SUBJECTS.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </select>
-              <Button variant="outline" size="sm" className="h-[38px] rounded-lg" onClick={onNew}>
                 <Plus aria-hidden className="size-4" /> {copy.home.newVideo}
               </Button>
             </>
@@ -291,8 +303,7 @@ function VideoTable({
                 <StepBar v={v} />
               </td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5">
-                {/* Video mau: chi hien khi co viec (khong ghi "Da dung" cho ca danh sach) */}
-                <AiBadge status={flat && aiOf(ai, v) === 'dung' ? undefined : aiOf(ai, v)} />
+                <AiBadge status={aiOf(ai, v)} />
               </td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5 text-right text-phu tabular-nums">
                 {copy.home.shortDate(v.updatedAt)}

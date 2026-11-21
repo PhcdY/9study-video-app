@@ -24,6 +24,8 @@ const INVOKE: InvokeChannel[] = [
   'chat:send',
   'chat:chip',
   'chat:interrupt',
+  'chat:setAi',
+  'ai:models',
   'chat:statuses',
   'legacy:scan',
   'legacy:findDirs',

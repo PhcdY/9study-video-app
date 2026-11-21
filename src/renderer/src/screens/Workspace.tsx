@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import type { FeedbackTarget } from '@/screens/Feedback'
 import type { VideoStage } from '../../../shared/video'
 import { subjectName } from '../../../shared/prompt'
-import { useAppUpdate, useChat, useVideos } from '@/lib/api'
+import { api, useAppUpdate, useChat, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { ChatPanel } from '@/components/workspace/ChatPanel'
@@ -122,7 +122,16 @@ export function WorkspaceScreen({
             {tab === 'kichBan' && (
               <ScriptTab slug={slug} version={video?.draft ? undefined : video?.updatedAt} />
             )}
-            {tab === 'storyboard' && <StoryboardTab video={video} />}
+            {tab === 'storyboard' && (
+              <StoryboardTab
+                video={video}
+                onRefresh={
+                  slug && !chat?.busy
+                    ? () => void api.invoke('chat:chip', chatKey, 'xuatLaiStoryboard', slug)
+                    : undefined
+                }
+              />
+            )}
             {tab === 'chuyenDong' && <StudioTab compositionId={video?.compositionId} />}
             {tab === 'giongDoc' && (
               <AudioTab

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { FolderOpen, Loader2, MessageSquareWarning, Play } from 'lucide-react'
+import { FolderOpen, Loader2, MessageSquareWarning, Play, RefreshCw } from 'lucide-react'
 import type { AudioLine, ScriptData, VideoInfo } from '../../../../shared/video'
 import { api, fileUrl } from '@/lib/api'
 import { copy } from '@/lib/copy'
@@ -80,15 +80,39 @@ export function ScriptTab({
 }
 
 /** Storyboard do skill xuat ra (trang HTML anh nhung san). */
-export function StoryboardTab({ video }: { video?: VideoInfo }): React.JSX.Element {
+export function StoryboardTab({
+  video,
+  onRefresh
+}: {
+  video?: VideoInfo
+  /** Nho AI xuat lai storyboard day du; undefined khi AI dang lam */
+  onRefresh?: () => void
+}): React.JSX.Element {
   if (!video?.storyboardHtml) return <Empty>{w.noStoryboard}</Empty>
   return (
-    <iframe
-      title={copy.workspace.tabs.storyboard}
-      src={fileUrl(video.storyboardHtml, video.updatedAt)}
-      sandbox="allow-scripts"
-      className="min-h-[640px] w-full flex-1 rounded-xl border border-vien bg-white"
-    />
+    <div className="flex flex-1 flex-col gap-3">
+      {video.storyboardStale && (
+        <div
+          role="status"
+          className="flex flex-wrap items-center gap-3 rounded-xl border border-credit/30 bg-credit-nen px-4 py-3 text-[15px] text-credit"
+        >
+          <span className="min-w-0 flex-[1_1_260px]">
+            {onRefresh ? w.storyboardStale : w.storyboardStaleBusy}
+          </span>
+          {onRefresh && (
+            <Button size="sm" onClick={onRefresh}>
+              <RefreshCw aria-hidden className="size-4" /> {copy.chat.chips.xuatLaiStoryboard}
+            </Button>
+          )}
+        </div>
+      )}
+      <iframe
+        title={copy.workspace.tabs.storyboard}
+        src={fileUrl(video.storyboardHtml, video.updatedAt)}
+        sandbox="allow-scripts"
+        className="min-h-[640px] w-full flex-1 rounded-xl border border-vien bg-white"
+      />
+    </div>
   )
 }
 

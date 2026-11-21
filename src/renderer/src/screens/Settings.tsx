@@ -15,6 +15,7 @@ import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
 import {
   api,
+  useAiModels,
   useAppUpdate,
   useFeedbackDirCheck,
   useFeedback,
@@ -24,6 +25,7 @@ import {
   useUsage
 } from '@/lib/api'
 import { BusyWarning } from '@/components/UpdatePill'
+import { AiPicker } from '@/components/AiPicker'
 import { LegacySettings } from '@/components/Legacy'
 import { FeedbackDirBadge, FeedbackDirGuide, FeedbackDirWarning } from '@/components/FeedbackDir'
 import { headline } from '../../../shared/feedback-rules'
@@ -56,6 +58,7 @@ export function SettingsScreen({
   const [showBug, setShowBug] = useState(false)
   const [active, setActive] = useState('thu-muc')
   const [prefs, savePrefs] = usePrefs()
+  const aiModels = useAiModels()
   const appUpdate = useAppUpdate()
   const fbDir = useFeedbackDirCheck()
   const [guide, setGuide] = useState(false)
@@ -364,6 +367,22 @@ export function SettingsScreen({
                 ))
               ) : (
                 <span className="text-[13px] text-phu">{copy.usage.unknown}</span>
+              )}
+            </div>
+            <div className="flex flex-col gap-2 border-b border-[#EEF1F8] pt-4 pb-4">
+              <span className="text-[15px] font-bold">{copy.ai.settingsTitle}</span>
+              {aiModels.length ? (
+                <>
+                  <span className="text-[13px] text-phu">{copy.ai.settingsHint}</span>
+                  <AiPicker
+                    variant="field"
+                    models={aiModels}
+                    value={prefs?.defaultAi ?? {}}
+                    onChange={(choice) => void savePrefs({ defaultAi: choice })}
+                  />
+                </>
+              ) : (
+                <span className="text-[13px] text-phu">{copy.ai.settingsEmpty}</span>
               )}
             </div>
             {confirmLogout && (

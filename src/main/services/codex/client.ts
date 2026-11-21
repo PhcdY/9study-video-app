@@ -67,7 +67,7 @@ export class CodexClient extends EventEmitter {
       const rl = createInterface({ input: child.stdout! })
       rl.on('line', (line) => this.onLine(line))
       await this.request('initialize', {
-        clientInfo: { name: '9study_video', title: '9Study Video', version: app.getVersion() },
+        clientInfo: { name: '9study_video', title: 'NiniStudio', version: app.getVersion() },
         capabilities: null
       })
       this.send({ method: 'initialized' })

@@ -1,4 +1,5 @@
 // Kieu dung chung cho man Video cua toi, form Lam video moi va man mot video.
+import type { AiChoice } from './ai-model'
 
 /** Ba buoc lam video tren giao dien, cong buoc da xuat. */
 export type VideoStage = 'kichBan' | 'duyetHinh' | 'giongDoc' | 'daXuat'
@@ -18,6 +19,8 @@ export interface VideoInfo {
   /** Lan sua cuoi (ms) */
   updatedAt: number
   storyboardHtml?: string
+  /** Co file trong src/videos/<slug>/ sua sau lan xuat storyboard cuoi: storyboard dang hien la ban cu */
+  storyboardStale?: boolean
   /** Anh lam hinh thu nho: mot anh trong thu muc storyboard */
   thumb?: string
   finalMp4?: string
@@ -140,6 +143,8 @@ export interface ChatState {
   items: ChatItem[]
   /** AI dang lam (co the bam Dung) */
   busy: boolean
+  /** Model + muc suy nghi cua cuoc tro chuyen nay */
+  ai: AiChoice
 }
 
 export type SubjectId = 'toan' | 'ly' | 'hoa' | 'sinh' | 'su' | 'dia' | 'van' | 'ktpl' | 'anh'
