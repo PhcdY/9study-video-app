@@ -531,6 +531,9 @@ export const copy = {
     colText: 'Chữ trên hình',
     noStoryboard:
       'Chưa có storyboard. Duyệt kịch bản xong, AI sẽ dựng bản nháp và xuất storyboard.',
+    storyboardStale: 'Hình vừa sửa chưa có trong storyboard này. Xuất lại để xem bản mới.',
+    storyboardStaleBusy:
+      'Hình vừa sửa chưa có trong storyboard này. AI làm xong mà vẫn vậy thì bấm "Xuất lại storyboard".',
     studioStart: 'Mở bản xem chuyển động',
     studioStarting: 'Đang mở bản xem chuyển động… lần đầu mất khoảng 10–30 giây.',
     studioError: 'Chưa mở được bản xem chuyển động. Bấm thử lại; nếu vẫn lỗi, hãy gửi báo lỗi.',

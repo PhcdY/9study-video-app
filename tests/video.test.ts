@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import path from 'node:path'
 import {
   describeApproval,
   statusLabelFor,
@@ -8,6 +10,7 @@ import {
 import {
   compositionIdFrom,
   listLessons,
+  newestMtime,
   sampleSlugsFrom,
   scanVideos,
   stageFrom
@@ -79,6 +82,36 @@ describe('video', () => {
     expect([...s]).toEqual(['tiem-can'])
   })
 
+  it('bao storyboard cu khi hinh sua sau lan xuat cuoi (bao loi 22/11/2026)', () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'sb-'))
+    try {
+      const vid = path.join(dir, 'src', 'videos', 'a')
+      const sb = path.join(dir, 'out', '_lam-viec', 'a', 'storyboard')
+      mkdirSync(vid, { recursive: true })
+      mkdirSync(path.join(sb, 'review'), { recursive: true })
+      writeFileSync(path.join(vid, 'script.json'), '{"title":"A","beats":[]}')
+      writeFileSync(path.join(vid, 'scene.tsx'), 'x')
+      writeFileSync(path.join(sb, 'index.html'), '<html>')
+      const t = (s: number): Date => new Date(Date.UTC(2026, 10, 21, 23, 0, s))
+      utimesSync(path.join(vid, 'script.json'), t(0), t(0))
+      utimesSync(path.join(vid, 'scene.tsx'), t(0), t(0))
+      utimesSync(path.join(sb, 'index.html'), t(10), t(10))
+      const scan = (): boolean | undefined =>
+        scanVideos(dir, new Set(), new Set())[0].storyboardStale
+      expect(scan()).toBe(false)
+      // AI sua hinh, chi xuat anh rut gon trong review/: index.html van cu
+      utimesSync(path.join(vid, 'scene.tsx'), t(20), t(20))
+      writeFileSync(path.join(sb, 'review', 'b04.png'), 'png')
+      expect(newestMtime(vid)).toBe(t(20).getTime())
+      expect(scan()).toBe(true)
+      // Xuat lai ban day du thi het cu
+      utimesSync(path.join(sb, 'index.html'), t(30), t(30))
+      expect(scan()).toBe(false)
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   const repo = 'D:\\9study-video-app\\spikes\\output\\video-repo'
   it.skipIf(!existsSync(repo))('doc that repo video thu cua Moc 0', () => {
     const vids = scanVideos(repo, new Set(['tiem-can']), new Set())
@@ -134,6 +167,8 @@ describe('cau lenh gui AI', () => {
   it('nut goi y goi dung skill', () => {
     expect(chipPrompt('duyetKichBan', 'a')).toMatch(/^\$dung-video\n/)
     expect(chipPrompt('duyetHinh', 'a')).toMatch(/^\$tao-audio\n/)
+    // Xuat lai phai ra ban day du (index.html), khong phai anh rut gon --review
+    expect(chipPrompt('xuatLaiStoryboard', 'a')).toMatch(/không kèm `--review` hay `--beats`/)
     expect(suggestedVoice('van')).toBe('nữ - c Nhi')
   })
 })

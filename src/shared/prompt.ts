@@ -124,7 +124,7 @@ export function chipPrompt(chip: ChipId, slug: string): string {
     case 'duyetHinh':
       return `$tao-audio\nHình của \`${slug}\` đã duyệt. Sang bước tạo giọng đọc: trước hết tạo các câu nghe thử để tôi nghe, chưa tạo cả bài.`
     case 'xuatLaiStoryboard':
-      return `Xuất lại storyboard cho \`${slug}\` (bản nháp) sau các chỗ vừa sửa.`
+      return `Xuất lại storyboard đầy đủ cho \`${slug}\` (bản nháp) sau các chỗ vừa sửa: chạy \`node scripts/storyboard.mjs\` không kèm \`--review\` hay \`--beats\`, để trang storyboard (index.html) có đủ mọi beat với hình mới. Ảnh rút gọn trong \`review/\` không hiện trong app.`
     case 'hocSinhAoHinh':
       return `$hoc-sinh-ao\nNhờ học sinh ảo xem storyboard của \`${slug}\` và báo chỗ nào khó hiểu.`
     case 'nghiOnDungHoanChinh':

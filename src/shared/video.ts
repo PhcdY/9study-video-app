@@ -19,6 +19,8 @@ export interface VideoInfo {
   /** Lan sua cuoi (ms) */
   updatedAt: number
   storyboardHtml?: string
+  /** Co file trong src/videos/<slug>/ sua sau lan xuat storyboard cuoi: storyboard dang hien la ban cu */
+  storyboardStale?: boolean
   /** Anh lam hinh thu nho: mot anh trong thu muc storyboard */
   thumb?: string
   finalMp4?: string
