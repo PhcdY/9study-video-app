@@ -45,7 +45,13 @@ import type { Prefs, PrefsSnapshot } from '../shared/app'
 import { bugAiPrompt } from '../shared/bugs'
 import type { FeedbackList } from '../shared/feedback'
 import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
-import { restartToUpdate, startUpdater, updateInfo } from './services/updater'
+import {
+  checkNow,
+  restartToUpdate,
+  startUpdater,
+  updateInfo,
+  updateStatus
+} from './services/updater'
 import { VideosService } from './services/videos'
 import {
   copyKey,
@@ -191,6 +197,8 @@ function registerIpc(): void {
   handle('app:openLoginPage', () => reopenLoginPage())
   handle('app:restartToUpdate', () => restartToUpdate())
   handle('app:update', () => updateInfo())
+  handle('app:checkUpdate', () => checkNow())
+  handle('app:updateState', () => updateStatus())
   handle('app:busyWork', () => videos.busyTitles())
   handle('app:version', () => app.getVersion())
   handle('app:openTeamFolder', () => shell.openExternal(TEAM_FEEDBACK_FOLDER_URL))

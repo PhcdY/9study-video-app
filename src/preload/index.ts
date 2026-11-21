@@ -10,6 +10,8 @@ const INVOKE: InvokeChannel[] = [
   'app:openLoginPage',
   'app:restartToUpdate',
   'app:update',
+  'app:checkUpdate',
+  'app:updateState',
   'app:busyWork',
   'app:version',
   'app:openTeamFolder',
@@ -73,6 +75,7 @@ const INVOKE: InvokeChannel[] = [
 const EVENTS: EventChannel[] = [
   'setup:changed',
   'app:updateReady',
+  'app:updateStatus',
   'videos:changed',
   'chat:changed',
   'legacy:progress',

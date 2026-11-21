@@ -130,6 +130,10 @@ export function createMockApi(): Api {
       }
       if (channel === 'dialog:pickFolder') return 'E:\\Khac\\VideoAI' as never
       if (channel === 'app:version') return '0.1.0-dev' as never
+      if (channel === 'app:checkUpdate') {
+        await new Promise((r) => setTimeout(r, 800))
+        return { state: 'latest' } as never
+      }
       return undefined as never
     },
     on(channel, cb) {

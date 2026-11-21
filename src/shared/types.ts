@@ -5,6 +5,7 @@ import type {
   PrefsSnapshot,
   UpdateProgress,
   AppUpdate,
+  AppUpdateCheck,
   UpdateResult,
   Usage,
   VersionInfo
@@ -191,6 +192,10 @@ export interface InvokeMap {
   /** Ban app moi da tai xong (null neu chua co) */
   'app:update': { args: []; ret: AppUpdate | null }
   /** Ten cac bai AI dang lam viec (de canh bao truoc khi khoi dong lai) */
+  /** Tim ban app moi ngay (co thi tai luon) */
+  'app:checkUpdate': { args: []; ret: AppUpdateCheck }
+  /** Trang thai tim / tai ban app moi gan nhat (null neu chua tim lan nao) */
+  'app:updateState': { args: []; ret: AppUpdateCheck | null }
   'app:busyWork': { args: []; ret: string[] }
   'app:version': { args: []; ret: string }
   /** Mo thu muc gop y chung cua doi tren trinh duyet (link co dinh trong app) */
@@ -295,6 +300,7 @@ export interface InvokeMap {
 export interface EventMap {
   'setup:changed': SetupSnapshot
   'app:updateReady': AppUpdate
+  'app:updateStatus': AppUpdateCheck
   'videos:changed': VideosSnapshot
   'chat:changed': ChatState
   'version:progress': UpdateProgress

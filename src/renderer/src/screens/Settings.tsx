@@ -10,13 +10,14 @@ import {
 import { ChangelogBody } from '@/components/UpdateDialog'
 import { VivibeSettingsBlock } from '@/components/VivibeUsage'
 import { BugReportPanel, MyBugs } from '@/components/BugReport'
-import type { DiskUsage, VersionInfo } from '../../../shared/app'
+import type { AppUpdateCheck, DiskUsage, VersionInfo } from '../../../shared/app'
 import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
 import {
   api,
   useAiModels,
   useAppUpdate,
+  useAppUpdateCheck,
   useFeedbackDirCheck,
   useFeedback,
   usePrefs,
@@ -30,6 +31,7 @@ import { LegacySettings } from '@/components/Legacy'
 import { FeedbackDirBadge, FeedbackDirGuide, FeedbackDirWarning } from '@/components/FeedbackDir'
 import { headline } from '../../../shared/feedback-rules'
 import { copy } from '@/lib/copy'
+import { ErrorSnap } from '@/components/ErrorSnap'
 import { Button } from '@/components/ui/button'
 import { Card, CardTitle, Input, Page, PageTitle, Select, SettingRow } from '@/components/ui/layout'
 import { cn } from '@/lib/utils'
@@ -60,6 +62,7 @@ export function SettingsScreen({
   const [prefs, savePrefs] = usePrefs()
   const aiModels = useAiModels()
   const appUpdate = useAppUpdate()
+  const appCheck = useAppUpdateCheck()
   const fbDir = useFeedbackDirCheck()
   const [guide, setGuide] = useState(false)
   const restart = useRestartToUpdate()
@@ -590,7 +593,7 @@ export function SettingsScreen({
                 )}
               </>
             ) : (
-              <SettingRow label={t.appName(appVersion)} />
+              <AppCheckRow label={t.appName(appVersion)} {...appCheck} />
             )}
             <CheckRow
               checked={prefs?.autoUpdateApp !== false}
@@ -897,6 +900,66 @@ function AccountRow({
       </div>
       {action}
     </div>
+  )
+}
+
+/** Hang "App NiniStudio · x" khi chua co ban moi tai xong: nut "Tim ban moi", dang tim / dang tai / da moi nhat / loi. */
+function AppCheckRow({
+  label,
+  status,
+  shown,
+  check
+}: {
+  label: string
+  status: AppUpdateCheck | null
+  shown: boolean
+  check: () => Promise<void>
+}): React.JSX.Element {
+  const c = copy.appUpdate
+  const s = shown ? status?.state : undefined
+  if (status?.state === 'downloading')
+    return (
+      <SettingRow
+        label={
+          <span className="flex flex-wrap items-center gap-2.5">
+            {label}
+            <span className="flex items-center gap-1.5 rounded-full bg-cham-nhat px-2.5 py-0.5 text-xs font-bold text-cham">
+              <Loader2 aria-hidden className="size-3 animate-spin" />
+              {c.downloading(status.version, status.percent)}
+            </span>
+          </span>
+        }
+        desc={c.downloadingDesc}
+      />
+    )
+  return (
+    <SettingRow
+      label={label}
+      desc={
+        s === 'latest' ? (
+          <span className="flex items-center gap-1.5">
+            <CheckCircle2 aria-hidden className="size-4" />
+            {c.latest}
+          </span>
+        ) : s === 'error' ? (
+          <span role="alert" className="font-semibold text-loi">
+            {c.checkFail}
+            <ErrorSnap id="app-update-check" label={c.checkFail} />
+          </span>
+        ) : undefined
+      }
+      descTone={s === 'latest' ? 'ok' : 'muted'}
+    >
+      <Button
+        size="sm"
+        variant="outline"
+        disabled={s === 'checking'}
+        onClick={() => void check()}
+      >
+        {s === 'checking' && <Loader2 aria-hidden className="size-4 animate-spin" />}
+        {s === 'checking' ? c.checking : s === 'error' ? c.retry : c.check}
+      </Button>
+    </SettingRow>
   )
 }
 
