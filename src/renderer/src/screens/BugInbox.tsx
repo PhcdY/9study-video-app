@@ -1,5 +1,6 @@
-import { useState } from 'react'
-import type { BugItem, BugStatus } from '../../../shared/bugs'
+import { useEffect, useState } from 'react'
+import { Sparkles } from 'lucide-react'
+import { bugAiPrompt, type BugItem, type BugStatus } from '../../../shared/bugs'
 import { api, fileUrl } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
@@ -10,7 +11,13 @@ const t = copy.bug
 const STATUSES: BugStatus[] = ['moi', 'dangXem', 'daXuLy']
 
 /** Hop thu bao loi app cho nguoi bao tri: danh sach ben trai, chi tiet ben phai. */
-export function BugInbox({ bugs }: { bugs: BugItem[] }): React.JSX.Element {
+export function BugInbox({
+  bugs,
+  onOpenChat
+}: {
+  bugs: BugItem[]
+  onOpenChat: (key: string) => void
+}): React.JSX.Element {
   const [current, setCurrent] = useState<string | null>(null)
   const cur = bugs.find((b) => b.id === current) ?? bugs[0]
   if (!bugs.length)
@@ -64,7 +71,7 @@ export function BugInbox({ bugs }: { bugs: BugItem[] }): React.JSX.Element {
           )
         })}
       </ul>
-      {cur && <BugDetail bug={cur} />}
+      {cur && <BugDetail key={cur.id} bug={cur} onOpenChat={onOpenChat} />}
     </div>
   )
 }
@@ -91,7 +98,13 @@ function Tile({
   )
 }
 
-function BugDetail({ bug }: { bug: BugItem }): React.JSX.Element {
+function BugDetail({
+  bug,
+  onOpenChat
+}: {
+  bug: BugItem
+  onOpenChat: (key: string) => void
+}): React.JSX.Element {
   const setStatus = (s: BugStatus): void => void api.invoke('bugs:setState', bug.id, s)
   return (
     <article className="box-border flex min-w-0 flex-[999_1_560px] flex-col gap-4 rounded-xl border border-vien bg-white px-6 py-5">
@@ -166,6 +179,8 @@ function BugDetail({ bug }: { bug: BugItem }): React.JSX.Element {
         )}
       </div>
 
+      <AskAi bug={bug} onOpenChat={onOpenChat} />
+
       <div className="mt-auto flex flex-wrap gap-2.5">
         {bug.logFile && (
           <Button
@@ -190,5 +205,76 @@ function BugDetail({ bug }: { bug: BugItem }): React.JSX.Element {
         )}
       </div>
     </article>
+  )
+}
+
+/** Nho AI xu ly: tro ly trong app (chan doan) hoac chep loi nho cho Claude Code / ChatGPT (sua ma app). */
+function AskAi({
+  bug,
+  onOpenChat
+}: {
+  bug: BugItem
+  onOpenChat: (key: string) => void
+}): React.JSX.Element {
+  const a = t.ai
+  const text = bugAiPrompt(bug, 'ngoai')
+  const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const id = setTimeout(() => setCopied(false), 3000)
+    return () => clearTimeout(id)
+  }, [copied])
+  const open = async (): Promise<void> => {
+    setBusy(true)
+    const key = await api.invoke('bugs:askAi', bug.id)
+    setBusy(false)
+    if (key) onOpenChat(key)
+  }
+  const copyText = async (): Promise<void> => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopied(true)
+    } catch {
+      setCopied(false)
+    }
+  }
+  const card = (title: string, sub: string, btn: React.ReactNode): React.JSX.Element => (
+    <div className="flex min-w-0 flex-[1_1_260px] flex-col gap-2.5 rounded-xl border border-vien px-4 py-3.5">
+      <b className="text-[15px]">{title}</b>
+      <span className="text-[13px] leading-[1.45] text-phu">{sub}</span>
+      <div className="mt-auto">{btn}</div>
+    </div>
+  )
+  return (
+    <section className="flex flex-col gap-3.5 rounded-[14px] border-[1.5px] border-[#c9cefa] bg-white px-5 py-[18px]">
+      <h3 className="m-0 flex items-center gap-2.5 text-base font-bold">
+        <Sparkles aria-hidden className="size-5 text-cham" /> {a.title}
+      </h3>
+      <div className="flex flex-wrap gap-3">
+        {card(
+          a.inApp,
+          a.inAppSub,
+          <Button size="sm" disabled={busy} onClick={() => void open()}>
+            {a.open}
+          </Button>
+        )}
+        {card(
+          a.ext,
+          a.extSub,
+          <Button size="sm" variant="outline" onClick={() => void copyText()}>
+            {a.copy}
+          </Button>
+        )}
+      </div>
+      <pre className="m-0 max-h-[130px] overflow-hidden rounded-[10px] bg-nen px-3.5 py-3 font-mono text-xs leading-[1.55] whitespace-pre-wrap text-[#3d4466]">
+        {text}
+      </pre>
+      {copied && (
+        <p role="status" className="m-0 text-[13px] font-semibold text-xong">
+          {a.copied}
+        </p>
+      )}
+    </section>
   )
 }

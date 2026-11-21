@@ -62,6 +62,12 @@ export interface LegacyResult {
   chats: number
   chars: number
   key: boolean
+  /** Da chep ca bo cong cu tu thu muc nay va dem du file (co the bo thu muc cu) */
+  copiedFrom?: string
+  /** Dung luong thu muc cu (khong tinh node_modules) */
+  sourceBytes?: number
+  /** Thu muc cu da duoc chuyen vao Thung rac */
+  sourceRemoved?: boolean
 }
 
 /** Ten thu muc Claude Code dat cho mot du an: moi ky tu khong phai chu/so thanh "-". */

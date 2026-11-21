@@ -52,3 +52,36 @@ export function errorLines(log: string, max = 6): { count: number; last: string[
     last: lines.slice(-max).map((l) => l.replace(/^\[[\d\- :.]+\]\s*/, '').slice(0, 300))
   }
 }
+
+const two = (n: number): string => String(n).padStart(2, '0')
+
+/** Loi nho AI doc bao loi: 'app' = tro ly trong app (chi doc, chan doan); 'ngoai' = dan vao Claude Code / ChatGPT. */
+export function bugAiPrompt(bug: BugItem, who: 'app' | 'ngoai'): string {
+  const d = new Date(bug.createdAt)
+  const when = `${two(d.getDate())}/${two(d.getMonth() + 1)}/${d.getFullYear()} ${two(d.getHours())}:${two(d.getMinutes())}`
+  const info = [
+    `Mô tả: ${bug.desc?.trim() || '(không có)'}`,
+    `Người gửi: ${bug.author} · ${when}`,
+    [
+      `App ${bug.appVersion}`,
+      bug.toolkitVersion ? `bộ công cụ bản ${bug.toolkitVersion}` : '',
+      bug.cFreeGb !== undefined ? `ổ C còn ${bug.cFreeGb} GB` : ''
+    ]
+      .filter(Boolean)
+      .join(' · '),
+    `Lỗi trong nhật ký: ${bug.errorCount} lần.`,
+    ...(bug.lastErrors.length ? ['Dòng lỗi gần nhất:', ...bug.lastErrors] : [])
+  ]
+  const head =
+    who === 'app'
+      ? [
+          `Đọc báo lỗi của app 9Study Video trong thư mục ${bug.dir} (meta.json, thong-tin.txt, thư mục nhật ký và ảnh lúc lỗi). Chỉ đọc, không sửa file nào.`,
+          'Cho tôi biết: lỗi xảy ra lúc người gửi làm gì, do đâu (máy người gửi, bộ công cụ, hay chính app), và cách khắc phục. Nếu do app thì chỉ rõ dòng nhật ký cho thấy điều đó để báo người phát triển app.'
+        ]
+      : [
+          'Đọc báo lỗi của app 9Study Video trong thư mục:',
+          bug.dir,
+          '(meta.json, thong-tin.txt, thư mục nhật ký và ảnh lúc lỗi). Tìm nguyên nhân trong mã app, sửa, rồi báo lại đã sửa gì.'
+        ]
+  return [...head, '', ...info].join('\n')
+}

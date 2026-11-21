@@ -11,9 +11,10 @@ export function TaskList({ step }: { step: StepState }): React.JSX.Element | nul
   const tasks: TaskState[] =
     step.tasks ?? plan.map((id) => ({ id, status: step.status === 'done' ? 'done' : 'waiting' }))
   const started = step.status === 'running' || !!step.tasks
+  const heading = step.status === 'done' ? copy.didDo : started ? copy.doing : copy.willDo
   return (
-    <section className="flex flex-col gap-2" aria-label={started ? copy.doing : copy.willDo}>
-      <div className="text-sm font-semibold text-phu">{started ? copy.doing : copy.willDo}</div>
+    <section className="flex flex-col gap-2" aria-label={heading}>
+      <div className="text-sm font-semibold text-phu">{heading}</div>
       <ol className="m-0 flex list-none flex-col gap-2 p-0">
         {tasks.map((t) => (
           <TaskRow key={t.id} task={t} stepId={step.id} />

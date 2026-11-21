@@ -31,6 +31,8 @@ const INVOKE: InvokeChannel[] = [
   'legacy:chats',
   'legacy:transcript',
   'legacy:resume',
+  'legacy:ack',
+  'legacy:trashSource',
   'chat:approve',
   'studio:start',
   'shell:showItem',
@@ -58,6 +60,7 @@ const INVOKE: InvokeChannel[] = [
   'bugs:shots',
   'bugs:send',
   'bugs:setState',
+  'bugs:askAi',
   'disk:clean'
 ]
 const EVENTS: EventChannel[] = [

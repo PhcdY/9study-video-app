@@ -17,6 +17,8 @@ export interface Settings extends Prefs {
   legacySource?: string
   legacyPending?: boolean
   legacyResult?: LegacyResult
+  /** Nguoi dung da xem man Da nhan o buoc 2 */
+  legacySeen?: boolean
 }
 
 const file = (): string => path.join(app.getPath('userData'), 'settings.json')

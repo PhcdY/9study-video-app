@@ -158,7 +158,7 @@ export interface SetupSnapshot {
   /** Bo cong cu da co san tren may (chi do khi chua chon thu muc), bo day du nhat dung dau */
   existingRepos: ExistingRepo[]
   /** Dang nhan du lieu cu tu thu muc nay (buoc 2), va ket qua khi xong */
-  legacy?: { source: string; pending: boolean; result?: LegacyResult }
+  legacy?: { source: string; pending: boolean; result?: LegacyResult; seen: boolean }
   account?: { email: string; plan: string }
   vivibeKeyMasked?: string
   checks: MachineCheck[]
@@ -216,6 +216,10 @@ export interface InvokeMap {
   'legacy:transcript': { args: [id: string]; ret: LegacyMessage[] }
   /** Mo tiep cuoc Codex cu trong video; false neu Codex khong mo lai duoc */
   'legacy:resume': { args: [key: string, id: string]; ret: boolean }
+  /** Da xem man "Da nhan du lieu cu" o buoc 2, sang buoc tiep */
+  'legacy:ack': { args: []; ret: void }
+  /** Chuyen thu muc cu (da chep du) vao Thung rac; Windows hoi lai truoc */
+  'legacy:trashSource': { args: []; ret: { ok: boolean } }
   /** Trang thai AI theo slug / khoa cuoc tro chuyen */
   'chat:statuses': { args: []; ret: Record<string, AiStatus> }
   'chat:approve': {
@@ -266,6 +270,8 @@ export interface InvokeMap {
     ret: { ok: true } | { ok: false; code: 'chuaCoThuMuc' | 'loi' }
   }
   'bugs:setState': { args: [id: string, status: BugStatus]; ret: void }
+  /** Mo cuoc tro chuyen voi tro ly AI de doc bao loi; tra ve khoa cuoc tro chuyen */
+  'bugs:askAi': { args: [id: string]; ret: string | null }
   'disk:clean': { args: [which: 'drafts' | 'temp']; ret: DiskUsage }
 }
 

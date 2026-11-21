@@ -46,7 +46,7 @@ import {
   openDriveSetup
 } from './google-drive'
 import { FEEDBACK_FOLDER, feedbackDir } from './feedback'
-import { copyRepo, needsCopy, saveChats, scanLegacy } from './legacy'
+import { copyRepo, countFiles, needsCopy, saveChats, scanLegacy } from './legacy'
 import { importVoiceRuns } from './vivibe-usage'
 import type { LegacyOptions } from '../../shared/legacy'
 import log from '../log'
@@ -140,7 +140,8 @@ export class SetupService extends EventEmitter {
         ? {
             source: getSettings().legacySource!,
             pending: !!getSettings().legacyPending,
-            result: getSettings().legacyResult
+            result: getSettings().legacyResult,
+            seen: !!getSettings().legacySeen
           }
         : undefined,
       account: this.account,
@@ -460,9 +461,10 @@ export class SetupService extends EventEmitter {
     })
     const full = await scanLegacy(source, target)
 
+    let copiedFrom: string | undefined
     if (path.resolve(source) !== path.resolve(target) && !isVideoRepo(target)) {
       this.task('taiDuAn', 'chepBoCongCu', { status: 'running', progress: 0 })
-      await copyRepo(
+      const total = await copyRepo(
         source,
         target,
         (done, total) =>
@@ -471,6 +473,10 @@ export class SetupService extends EventEmitter {
           }),
         signal
       )
+      // Dem lai: du file thi moi cho bo thu muc cu
+      const copied = countFiles(target)
+      if (copied >= total) copiedFrom = source
+      else log.warn(`[du lieu cu] chep thieu: ${copied}/${total} file`)
       this.task('taiDuAn', 'chepBoCongCu', { status: 'done' })
     } else this.task('taiDuAn', 'chepBoCongCu', { status: 'skipped' })
 
@@ -495,8 +501,11 @@ export class SetupService extends EventEmitter {
         videos: full.scan.ownVideos,
         chats: opts.chats ? full.scan.chats.length : 0,
         chars,
-        key: !!readEnvFile(path.join(target, '.env')).get('VIVIBE_API_KEY')
-      }
+        key: !!readEnvFile(path.join(target, '.env')).get('VIVIBE_API_KEY'),
+        copiedFrom,
+        sourceBytes: full.scan.sizeBytes
+      },
+      legacySeen: false
     })
     log.info(`[du lieu cu] da nhan tu ${source}: ${chats} tro chuyen moi, ${chars} ky tu Vivibe`)
   }

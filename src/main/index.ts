@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow } from 'electron'
-import { join } from 'path'
+import { join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import log from './log'
 import { handle, broadcast, pickFiles, pickFolder } from './ipc'
@@ -36,6 +36,7 @@ import { outputBase } from './services/project'
 import { readSpeed, writeSpeed } from './services/voice-config'
 import { cleanDisk, diskUsage } from './services/disk'
 import type { Prefs, PrefsSnapshot } from '../shared/app'
+import { bugAiPrompt } from '../shared/bugs'
 import type { FeedbackList } from '../shared/feedback'
 import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
 import { restartToUpdate, startUpdater, updateInfo } from './services/updater'
@@ -46,10 +47,11 @@ import {
   legacyChats,
   legacyTranscript,
   saveChats,
-  scanLegacy
+  scanLegacy,
+  trashFolder
 } from './services/legacy'
 import { importVoiceRuns } from './services/vivibe-usage'
-import { defaultSearchRoots, findVideoRepos } from './services/detect'
+import { defaultSearchRoots, findVideoRepos, isVideoRepo } from './services/detect'
 import { handleFileScheme, isInside, registerFileScheme } from './services/files-protocol'
 
 // Thu tu dong: chay voi thu muc du lieu rieng, khong dung toi cai dat that cua nguoi dung
@@ -245,6 +247,30 @@ function registerIpc(): void {
   handle('legacy:chats', (slug) => legacyChats(getSettings().projectDir ?? '', slug))
   handle('legacy:transcript', (id) => legacyTranscript(id))
   handle('legacy:resume', (key, id) => videos.resumeLegacy(key, id))
+  handle('legacy:ack', async () => {
+    updateSettings({ legacySeen: true })
+    broadcast('setup:changed', await setup.refresh())
+  })
+  handle('legacy:trashSource', async () => {
+    const s = getSettings()
+    const src = s.legacyResult?.copiedFrom
+    const cur = s.projectDir
+    if (!src || !cur || !existsSync(src)) return { ok: false }
+    const a = resolve(src).toLowerCase()
+    const b = resolve(cur).toLowerCase()
+    // Chi bo dung thu muc da chep du, khong bao gio la (hoac chua) thu muc dang dung
+    if (a === b || b.startsWith(`${a}\\`) || a.startsWith(`${b}\\`) || !isVideoRepo(cur))
+      return { ok: false }
+    const ok = await trashFolder(src)
+    if (ok) {
+      updateSettings({
+        legacyResult: { ...s.legacyResult!, copiedFrom: undefined, sourceRemoved: true }
+      })
+      broadcast('setup:changed', await setup.refresh())
+    }
+    log.info(`[du lieu cu] bo thu muc cu ${src}: ${ok ? 'da vao thung rac' : 'chua bo'}`)
+    return { ok }
+  })
   handle('chat:approve', (key, itemId, decision) => videos.chat().approve(key, itemId, decision))
   handle('studio:start', async () => {
     try {
@@ -342,6 +368,15 @@ function registerIpc(): void {
     })
     if (res.ok) broadcast('feedback:changed', feedbackList())
     return res
+  })
+  handle('bugs:askAi', (id) => {
+    const bug = listBugs().find((b) => b.id === id)
+    if (!bug) return null
+    const key = `he-baoloi-${id.replace(/[^A-Za-z0-9_-]/g, '-')}`
+    void videos.chat().send(key, bugAiPrompt(bug, 'app'))
+    if (bug.state.status === 'moi') setBugState(id, 'dangXem')
+    broadcast('feedback:changed', feedbackList())
+    return key
   })
   handle('bugs:setState', (id, status) => {
     setBugState(id, status)

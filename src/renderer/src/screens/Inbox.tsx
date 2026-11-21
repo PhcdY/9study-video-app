@@ -83,7 +83,7 @@ export function InboxScreen(props: InboxProps): React.JSX.Element {
         <FeedbackInbox {...props} />
       ) : (
         <div className="flex min-h-0 flex-1 overflow-y-auto bg-nen px-8 py-6">
-          <BugInbox bugs={list?.bugs ?? []} />
+          <BugInbox bugs={list?.bugs ?? []} onOpenChat={props.onOpenChat} />
         </div>
       )}
     </div>

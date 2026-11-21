@@ -229,6 +229,21 @@ export const copy = {
     tileKey: 'key giọng đọc',
     keyNone: 'Chưa có',
     nothing: 'Thư mục này không có video, trò chuyện hay key nào để nhận.',
+    continue: 'Tiếp tục cài đặt',
+    oldStill: (dir: string, size: string) => `Thư mục cũ ${dir} vẫn còn · ${size}`,
+    oldStillSub: (target: string) => `Mọi thứ đã chép sang ${target} và kiểm tra đủ file.`,
+    oldRemove: 'Bỏ thư mục cũ',
+    oldConfirm: (dir: string) => `Chuyển ${dir} vào Thùng rác?`,
+    oldConfirmLines: [
+      'Video, giọng đọc, key đã có ở thư mục mới.',
+      'Lấy lại được trong Thùng rác của Windows.',
+      'Trò chuyện cũ vẫn xem được trong app.'
+    ],
+    oldConfirmBtn: 'Chuyển vào Thùng rác',
+    oldKeep: 'Giữ lại',
+    oldWindows: 'Thư mục quá lớn so với Thùng rác thì Windows hỏi trước khi xoá hẳn.',
+    oldRemoved: 'Đã chuyển thư mục cũ vào Thùng rác.',
+    oldNotRemoved: 'Thư mục cũ vẫn còn (bạn đã huỷ hoặc Windows chưa chuyển được).',
     settingsRow: 'Dữ liệu từ thư mục cũ',
     settingsOpen: 'Nhận dữ liệu cũ',
     settingsPick: 'Thư mục cũ',
@@ -256,6 +271,7 @@ export const copy = {
   },
   willDo: 'Những gì app sẽ làm',
   doing: 'Đang làm',
+  didDo: 'Đã làm',
   mb: (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} MB`,
   goi: (n: number) => `${n.toLocaleString('vi-VN')} gói`,
   speed: (n: number) => `${n.toLocaleString('vi-VN', { maximumFractionDigits: 1 })} MB/giây`,
@@ -647,7 +663,19 @@ export const copy = {
     shots: 'Ảnh lúc báo lỗi',
     openLog: 'Mở cả nhật ký',
     openFolder: 'Mở thư mục',
-    markDone: 'Đánh dấu đã xử lý'
+    markDone: 'Đánh dấu đã xử lý',
+    ai: {
+      title: 'Nhờ AI xử lý lỗi này',
+      inApp: 'Trợ lý AI trong app',
+      inAppSub:
+        'Mở cuộc trò chuyện, AI đọc nhật ký, ảnh lúc lỗi, thông tin máy rồi nói lỗi do đâu và cách sửa.',
+      open: 'Mở trò chuyện',
+      ext: 'Claude Code hoặc ChatGPT',
+      extSub:
+        'Chép sẵn lời nhờ kèm đường dẫn thư mục báo lỗi, các dòng lỗi và thông tin máy. Dán vào nơi bạn sửa mã app.',
+      copy: 'Chép lời nhờ',
+      copied: 'Đã chép. Dán vào Claude Code hoặc ChatGPT.'
+    }
   },
   vivibe: {
     title: 'Đã dùng',
@@ -713,7 +741,9 @@ export const copy = {
     phienBan: 'Cập nhật bộ công cụ cùng AI',
     phienBanSub: 'AI giữ nguyên bài của bạn khi đổi bản',
     gopY: 'Sửa bộ công cụ theo góp ý',
-    gopYSub: (branch: string) => `Nhánh ${branch}`
+    gopYSub: (branch: string) => `Nhánh ${branch}`,
+    baoLoi: 'Xử lý báo lỗi cùng AI',
+    baoLoiSub: 'AI chỉ đọc nhật ký và ảnh lúc lỗi, không sửa file'
   },
   feedback: {
     open: 'Góp ý cho đội',

@@ -451,22 +451,28 @@ export function saveChats(projectDir: string, parsed: Parsed[]): number {
 
 // ---------- chep ----------
 
-/** Chep ca bo cong cu (tru node_modules: buoc Cai thu vien se cai lai). */
+/** So file trong thu muc (khong tinh node_modules). */
+export function countFiles(dir: string): number {
+  let n = 0
+  const walk = (d: string): void => {
+    for (const e of readdirSync(d, { withFileTypes: true })) {
+      if (e.name === 'node_modules') continue
+      if (e.isDirectory()) walk(path.join(d, e.name))
+      else n++
+    }
+  }
+  walk(dir)
+  return n
+}
+
+/** Chep ca bo cong cu (tru node_modules: buoc Cai thu vien se cai lai). Tra ve so file can chep. */
 export async function copyRepo(
   from: string,
   to: string,
   onProgress: (done: number, total: number) => void,
   signal: AbortSignal
-): Promise<void> {
-  let total = 0
-  const count = (d: string): void => {
-    for (const e of readdirSync(d, { withFileTypes: true })) {
-      if (e.name === 'node_modules') continue
-      if (e.isDirectory()) count(path.join(d, e.name))
-      else total++
-    }
-  }
-  count(from)
+): Promise<number> {
+  const total = countFiles(from)
   let done = 0
   let lastPct = -1
   await mkdir(to, { recursive: true })
@@ -492,6 +498,7 @@ export async function copyRepo(
       return true
     }
   })
+  return total
 }
 
 /** Chep cac video chua co sang thu muc dang dung (nhan tu Cai dat, khong chep ca bo cong cu). */
@@ -534,3 +541,18 @@ export async function bringCodexRollout(file: string, codexHome: string): Promis
 }
 
 export type { LegacySource }
+
+/** Chuyen thu muc cu vao Thung rac bang hop thoai cua Windows (Windows hoi lai, thung rac day thi Windows bao). */
+export async function trashFolder(dir: string): Promise<boolean> {
+  await run(
+    'powershell.exe',
+    [
+      '-NoProfile',
+      '-NonInteractive',
+      '-Command',
+      "Add-Type -AssemblyName Microsoft.VisualBasic; try { [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteDirectory($env:THU_MUC_CU, 'AllDialogs', 'SendToRecycleBin') } catch { exit 2 }"
+    ],
+    { env: { ...process.env, THU_MUC_CU: dir }, logLabel: 'bo thu muc cu' }
+  )
+  return !existsSync(dir)
+}

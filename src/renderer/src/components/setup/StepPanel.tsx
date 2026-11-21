@@ -141,7 +141,21 @@ function LegacyStep({ snap, step, index }: Props): React.JSX.Element {
             <Progress value={step.progress} label={l.running} />
           )}
           <TaskList step={step} />
-          {done && <LegacyResultTiles result={legacy.result!} />}
+          {done && (
+            <>
+              <LegacyResultTiles result={legacy.result!} />
+              <OldFolder snap={snap} />
+              {!legacy.seen && (
+                <Button
+                  size="lg"
+                  className="self-start"
+                  onClick={() => void api.invoke('legacy:ack')}
+                >
+                  {l.continue}
+                </Button>
+              )}
+            </>
+          )}
         </>
       ) : (
         <LegacyChoices
@@ -164,6 +178,70 @@ function LegacyStep({ snap, step, index }: Props): React.JSX.Element {
         </LegacyChoices>
       )}
     </main>
+  )
+}
+
+/** Sau khi chep du sang thu muc moi: goi y bo thu muc cu vao Thung rac (hoi lai, Windows cung hoi). */
+function OldFolder({ snap }: { snap: SetupSnapshot }): React.JSX.Element | null {
+  const l = copy.legacy
+  const r = snap.legacy?.result
+  const [asking, setAsking] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  if (r?.sourceRemoved)
+    return (
+      <div className="flex items-center gap-2 text-[15px] font-semibold text-xong">
+        <CheckCircle2 aria-hidden className="size-5" /> {l.oldRemoved}
+      </div>
+    )
+  if (!r?.copiedFrom) return null
+  const remove = async (): Promise<void> => {
+    setBusy(true)
+    const res = await api.invoke('legacy:trashSource')
+    setBusy(false)
+    setAsking(false)
+    setFailed(!res.ok)
+  }
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-vien px-[18px] py-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex min-w-0 flex-[1_1_280px] flex-col gap-0.5">
+          <b className="text-[15px]">{l.oldStill(r.copiedFrom, l.size(r.sourceBytes ?? 0))}</b>
+          <span className="text-[13px] text-phu">{l.oldStillSub(snap.projectDir)}</span>
+        </div>
+        {!asking && (
+          <Button variant="outline" size="sm" onClick={() => setAsking(true)}>
+            {l.oldRemove}
+          </Button>
+        )}
+      </div>
+      {asking && (
+        <div role="dialog" className="flex flex-col gap-3 rounded-[10px] bg-nen px-4 py-3.5">
+          <b className="text-base">{l.oldConfirm(r.copiedFrom)}</b>
+          <ul className="m-0 flex flex-col gap-1 pl-[18px] text-sm leading-normal">
+            {l.oldConfirmLines.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Button
+              size="sm"
+              disabled={busy}
+              className="bg-loi hover:bg-loi/90"
+              onClick={() => void remove()}
+            >
+              {busy && <Loader2 aria-hidden className="size-4 animate-spin" />}
+              {l.oldConfirmBtn}
+            </Button>
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => setAsking(false)}>
+              {l.oldKeep}
+            </Button>
+            <span className="text-[13px] text-phu">{l.oldWindows}</span>
+          </div>
+        </div>
+      )}
+      {failed && <p className="m-0 text-[13px] text-credit">{l.oldNotRemoved}</p>}
+    </div>
   )
 }
 
