@@ -4,6 +4,7 @@ import path from 'node:path'
 import { existsSync, watch, type FSWatcher } from 'node:fs'
 import type {
   AudioLine,
+  VideoInfo,
   ChipId,
   Lesson,
   NewVideoInput,
@@ -12,7 +13,7 @@ import type {
 } from '../../shared/video'
 import { STAGE_CHANGING_CHIPS, chipPrompt, composeNewVideoPrompt } from '../../shared/prompt'
 import { getSettings } from './settings'
-import { childEnv, exe } from './runtime'
+import { childEnv, codexHome, exe } from './runtime'
 import { run } from './process'
 import {
   listAudio,
@@ -22,7 +23,15 @@ import {
   sampleSlugsFrom,
   scanVideos
 } from './project'
-import { CodexSession, slugsWithChat } from './codex/session'
+import {
+  CodexSession,
+  boundThreads,
+  forgetThread,
+  slugsWithChat,
+  threadOf,
+  unboundNewChats
+} from './codex/session'
+import { dropDrafts, readDrafts, recoverDraft, saveDraft } from './drafts'
 import { StudioService } from './studio'
 import { latestNumericTag } from './rules'
 import log from '../log'
@@ -66,11 +75,79 @@ export class VideosService extends EventEmitter {
     if (!dir) return { videos: [], outputDir: '' }
     await this.loadRepoFacts().catch((e) => log.warn(`[videos] doc git loi: ${String(e)}`))
     this.ensureWatch()
+    const videos = [
+      ...scanVideos(dir, this.samples ?? new Set(), slugsWithChat(dir)),
+      ...this.drafts()
+    ]
+    videos.sort((a, b) => Number(a.sample) - Number(b.sample) || b.updatedAt - a.updatedAt)
     return {
-      videos: scanVideos(dir, this.samples ?? new Set(), slugsWithChat(dir)),
+      videos,
       toolkitVersion: this.version,
       outputDir: outputBase(dir)
     }
+  }
+
+  /** Video moi dang do (AI chua tao thu muc video). Video da co thu muc thi bo khoi danh sach nay. */
+  private drafts(): VideoInfo[] {
+    const dir = this.projectDir
+    const all = readDrafts(dir)
+    const bound = boundThreads(dir)
+    const done = Object.keys(all).filter((k) => {
+      const t = threadOf(dir, k)
+      return !!t && bound.has(t)
+    })
+    dropDrafts(dir, done)
+    const list: VideoInfo[] = Object.entries(all)
+      .filter(([k]) => !done.includes(k))
+      .map(([key, d]) => ({
+        slug: key,
+        title: d.title,
+        subject: d.subject,
+        lop: d.lop,
+        loai: d.loai,
+        stage: 'kichBan' as const,
+        sample: false,
+        updatedAt: d.createdAt,
+        hasChat: true,
+        draft: true
+      }))
+    // Video moi dung giua chung tu ban app cu (chua luu thong tin bai): van hien de lam tiep
+    for (const key of unboundNewChats(dir)) {
+      if (all[key]) continue
+      const thread = threadOf(dir, key)
+      const d = thread ? recoverDraft(dir, key, thread, codexHome()) : null
+      list.push({
+        slug: key,
+        title: d?.title ?? 'Video mới (chưa có tên)',
+        subject: d?.subject ?? '',
+        lop: d?.lop,
+        loai: d?.loai,
+        stage: 'kichBan',
+        sample: false,
+        updatedAt: Number(key.slice(4)) || 0,
+        hasChat: true,
+        draft: true
+      })
+    }
+    return list
+  }
+
+  /** Lam tiep video moi dang do: chua co cuoc tro chuyen thi gui lai yeu cau goc. */
+  async resumeDraft(key: string): Promise<void> {
+    const d = readDrafts(this.projectDir)[key]
+    const s = this.chat()
+    await s.open(key)
+    if (!threadOf(this.projectDir, key)) return d ? s.send(key, d.prompt) : undefined
+    return s.send(
+      key,
+      'Làm tiếp việc đang dở: viết kịch bản cho bài này theo yêu cầu ở đầu cuộc trò chuyện. Nếu đã tạo thư mục video thì làm tiếp trên đó.'
+    )
+  }
+
+  dropDraft(key: string): void {
+    dropDrafts(this.projectDir, [key])
+    forgetThread(this.projectDir, key)
+    this.changedSoon()
   }
 
   /** Ban bo cong cu dang dung (tag so tren commit hien tai). */
@@ -133,7 +210,11 @@ export class VideosService extends EventEmitter {
 
   async create(input: NewVideoInput): Promise<string> {
     const key = `moi-${Date.now()}`
-    void this.chat().send(key, composeNewVideoPrompt(input))
+    const prompt = composeNewVideoPrompt(input)
+    // Luu ngay: bam Dung truoc khi AI tao thu muc thi van thay video trong danh sach de lam tiep
+    saveDraft(this.projectDir, key, input, prompt)
+    void this.chat().send(key, prompt)
+    this.changedSoon()
     return key
   }
 

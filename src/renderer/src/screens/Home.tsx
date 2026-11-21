@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { ArrowRight, Check, ChevronDown, Film, Plus, Search } from 'lucide-react'
 import type { VideoInfo, VideoStage } from '../../../shared/video'
 import { SUBJECTS, subjectName } from '../../../shared/prompt'
-import { fileUrl, useVideos } from '@/lib/api'
+import { api, fileUrl, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -61,7 +61,9 @@ export function HomeScreen({
                 </button>
               </div>
               <StageTrail stage={latest.stage} />
-              <p className="m-0 text-sm leading-normal">{copy.home.nextStep[latest.stage]}</p>
+              <p className="m-0 text-sm leading-normal">
+                {latest.draft ? copy.home.draftNext : copy.home.nextStep[latest.stage]}
+              </p>
             </div>
             <div className="flex flex-col items-end gap-1.5">
               <Button size="md" onClick={() => onOpen(latest.slug)}>
@@ -256,23 +258,52 @@ function VideoTable({
               </td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5">{subjectName(v.subject)}</td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5">
-                <span
-                  className={cn(
-                    'inline-flex items-center gap-2 font-semibold',
-                    stageTone[v.stage].text
-                  )}
-                >
-                  <span className={cn('size-2 rounded-full', stageTone[v.stage].dot)} />
-                  {copy.stageStatus[v.stage]}
-                </span>
+                {v.draft ? (
+                  <span className="inline-flex items-center gap-2 font-semibold text-credit">
+                    <span className="size-2 rounded-full bg-[#E08A1E]" />
+                    {copy.home.draftStatus}
+                  </span>
+                ) : (
+                  <span
+                    className={cn(
+                      'inline-flex items-center gap-2 font-semibold',
+                      stageTone[v.stage].text
+                    )}
+                  >
+                    <span className={cn('size-2 rounded-full', stageTone[v.stage].dot)} />
+                    {copy.stageStatus[v.stage]}
+                  </span>
+                )}
               </td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5 text-right text-phu">
-                {copy.home.shortDate(v.updatedAt)}
+                {v.draft ? <DropDraft v={v} /> : copy.home.shortDate(v.updatedAt)}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
+  )
+}
+
+/** Bo video moi dang do: bam "Bo" roi "Bo luon?" de chac chan. */
+function DropDraft({ v }: { v: VideoInfo }): React.JSX.Element {
+  const [sure, setSure] = useState(false)
+  return (
+    <span className="inline-flex items-center gap-2">
+      {!sure && copy.home.shortDate(v.updatedAt)}
+      <button
+        type="button"
+        aria-label={copy.home.dropLabel(v.title)}
+        onClick={() => (sure ? void api.invoke('videos:dropDraft', v.slug) : setSure(true))}
+        onBlur={() => setSure(false)}
+        className={cn(
+          'cursor-pointer text-[13px] font-semibold',
+          sure ? 'text-loi' : 'text-phu hover:text-loi'
+        )}
+      >
+        {sure ? copy.home.dropConfirm : copy.home.drop}
+      </button>
+    </span>
   )
 }

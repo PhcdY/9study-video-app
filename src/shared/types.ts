@@ -158,6 +158,9 @@ export interface InvokeMap {
   'videos:lessons': { args: [subject: SubjectId, lop: number]; ret: Lesson[] }
   /** Tao cuoc tro chuyen moi va gui yeu cau viet kich ban; tra ve khoa cuoc tro chuyen */
   'videos:create': { args: [input: NewVideoInput]; ret: string }
+  /** Video moi dang do: lam tiep / bo */
+  'videos:resumeDraft': { args: [key: string]; ret: void }
+  'videos:dropDraft': { args: [key: string]; ret: void }
   'chat:open': { args: [key: string]; ret: ChatState }
   'chat:send': { args: [key: string, text: string]; ret: void }
   'chat:chip': { args: [key: string, chip: ChipId, slug: string]; ret: void }

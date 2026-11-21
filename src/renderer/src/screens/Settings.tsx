@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
-import { CheckCircle2, FolderOpen, Loader2, TriangleAlert, XCircle } from 'lucide-react'
+import {
+  CheckCircle2,
+  ChevronRight,
+  FolderOpen,
+  Loader2,
+  TriangleAlert,
+  XCircle
+} from 'lucide-react'
+import { ChangelogBody } from '@/components/UpdateDialog'
 import type { DiskUsage, VersionInfo } from '../../../shared/app'
 import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
@@ -41,7 +49,11 @@ export function SettingsScreen({
   const [disk, setDisk] = useState<DiskUsage | null>(null)
   const [cleaning, setCleaning] = useState<'drafts' | 'temp' | null>(null)
   const [confirmClean, setConfirmClean] = useState<'drafts' | 'temp' | null>(null)
-  const [back, setBack] = useState<'idle' | 'confirm' | 'busy' | 'done' | 'fail'>('idle')
+  // Ban dang mo xem mo ta; ban dang doi sang (xac nhan / dang doi / xong / loi)
+  const [openV, setOpenV] = useState<string | null>(null)
+  const [sw, setSw] = useState<{ v: string; state: 'confirm' | 'busy' | 'done' | 'fail' } | null>(
+    null
+  )
   useEffect(() => {
     void api.invoke('voice:speed').then(setSpeed)
     void api.invoke('disk:usage').then(setDisk)
@@ -79,15 +91,14 @@ export function SettingsScreen({
     setEditKey(false)
     setKey('')
   }
-  const goBack = async (): Promise<void> => {
-    if (!version?.previous) return
-    setBack('busy')
-    const res = await api.invoke('version:update', version.previous)
+  const switchTo = async (v: string): Promise<void> => {
+    setSw({ v, state: 'busy' })
+    const res = await api.invoke('version:update', v)
     if (res.ok) {
-      setBack('done')
+      setSw({ v, state: 'done' })
       onVersionChanged()
     } else if (res.code === 'nhoAi') onOpenChat(res.chatKey)
-    else setBack('fail')
+    else setSw({ v, state: 'fail' })
   }
   const clean = async (which: 'drafts' | 'temp'): Promise<void> => {
     setConfirmClean(null)
@@ -296,41 +307,50 @@ export function SettingsScreen({
           </SettingsCard>
 
           <SettingsCard id="tro-ly" title={t.ai}>
-            <SettingRow
-              label={t.signedIn(snap.account?.email ?? '', snap.account?.plan)}
-              desc={
-                usage ? (
-                  <span className="mt-1 flex flex-col gap-2">
-                    {usage.windows.map((w, i) => (
-                      <span key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <span className="w-28 text-[13px] font-semibold text-navy">
-                          {copy.usage.windowLong(w.minutes)}
-                        </span>
-                        <span
-                          className="h-1.5 w-40 overflow-hidden rounded-full bg-vien"
-                          aria-hidden
-                        >
-                          <span
-                            className="block h-full rounded-full bg-xanh"
-                            style={{ width: `${w.usedPercent}%` }}
-                          />
-                        </span>
-                        <span className="text-[13px]">
-                          {copy.usage.used(w.usedPercent)}
-                          {w.resetsAt ? ` · ${copy.usage.resets(w.resetsAt)}` : ''}
-                        </span>
-                      </span>
-                    ))}
-                  </span>
-                ) : undefined
+            <AccountRow
+              email={snap.account?.email}
+              plan={snap.account?.plan}
+              action={
+                !confirmLogout && (
+                  <Button variant="outline" size="sm" onClick={() => setConfirmLogout(true)}>
+                    {t.logout}
+                  </Button>
+                )
               }
-            >
-              {!confirmLogout && (
-                <Button variant="outline" size="sm" onClick={() => setConfirmLogout(true)}>
-                  {t.logout}
-                </Button>
+            />
+            <div className="flex flex-col gap-3 border-b border-[#EEF1F8] pt-1 pb-4">
+              <span className="text-[15px] font-bold">{copy.usage.title}</span>
+              {usage ? (
+                usage.windows.map((w, i) => (
+                  <div key={i} className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    <span className="w-32 text-sm font-semibold text-navy">
+                      {copy.usage.windowLong(w.minutes)}
+                    </span>
+                    <span className="h-2 w-48 overflow-hidden rounded-full bg-vien" aria-hidden>
+                      <span
+                        className={cn(
+                          'block h-full rounded-full',
+                          w.usedPercent >= 90
+                            ? 'bg-loi'
+                            : w.usedPercent >= 70
+                              ? 'bg-[#E08A1E]'
+                              : 'bg-xanh'
+                        )}
+                        style={{ width: `${w.usedPercent}%` }}
+                      />
+                    </span>
+                    <span className="text-sm font-semibold tabular-nums">
+                      {copy.usage.used(w.usedPercent)}
+                    </span>
+                    {w.resetsAt && (
+                      <span className="text-[13px] text-phu">{copy.usage.resets(w.resetsAt)}</span>
+                    )}
+                  </div>
+                ))
+              ) : (
+                <span className="text-[13px] text-phu">{copy.usage.unknown}</span>
               )}
-            </SettingRow>
+            </div>
             {confirmLogout && (
               <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[10px] border border-vien bg-nen px-4 py-3">
                 <span className="flex-1 text-sm">{t.logoutConfirm}</span>
@@ -363,7 +383,9 @@ export function SettingsScreen({
                     <span className="text-[15px] font-semibold">
                       {v === 'tonCredit' ? t.askCredit : t.askAll}
                       {v === 'tonCredit' && (
-                        <span className="font-normal text-phu">{t.askCreditTag}</span>
+                        <span className="ml-2 rounded-full bg-xong-nen px-2 py-px align-[1px] text-xs font-bold text-xong">
+                          {t.askCreditTag}
+                        </span>
                       )}
                     </span>
                     <span className="text-[13px] text-phu">
@@ -399,30 +421,103 @@ export function SettingsScreen({
                   {t.viewUpdate}
                 </Button>
               )}
-              {version?.previous && version.safe && back === 'idle' && (
-                <Button variant="outline" size="sm" onClick={() => setBack('confirm')}>
-                  {t.goBack(version.previous)}
-                </Button>
-              )}
             </SettingRow>
-            {back === 'confirm' && version?.previous && (
-              <div className="mb-4 flex flex-wrap items-center gap-3 rounded-[10px] border border-vien bg-nen px-4 py-3">
-                <span className="flex-1 text-sm">{t.goBackConfirm(version.previous)}</span>
-                <Button size="sm" onClick={() => void goBack()}>
-                  {t.goBack(version.previous)}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={() => setBack('idle')}>
-                  {t.cancel}
-                </Button>
+            {!!version?.history.length && (
+              <div className="flex flex-col gap-2 border-b border-[#EEF1F8] py-4">
+                <span className="text-[15px] font-bold">{t.allVersions}</span>
+                <span className="text-[13px] text-phu">{t.allVersionsDesc}</span>
+                <ul className="m-0 mt-1 flex list-none flex-col gap-2 p-0">
+                  {version.history.map((e) => {
+                    const mine = Number(version.current ?? version.base ?? 0)
+                    const isCur = !version.branch && e.version === version.current
+                    const isOpen = openV === e.version
+                    const busy = sw?.state === 'busy'
+                    return (
+                      <li key={e.version} className="rounded-[10px] border border-vien bg-white">
+                        <div className="flex flex-wrap items-center gap-3 px-3 py-2">
+                          <button
+                            type="button"
+                            aria-expanded={isOpen}
+                            onClick={() => setOpenV(isOpen ? null : e.version)}
+                            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-md py-1 text-left hover:text-cham"
+                          >
+                            <ChevronRight
+                              aria-hidden
+                              className={cn(
+                                'size-4 shrink-0 text-phu transition-transform',
+                                isOpen && 'rotate-90'
+                              )}
+                            />
+                            <span className="font-bold">{t.versionName(e.version)}</span>
+                            {e.date && (
+                              <span className="text-[13px] text-phu">{t.versionDate(e.date)}</span>
+                            )}
+                            {isCur && (
+                              <span className="rounded-full bg-xong-nen px-2 py-px text-xs font-bold text-xong">
+                                {t.inUse}
+                              </span>
+                            )}
+                            {!isCur && e.version === version.latest && (
+                              <span className="rounded-full bg-cham-nhat px-2 py-px text-xs font-bold text-cham">
+                                {t.newest}
+                              </span>
+                            )}
+                          </button>
+                          {!isCur && sw?.v !== e.version && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              disabled={busy}
+                              onClick={() => setSw({ v: e.version, state: 'confirm' })}
+                            >
+                              {Number(e.version) < mine ? t.goBack(e.version) : t.goUp(e.version)}
+                            </Button>
+                          )}
+                        </div>
+                        {isOpen && (
+                          <div className="border-t border-vien px-4 py-3">
+                            <ChangelogBody entry={e} />
+                          </div>
+                        )}
+                        {sw?.v === e.version && (
+                          <div className="flex flex-wrap items-center gap-3 border-t border-vien bg-nen px-4 py-3">
+                            {sw.state === 'confirm' && (
+                              <>
+                                <span className="flex-1 text-sm">{t.switchConfirm(e.version)}</span>
+                                <Button size="sm" onClick={() => void switchTo(e.version)}>
+                                  {Number(e.version) < mine
+                                    ? t.goBack(e.version)
+                                    : t.goUp(e.version)}
+                                </Button>
+                                <Button variant="ghost" size="sm" onClick={() => setSw(null)}>
+                                  {t.cancel}
+                                </Button>
+                              </>
+                            )}
+                            {sw.state === 'busy' && (
+                              <span className="flex items-center gap-2 text-sm text-phu">
+                                <Loader2 aria-hidden className="size-4 animate-spin text-xanh" />
+                                {t.working}
+                              </span>
+                            )}
+                            {sw.state === 'done' && (
+                              <span className="text-sm font-semibold text-xong">
+                                {t.switchDone(e.version)}
+                              </span>
+                            )}
+                            {sw.state === 'fail' && (
+                              <span role="alert" className="text-sm text-loi">
+                                {t.switchFail}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </li>
+                    )
+                  })}
+                </ul>
               </div>
             )}
-            {back === 'busy' && <Working />}
-            {back === 'done' && (
-              <p className="m-0 pb-4 text-sm font-semibold text-xong">
-                {t.goBackDone(version?.current ?? '')}
-              </p>
-            )}
-            {back === 'fail' && <Alert>{t.goBackFail}</Alert>}
             <SettingRow label={t.appName(appVersion)} />
             <CheckRow
               checked={prefs?.autoUpdateApp !== false}
@@ -619,6 +714,40 @@ export function SettingsScreen({
         </div>
       </div>
     </Page>
+  )
+}
+
+/** Tai khoan ChatGPT: chu cai dau, email, ten goi (vd ChatGPT Plus). */
+function AccountRow({
+  email,
+  plan,
+  action
+}: {
+  email?: string
+  plan?: string
+  action?: React.ReactNode
+}): React.JSX.Element {
+  const initials =
+    (email?.split('@')[0] ?? '')
+      .replace(/[^a-zA-Z]/g, '')
+      .slice(0, 2)
+      .toUpperCase() || 'AI'
+  return (
+    <div className="flex flex-wrap items-center gap-3 border-b border-[#EEF1F8] py-4">
+      <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-navy text-sm font-bold text-white">
+        {initials}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <span className="truncate text-[15px] font-bold">{email || copy.usage.chatgpt}</span>
+        <span className="flex items-center gap-2 text-[13px] text-phu">
+          {t.account}
+          <span className="rounded-full bg-cham-nhat px-2 py-px text-xs font-bold text-cham">
+            {copy.usage.plan(plan)}
+          </span>
+        </span>
+      </div>
+      {action}
+    </div>
   )
 }
 

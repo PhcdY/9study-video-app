@@ -121,11 +121,21 @@ export class VersionService {
 
     const updateAvailable = !!latest && Number(latest) > mine
 
+    // Mo ta moi ban: doc CHANGELOG cua ban moi nhat (co du cac ban cu)
+    const md = (
+      await this.lines(['show', latest ? `refs/tags/${latest}:CHANGELOG.md` : 'HEAD:CHANGELOG.md'])
+    ).join('\n')
+    const parsed = parseChangelog(md)
+    const history = tags
+      .map((t) => t.trim())
+      .filter((t) => /^\d+$/.test(t))
+      .sort((a, b) => Number(b) - Number(a))
+      .map((v) => parsed.find((e) => e.version === v) ?? { version: v, groups: [] })
+
     let notes: ChangelogEntry[] = []
     let needAppVersion: string | undefined
     if (updateAvailable && latest) {
-      const md = (await this.lines(['show', `refs/tags/${latest}:CHANGELOG.md`])).join('\n')
-      notes = parseChangelog(md).filter((e) => Number(e.version) > mine)
+      notes = parsed.filter((e) => Number(e.version) > mine)
       const compat = (await this.lines(['show', `refs/tags/${latest}:app-compat.json`])).join('\n')
       try {
         const min = (JSON.parse(compat) as { minAppVersion?: string }).minAppVersion
@@ -144,6 +154,7 @@ export class VersionService {
       notes,
       safe: !branch && !!current && isSafeToSwitch(status),
       previous: previous ?? undefined,
+      history,
       needAppVersion,
       offline
     }

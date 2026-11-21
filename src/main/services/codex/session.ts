@@ -62,6 +62,35 @@ export function slugsWithChat(projectDir: string): Set<string> {
   )
 }
 
+/** Thread da luu cua mot cuoc tro chuyen (neu co). */
+export function threadOf(projectDir: string, key: string): string | undefined {
+  return readStore()[projectDir]?.[key]
+}
+/** Video moi chua gan vao thu muc video nao: khoa moi- co thread chua duoc video nao dung. */
+export function unboundNewChats(projectDir: string): string[] {
+  const all = readStore()[projectDir] ?? {}
+  const bound = boundThreads(projectDir)
+  return Object.entries(all)
+    .filter(([k, v]) => k.startsWith('moi-') && !bound.has(v))
+    .map(([k]) => k)
+}
+/** Quen cuoc tro chuyen (nguoi dung bo video dang do). */
+export function forgetThread(projectDir: string, key: string): void {
+  const s = readStore()
+  if (!s[projectDir]?.[key]) return
+  delete s[projectDir][key]
+  writeFileSync(storeFile() + '.tmp', JSON.stringify(s, null, 2))
+  renameSync(storeFile() + '.tmp', storeFile())
+}
+/** Thread da gan vao mot video (de biet video moi nao da co thu muc). */
+export function boundThreads(projectDir: string): Set<string> {
+  return new Set(
+    Object.entries(readStore()[projectDir] ?? {})
+      .filter(([k]) => !k.startsWith('moi-') && !k.startsWith('he-'))
+      .map(([, v]) => v)
+  )
+}
+
 /** Doi loi tho cua Codex ra ma loi cho giao dien. */
 export function chatErrorCode(message: string): ChatErrorCode {
   if (/usage limit|rate limit|quota|too many requests|429/i.test(message)) return 'hetLuot'

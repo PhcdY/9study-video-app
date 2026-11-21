@@ -145,3 +145,18 @@ export const STAGE_CHIPS: Record<VideoStage, ChipId[]> = {
 
 /** Nut lam chuyen buoc: thu gon cuoc tro chuyen truoc khi gui de tiet kiem luot. */
 export const STAGE_CHANGING_CHIPS: ChipId[] = ['duyetKichBan', 'duyetHinh', 'nghiOnDungHoanChinh']
+
+/** Doc nguoc yeu cau "Lam video moi" (composeNewVideoPrompt) ra mon, lop, loai, ten bai. */
+export function parseNewVideoPrompt(
+  text: string
+): { subject: string; lop?: number; loai: string; title: string } | null {
+  if (!text.includes('$viet-kich-ban')) return null
+  const subject = /gói môn `([a-z]+)`/.exec(text)?.[1]
+  if (!subject) return null
+  const lop = Number(/lớp (\d+)/.exec(text)?.[1]) || undefined
+  const loai = text.includes('"loai": "hien-tuong"') ? 'hien-tuong' : 'bai-hoc'
+  const raw =
+    /^- Bài: (.+)$/m.exec(text)?.[1] ?? /^- Câu hỏi \/ hiện tượng: (.+)$/m.exec(text)?.[1] ?? ''
+  const title = raw.replace(/\s*\(thẻ bài học: `[^`]*`\)\s*$/, '').trim()
+  return { subject, lop, loai, title }
+}

@@ -29,7 +29,10 @@ function MiniBar({ w }: { w: UsageWindow }): React.JSX.Element {
   )
 }
 
-/** Thanh dau: "Usage" + tung han muc (5 gio, tuan) + chu cai tai khoan. Bam de xem chi tiet. */
+/**
+ * Thanh dau: "Usage" + han muc ngan nhat (thuong la 5h) + chu cai tai khoan.
+ * Di chuot vao hoac bam thi hien du cac han muc (5h, tuan...).
+ */
 export function UsagePill({
   onOpenSettings
 }: {
@@ -37,16 +40,28 @@ export function UsagePill({
 }): React.JSX.Element | null {
   const usage = useUsage()
   const snap = useSetup()
-  const [open, setOpen] = useState(false)
+  // hover: mo khi di chuot vao; pinned: bam de giu mo (bam lan nua hoac bam ra ngoai de dong)
+  const [hover, setHover] = useState(false)
+  const [pinned, setPinned] = useState(false)
+  const open = hover || pinned
   const box = useRef<HTMLDivElement>(null)
+  const leaveTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
   useEffect(() => {
-    if (!open) return
+    if (!pinned) return
     const close = (e: MouseEvent): void => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false)
+      if (!box.current?.contains(e.target as Node)) {
+        setPinned(false)
+        setHover(false)
+      }
     }
     document.addEventListener('mousedown', close)
     return () => document.removeEventListener('mousedown', close)
-  }, [open])
+  }, [pinned])
+  useEffect(() => () => clearTimeout(leaveTimer.current), [])
+  const close = (): void => {
+    setPinned(false)
+    setHover(false)
+  }
 
   const email = snap?.account?.email ?? ''
   const initials =
@@ -57,18 +72,28 @@ export function UsagePill({
   if (!usage && !snap?.account) return null
 
   return (
-    <div ref={box} className="relative">
+    <div
+      ref={box}
+      className="relative"
+      onMouseEnter={() => {
+        clearTimeout(leaveTimer.current)
+        setHover(true)
+      }}
+      onMouseLeave={() => {
+        leaveTimer.current = setTimeout(() => setHover(false), 180)
+      }}
+      onKeyDown={(e) => e.key === 'Escape' && close()}
+    >
       <button
         type="button"
         aria-expanded={open}
         aria-label={u.title}
-        onClick={() => setOpen((o) => !o)}
+        title={u.hint}
+        onClick={() => setPinned((p) => !p)}
         className="flex h-10 cursor-pointer items-center gap-3 rounded-full border border-vien bg-white py-0 pr-1.5 pl-3.5 hover:bg-nen"
       >
         <span className="text-[13px] font-bold text-navy">{u.title}</span>
-        {usage?.windows.map((w, i) => (
-          <MiniBar key={i} w={w} />
-        ))}
+        {usage?.windows[0] && <MiniBar w={usage.windows[0]} />}
         <span className="flex size-7 items-center justify-center rounded-full bg-navy text-xs font-bold text-white">
           {initials}
         </span>
@@ -114,7 +139,7 @@ export function UsagePill({
             <button
               type="button"
               onClick={() => {
-                setOpen(false)
+                close()
                 onOpenSettings()
               }}
               className="cursor-pointer self-start text-sm font-semibold text-cham hover:text-cham-dam"

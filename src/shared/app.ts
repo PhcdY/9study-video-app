@@ -34,6 +34,8 @@ export interface VersionInfo {
   offline: boolean
   /** Ban lien truoc (de quay lai) */
   previous?: string
+  /** Moi ban so da phat hanh, moi nhat truoc, kem mo ta (neu CHANGELOG co) */
+  history: ChangelogEntry[]
 }
 
 export type UpdateResult =

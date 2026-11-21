@@ -23,6 +23,8 @@ export interface VideoInfo {
   finalMp4?: string
   /** Video co cuoc tro chuyen da luu trong app */
   hasChat: boolean
+  /** Video moi dang do: AI chua tao thu muc video (slug la khoa cuoc tro chuyen) */
+  draft?: boolean
 }
 
 export interface VideosSnapshot {

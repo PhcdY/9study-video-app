@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { ArrowUpCircle, Check, Loader2, ShieldCheck, X } from 'lucide-react'
-import type { UpdateResult, UpdateStep, VersionInfo } from '../../../shared/app'
+import type { ChangelogEntry, UpdateResult, UpdateStep, VersionInfo } from '../../../shared/app'
 import { api } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
@@ -18,7 +18,8 @@ export function UpdateBanner({
 }): React.JSX.Element | null {
   const [hidden, setHidden] = useState(false)
   if (!info.updateAvailable || !info.latest || hidden) return null
-  const summary = info.notes[0]?.summary
+  // Dai thong bao chi mot dong chu thuong: bo dau ** cua Markdown
+  const summary = info.notes[0]?.summary?.replace(/\*\*|`/g, '')
   return (
     <div role="status" className="border-b border-vien bg-white">
       <div className="mx-auto box-border flex max-w-[1180px] flex-wrap items-center gap-x-3.5 gap-y-2 px-8 py-2.5">
@@ -113,7 +114,11 @@ export function UpdateDialog({
         </div>
 
         <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-6 py-5">
-          {entry?.summary && <p className="m-0 text-[15px] leading-normal">{entry.summary}</p>}
+          {entry?.summary && (
+            <div className="text-[15px] leading-normal">
+              <Markdown text={entry.summary} />
+            </div>
+          )}
           {main?.moi.length ? <Notes title={t.whatsNew} items={main.moi} /> : null}
           {main?.sua.length ? <Notes title={t.fixes} items={main.sua} /> : null}
           {otherGroups > 0 && (
@@ -192,6 +197,30 @@ export function UpdateDialog({
           )}
         </div>
       </div>
+    </div>
+  )
+}
+
+/** Mo ta day du mot ban: tom tat + tung nhom (chung, tung mon). */
+export function ChangelogBody({ entry }: { entry: ChangelogEntry }): React.JSX.Element {
+  const empty = !entry.summary && !entry.groups.some((g) => g.moi.length || g.sua.length)
+  return (
+    <div className="flex flex-col gap-3">
+      {entry.summary && (
+        <div className="text-sm leading-normal">
+          <Markdown text={entry.summary} />
+        </div>
+      )}
+      {entry.groups
+        .filter((g) => g.moi.length || g.sua.length)
+        .map((g) => (
+          <div key={g.name} className="flex flex-col gap-2">
+            <h3 className="m-0 text-sm font-bold text-navy">{g.name}</h3>
+            {g.moi.length ? <Notes title={t.whatsNew} items={g.moi} /> : null}
+            {g.sua.length ? <Notes title={t.fixes} items={g.sua} /> : null}
+          </div>
+        ))}
+      {empty && <p className="m-0 text-sm text-phu">{t.noNotes}</p>}
     </div>
   )
 }

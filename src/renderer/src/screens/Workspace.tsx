@@ -39,7 +39,8 @@ export function WorkspaceScreen({
   const chat = useChat(chatKey)
   const videos = useVideos()
   const slug = chat?.slug ?? (chatKey.startsWith('moi-') ? undefined : chatKey)
-  const video = videos?.videos.find((v) => v.slug === slug)
+  // Video moi dang do (chua co thu muc): tim theo khoa cuoc tro chuyen
+  const video = videos?.videos.find((v) => v.slug === (slug ?? chatKey))
   const stage: VideoStage = video?.stage ?? 'kichBan'
   // Tab do nguoi dung chon; khi video sang buoc moi thi tu ve tab hop voi buoc do
   const [picked, setPicked] = useState<{ tab: Tab; stage: VideoStage } | null>(null)
@@ -72,7 +73,7 @@ export function WorkspaceScreen({
           </span>
         </div>
         <StageBar stage={stage} />
-        {slug && (
+        {slug && !video?.draft && (
           <Button variant="outline" size="sm" onClick={() => onFeedback({ slug })}>
             <MessageSquareWarning aria-hidden className="size-4" /> {copy.feedback.open}
           </Button>
@@ -81,7 +82,13 @@ export function WorkspaceScreen({
       </div>
 
       <div className="flex min-h-0 flex-1">
-        <ChatPanel chatKey={chatKey} chat={chat} slug={slug} stage={stage} />
+        <ChatPanel
+          chatKey={chatKey}
+          chat={chat}
+          slug={slug}
+          stage={stage}
+          draft={!slug && !!video?.draft}
+        />
         <section
           aria-label="Kết quả"
           className="box-border flex min-w-0 flex-[999_1_560px] flex-col gap-4 overflow-y-auto px-6 py-5"
@@ -109,7 +116,9 @@ export function WorkspaceScreen({
             ))}
           </div>
           <div role="tabpanel" className="flex min-h-0 flex-1 flex-col">
-            {tab === 'kichBan' && <ScriptTab slug={slug} version={video?.updatedAt} />}
+            {tab === 'kichBan' && (
+              <ScriptTab slug={slug} version={video?.draft ? undefined : video?.updatedAt} />
+            )}
             {tab === 'storyboard' && <StoryboardTab video={video} />}
             {tab === 'chuyenDong' && <StudioTab compositionId={video?.compositionId} />}
             {tab === 'giongDoc' && (

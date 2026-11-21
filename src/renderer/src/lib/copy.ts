@@ -69,7 +69,7 @@ export const copy = {
     dangNhap: {
       nav: 'Đăng nhập ChatGPT',
       title: 'Đăng nhập ChatGPT',
-      desc: 'Trợ lý AI làm video dùng luôn gói ChatGPT bạn đang có. Không tốn thêm tiền.',
+      desc: 'Trợ lý AI dùng luôn tài khoản ChatGPT bạn đang có (Free, Plus hay Pro đều được). Không tốn thêm tiền.',
       appDoes: 'Mở trang đăng nhập của OpenAI trong trình duyệt của bạn.',
       youDo: 'Đăng nhập tài khoản ChatGPT, rồi bấm Tiếp tục.',
       primary: 'Đăng nhập',
@@ -210,6 +210,11 @@ export const copy = {
       giongDoc: 'Việc tiếp theo: nghe thử giọng đọc rồi xuất video.',
       daXuat: 'Video đã xuất xong. Mở để xem hoặc xuất lại.'
     } satisfies Record<VideoStage, string>,
+    draftNext: 'AI chưa viết xong kịch bản. Mở ra rồi bấm "Làm tiếp kịch bản".',
+    draftStatus: 'Dừng giữa chừng',
+    drop: 'Bỏ',
+    dropConfirm: 'Bỏ luôn?',
+    dropLabel: (t: string) => `Bỏ video đang dở: ${t}`,
     updatedAt: (ms: number) => {
       const d = new Date(ms)
       const now = new Date()
@@ -357,6 +362,7 @@ export const copy = {
     stop: 'Dừng',
     thinking: 'AI đang làm…',
     empty: 'Nhắn cho AI hoặc bấm một nút gợi ý bên dưới.',
+    resumeDraft: 'Làm tiếp kịch bản',
     you: 'Bạn',
     status: {
       docTaiLieu: 'Đang đọc tài liệu',
@@ -406,7 +412,7 @@ export const copy = {
     acceptedAlways: 'Đã cho phép cho cả buổi làm việc',
     declined: 'Đã từ chối',
     errors: {
-      hetLuot: 'Đã hết lượt dùng ChatGPT. Chờ tới lúc làm mới lượt rồi nhắn lại.',
+      hetLuot: 'Đã dùng hết Usage của ChatGPT. Chờ tới giờ Usage làm mới rồi nhắn lại.',
       mang: 'Mất kết nối mạng giữa chừng. Kiểm tra wifi rồi nhắn lại.',
       chuaDangNhap: 'Phiên đăng nhập ChatGPT đã hết. Vào Cài đặt để đăng nhập lại.',
       khongRo: 'AI gặp lỗi ngoài dự kiến. Nhắn lại thường sẽ được; nếu vẫn lỗi, hãy gửi báo lỗi.'
@@ -427,35 +433,33 @@ export const copy = {
   // ---------- Moc 3 ----------
   usage: {
     title: 'Usage',
-    chatgpt: 'Tài khoản ChatGPT',
-    plan: (p?: string) => (p ? `Gói ${p.charAt(0).toUpperCase()}${p.slice(1)}` : 'Gói ChatGPT'),
+    chatgpt: 'ChatGPT',
+    // Ten goi theo dung cach OpenAI viet: ChatGPT Free / Plus / Pro / Business...
+    plan: (p?: string) => {
+      if (!p) return 'ChatGPT'
+      const name: Record<string, string> = { edu: 'Edu', team: 'Team', k12: 'K-12' }
+      return `ChatGPT ${name[p.toLowerCase()] ?? p.charAt(0).toUpperCase() + p.slice(1).toLowerCase()}`
+    },
     // Do dai cua so tinh luot: 300 phut = 5 gio, 10080 = tuan, 43200 = 30 ngay
     windowShort: (m: number | null) =>
-      !m
-        ? ''
-        : m <= 60 * 24
-          ? `${Math.round(m / 60)}h`
-          : m <= 60 * 24 * 7
-            ? 'Tuần'
-            : `${Math.round(m / 1440)} ngày`,
+      !m ? '' : m <= 60 * 24 ? `${Math.round(m / 60)}h` : `${Math.round(m / 1440)}d`,
     windowLong: (m: number | null) =>
       !m
-        ? 'Hạn mức'
+        ? 'Limit'
         : m <= 60 * 24
-          ? `Hạn mức ${Math.round(m / 60)} giờ`
-          : m <= 60 * 24 * 7
-            ? 'Hạn mức tuần'
-            : `Hạn mức ${Math.round(m / 1440)} ngày`,
-    used: (n: number) => `Đã dùng ${n}%`,
+          ? `${Math.round(m / 60)}-hour limit`
+          : m === 60 * 24 * 7
+            ? 'Weekly limit'
+            : `${Math.round(m / 1440)}-day limit`,
+    used: (n: number) => `${n}% used`,
     resets: (ms: number) => {
       const d = new Date(ms)
-      const same = d.toDateString() === new Date().toDateString()
-      const t = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
-      return same
-        ? `Làm mới lúc ${t} hôm nay`
-        : `Làm mới ${t} ngày ${d.toLocaleDateString('vi-VN')}`
+      const t = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+      if (d.toDateString() === new Date().toDateString()) return `Resets at ${t}`
+      return `Resets ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}, ${t}`
     },
-    unknown: 'Chưa đọc được lượt dùng.',
+    unknown: 'Chưa đọc được Usage. Thử lại sau ít phút.',
+    hint: 'Di chuột hoặc bấm để xem đủ các hạn mức',
     manage: 'Xem trong Cài đặt'
   },
   version: {
@@ -491,6 +495,7 @@ export const copy = {
     current: (v?: string, branch?: string) =>
       branch ? `Bản thử nghiệm (${branch})` : v ? `Bản ${v}` : 'Chưa rõ bản',
     upToDate: 'Đang dùng bản mới nhất.',
+    noNotes: 'Bản này chưa có mô tả.',
     hasNew: (v: string) => `Đã có bản ${v}.`,
     offline: 'Chưa kiểm tra được bản mới (chưa có mạng).'
   },
@@ -680,8 +685,7 @@ export const copy = {
     save: 'Kiểm tra và lưu',
     cancel: 'Huỷ',
     ai: 'Trợ lý AI',
-    signedIn: (email: string, plan?: string) =>
-      `Đã đăng nhập ChatGPT${plan ? ` · gói ${plan}` : ''}${email ? ` · ${email}` : ''}`,
+    account: 'Tài khoản',
     logout: 'Đăng xuất',
     logoutConfirm: 'Đăng xuất khỏi ChatGPT? Muốn dùng trợ lý AI lại thì phải đăng nhập lại.',
     versions: 'Phiên bản',
@@ -699,12 +703,13 @@ export const copy = {
     working: 'Đang làm…',
     askTitle: 'Khi nào AI phải hỏi bạn trước',
     askCredit: 'Việc tốn credit hoặc cần mạng',
-    askCreditTag: ' · khuyên dùng',
+    askCreditTag: 'Khuyên dùng',
     askCreditDesc: 'Tạo giọng đọc, đổi phiên bản. Sửa kịch bản và dựng hình thì AI tự làm.',
     askAll: 'Mọi lệnh',
     askAllDesc: 'Chắc chắn nhất nhưng phải bấm đồng ý nhiều lần.',
     autoCompact: 'Tự dọn bộ nhớ AI sau mỗi bước',
-    autoCompactDesc: 'AI nhanh hơn và đỡ tốn lượt ChatGPT. Các quyết định quan trọng vẫn được giữ.',
+    autoCompactDesc:
+      'AI nhanh hơn và đỡ tốn Usage ChatGPT. Các quyết định quan trọng vẫn được giữ.',
     autoUpdate: 'Tự tải bản app mới',
     autoUpdateDesc: 'Tải ngầm, cài khi bạn mở lại app.',
     feedback: 'Góp ý cho đội',
@@ -734,11 +739,20 @@ export const copy = {
     speedDesc:
       'Chỉ đổi khi nghe cả bài thấy nhanh hoặc chậm. Đoạn nào nhanh quá thì nhờ AI chia câu ngắn hơn, đừng giảm tốc độ.',
     speedValue: (v: number) => `${v.toFixed(2).replace(/0$/, '').replace('.', ',')}×`,
+    allVersions: 'Các bản',
+    allVersionsDesc: 'Bấm tên bản để xem bản đó có gì. Đổi bản thì bài của bạn vẫn giữ nguyên.',
+    versionName: (v: string) => `Bản ${v}`,
+    versionDate: (d?: string) => {
+      const m = d && /^(\d{4})-(\d{2})-(\d{2})$/.exec(d)
+      return m ? `${m[3]}/${m[2]}/${m[1]}` : (d ?? '')
+    },
+    inUse: 'Đang dùng',
+    newest: 'Mới nhất',
     goBack: (v: string) => `Quay lại bản ${v}`,
-    goBackConfirm: (v: string) =>
-      `Quay lại bản ${v}? Bài của bạn giữ nguyên. Muốn lên bản mới lại thì bấm "Xem bản mới".`,
-    goBackDone: (v: string) => `Đã quay lại bản ${v}.`,
-    goBackFail: 'Chưa quay lại được. Thử lại sau ít phút.',
+    goUp: (v: string) => `Lên bản ${v}`,
+    switchConfirm: (v: string) => `Chuyển sang bản ${v}? Bài của bạn giữ nguyên.`,
+    switchDone: (v: string) => `Đã chuyển sang bản ${v}.`,
+    switchFail: 'Chưa đổi được bản. Bài của bạn vẫn nguyên. Thử lại sau ít phút.',
     disk: 'Ổ đĩa',
     drafts: (size: string) => `Ảnh nháp và storyboard · ${size}`,
     draftsDesc: 'Tạo lại được bất cứ lúc nào. Không đụng tới video thành phẩm.',

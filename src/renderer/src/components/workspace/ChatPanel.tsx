@@ -15,12 +15,15 @@ export function ChatPanel({
   chat,
   slug,
   stage,
-  wide
+  wide,
+  draft
 }: {
   chatKey: string
   chat: ChatState | null
   slug?: string
   stage: VideoStage
+  /** Video moi dang do (AI chua tao thu muc video): hien nut Lam tiep */
+  draft?: boolean
   /** Chiem het chieu ngang (man tro chuyen rieng, khong co tab ket qua) */
   wide?: boolean
 }): React.JSX.Element {
@@ -69,6 +72,18 @@ export function ChatPanel({
               (i.kind === 'status' && i.state === 'running') || (i.kind === 'ai' && i.streaming)
           ) && <Status label={c.thinking} running />}
       </div>
+
+      {draft && !busy && (
+        <div className="flex flex-wrap gap-2 px-5 pb-3">
+          <button
+            type="button"
+            onClick={() => void api.invoke('videos:resumeDraft', chatKey)}
+            className="h-9 cursor-pointer rounded-full border-[1.5px] border-cham bg-white px-3.5 text-sm font-semibold text-cham hover:bg-cham-nhat"
+          >
+            {c.resumeDraft}
+          </button>
+        </div>
+      )}
 
       {slug && !busy && (
         <div className="flex flex-wrap gap-2 px-5 pb-3">
