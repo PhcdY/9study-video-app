@@ -53,6 +53,7 @@ export function SettingsScreen({
   const [confirmClean, setConfirmClean] = useState<'drafts' | 'temp' | null>(null)
   // Ban dang mo xem mo ta; ban dang doi sang (xac nhan / dang doi / xong / loi)
   const [openV, setOpenV] = useState<string | null>(null)
+  const [openSent, setOpenSent] = useState<string | null>(null)
   const [sw, setSw] = useState<{ v: string; state: 'confirm' | 'busy' | 'done' | 'fail' } | null>(
     null
   )
@@ -604,31 +605,97 @@ export function SettingsScreen({
             </SettingRow>
             {showSent && (
               <ul className="m-0 mb-4 flex list-none flex-col rounded-[10px] border border-vien p-0">
-                {mine.map((it) => (
-                  <li
-                    key={it.id}
-                    className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-[#EEF1F8] px-4 py-2.5 last:border-b-0"
-                  >
-                    <span className="flex min-w-0 flex-[1_1_240px] flex-col">
-                      <span className="text-sm font-semibold">{headline(it.desc)}</span>
-                      <span className="text-xs text-phu">{it.title}</span>
-                    </span>
-                    <span
-                      className={cn(
-                        'rounded-full px-2.5 py-0.5 text-xs font-bold',
-                        it.state.status === 'daSua'
-                          ? 'bg-xong-nen text-xong'
-                          : it.state.status === 'dangSua'
-                            ? 'bg-cham-nhat text-cham'
-                            : 'bg-[#F1F3FA] text-phu'
+                {mine.map((it) => {
+                  const fixed = it.state.status === 'daSua'
+                  const open = openSent === it.id
+                  const notes = it.state.changelog ?? []
+                  const v = it.state.fixedIn
+                  const canUp =
+                    !!v &&
+                    !!version?.current &&
+                    Number(version.current) < Number(v) &&
+                    !!version.history?.some((h) => h.version === v)
+                  return (
+                    <li key={it.id} className="border-b border-[#EEF1F8] last:border-b-0">
+                      <button
+                        type="button"
+                        aria-expanded={fixed ? open : undefined}
+                        disabled={!fixed}
+                        onClick={() => setOpenSent(open ? null : it.id)}
+                        className={cn(
+                          'flex w-full flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-left',
+                          fixed && 'cursor-pointer hover:bg-nen'
+                        )}
+                      >
+                        {fixed && (
+                          <ChevronRight
+                            aria-hidden
+                            className={cn(
+                              'size-4 shrink-0 text-phu transition-transform',
+                              open && 'rotate-90'
+                            )}
+                          />
+                        )}
+                        <span className="flex min-w-0 flex-[1_1_240px] flex-col">
+                          <span className="text-sm font-semibold">{headline(it.desc)}</span>
+                          <span className="text-xs text-phu">{it.title}</span>
+                        </span>
+                        <span
+                          className={cn(
+                            'rounded-full px-2.5 py-0.5 text-xs font-bold',
+                            fixed
+                              ? 'bg-xong-nen text-xong'
+                              : it.state.status === 'dangSua'
+                                ? 'bg-cham-nhat text-cham'
+                                : 'bg-[#F1F3FA] text-phu'
+                          )}
+                        >
+                          {fixed && v
+                            ? copy.feedback.fixedIn(v)
+                            : copy.feedback.status[it.state.status]}
+                        </span>
+                      </button>
+                      {fixed && open && (
+                        <div className="flex flex-col gap-2.5 border-t border-vien bg-nen py-3.5 pr-4 pl-11">
+                          {it.state.summary && (
+                            <span className="text-[15px] leading-normal">{it.state.summary}</span>
+                          )}
+                          {notes.length > 0 && (
+                            <ul className="m-0 flex list-disc flex-col gap-1 pl-[18px] text-sm leading-normal text-[#3d4466]">
+                              {notes.map((l, i) => (
+                                <li key={i}>{l}</li>
+                              ))}
+                            </ul>
+                          )}
+                          {canUp && v && (
+                            <div className="flex flex-wrap items-center gap-2.5">
+                              <Button
+                                size="sm"
+                                disabled={sw?.v === v && sw.state === 'busy'}
+                                onClick={() => void switchTo(v)}
+                              >
+                                {sw?.v === v && sw.state === 'busy' ? (
+                                  <Loader2 aria-hidden className="size-4 animate-spin" />
+                                ) : null}
+                                {t.goUp(v)}
+                              </Button>
+                              <span className="text-[13px] text-phu">
+                                {sw?.v === v && sw.state === 'fail'
+                                  ? t.switchFail
+                                  : t.usingVersion(version!.current!)}
+                              </span>
+                            </div>
+                          )}
+                          {v && sw?.v === v && sw.state === 'done' && (
+                            <span className="text-[13px] font-semibold text-xong">
+                              {t.switchDone(v)}
+                            </span>
+                          )}
+                        </div>
                       )}
-                    >
-                      {it.state.status === 'daSua' && it.state.fixedIn
-                        ? copy.feedback.fixedIn(it.state.fixedIn)
-                        : copy.feedback.status[it.state.status]}
-                    </span>
-                  </li>
-                ))}
+                    </li>
+                  )
+                })}
               </ul>
             )}
             <CheckRow

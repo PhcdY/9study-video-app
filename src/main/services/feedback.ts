@@ -36,6 +36,7 @@ import {
   type TimelineLine
 } from '../../shared/feedback-rules'
 import { DRIVE_FOLDER_NAMES } from './rules'
+import { parseFixDiff, type FixDetail } from '../../shared/fix-notes'
 import { redact } from '../redact'
 import log from '../log'
 
@@ -417,11 +418,100 @@ export function setFeedbackState(ids: string[], patch: Omit<FeedbackState, 'upda
   for (const id of ids) {
     const dir = path.join(root, id)
     if (!existsSync(path.join(dir, 'meta.json'))) continue
-    writeFileSync(
-      path.join(dir, 'trang-thai.json'),
-      JSON.stringify({ ...patch, updatedAt: Date.now() }, null, 2),
-      'utf8'
-    )
+    const file = path.join(dir, 'trang-thai.json')
+    let old: Partial<FeedbackState> = {}
+    try {
+      if (existsSync(file)) old = JSON.parse(readFileSync(file, 'utf8')) as FeedbackState
+    } catch {
+      // file hong: ghi moi
+    }
+    // Van "Da sua" thi giu tom tat va dong nhat ky da ghi, tru khi patch ghi de
+    const keep = patch.status === 'daSua'
+    const next: FeedbackState = {
+      ...patch,
+      batch: patch.batch ?? old.batch,
+      summary: 'summary' in patch ? patch.summary || undefined : keep ? old.summary : undefined,
+      changelog: patch.changelog ?? (keep ? old.changelog : undefined),
+      updatedAt: Date.now()
+    }
+    writeFileSync(file, JSON.stringify(next, null, 2), 'utf8')
+  }
+}
+
+/** Chay git trong bo cong cu, tra ve cac dong (khong loi thi code 0). */
+async function gitLines(
+  projectDir: string,
+  args: string[]
+): Promise<{ ok: boolean; lines: string[] }> {
+  const lines: string[] = []
+  const r = await run(exe.git(), ['-c', 'core.quotepath=false', ...args], {
+    cwd: projectDir,
+    env: childEnv(projectDir),
+    onLine: (l, st) => st === 'out' && lines.push(l)
+  })
+  return { ok: r.code === 0, lines }
+}
+
+async function rev(projectDir: string, ref: string): Promise<string | undefined> {
+  const r = await gitLines(projectDir, ['rev-parse', '--verify', '--quiet', `${ref}^{commit}`])
+  return r.ok ? r.lines[0]?.trim() : undefined
+}
+
+/** Da sua gi: so nhanh sua (hoac ban da phat hanh) voi luc bat dau sua. Chi chay duoc tren may co nhanh. */
+export async function fixDetail(projectDir: string, id: string): Promise<FixDetail | null> {
+  const it = listFeedback().find((x) => x.id === id)
+  const b = it?.state.batch
+  if (!it || !b) return null
+  const empty: FixDetail = {
+    changelog: it.state.changelog ?? [],
+    lessons: [],
+    files: [],
+    found: false
+  }
+  if (!projectDir || !existsSync(path.join(projectDir, '.git'))) return empty
+  const head =
+    (await rev(projectDir, `refs/heads/${b.branch}`)) ??
+    (await rev(projectDir, `refs/remotes/origin/${b.branch}`)) ??
+    (b.target ? await rev(projectDir, `refs/tags/${b.target}`) : undefined)
+  if (!head) return empty
+  const prevTag = b.target && Number(b.target) > 1 ? String(Number(b.target) - 1) : undefined
+  let base: string | undefined
+  for (const cand of [b.base, prevTag && `refs/tags/${prevTag}`, 'main-codex']) {
+    if (!cand) continue
+    const c = await rev(projectDir, cand)
+    if (!c) continue
+    const mb = await gitLines(projectDir, ['merge-base', c, head])
+    const m = mb.lines[0]?.trim()
+    if (mb.ok && m && m !== head) {
+      base = m
+      break
+    }
+  }
+  if (!base) return empty
+  const diff = await gitLines(projectDir, [
+    'diff',
+    '--no-color',
+    '--no-ext-diff',
+    '-U1',
+    base,
+    head
+  ])
+  const parsed = parseFixDiff(diff.lines)
+  const desc = await gitLines(projectDir, [
+    'describe',
+    '--tags',
+    '--abbrev=0',
+    '--match',
+    '[0-9]*',
+    base
+  ])
+  const when = await gitLines(projectDir, ['log', '-1', '--format=%ct', head])
+  return {
+    ...parsed,
+    changelog: parsed.changelog.length ? parsed.changelog : (it.state.changelog ?? []),
+    since: desc.ok ? desc.lines[0]?.trim() : undefined,
+    at: Number(when.lines[0]) * 1000 || undefined,
+    found: true
   }
 }
 
@@ -440,12 +530,20 @@ export function voiceOf(projectDir: string, slug: string): string | undefined {
 
 /** Gom nhieu gop y thanh mot lan sua: danh dau "Dang sua"; openNow thi nho Codex sua. */
 export async function fixFeedback(
+  projectDir: string,
   input: BatchInput,
   send: (key: string, text: string) => void
 ): Promise<string | null> {
   const picked = listFeedback().filter((f) => input.ids.includes(f.id))
   if (picked.length === 0) return null
-  const batch = { name: input.name.trim(), branch: input.branch.trim(), target: input.target }
+  // Ghi lai commit luc bat dau sua de sau nay so "da sua gi"
+  const base = (await rev(projectDir, 'main-codex')) ?? (await rev(projectDir, 'HEAD'))
+  const batch = {
+    name: input.name.trim(),
+    branch: input.branch.trim(),
+    target: input.target,
+    base
+  }
   setFeedbackState(
     picked.map((p) => p.id),
     { status: 'dangSua', batch }

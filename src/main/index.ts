@@ -25,6 +25,7 @@ import {
   feedbackDir,
   feedbackDraft,
   fixFeedback,
+  fixDetail,
   listFeedback,
   machineId,
   setFeedbackState,
@@ -303,12 +304,20 @@ function registerIpc(): void {
     watchFeedback()
     return feedbackList()
   })
-  handle('feedback:setState', (ids, patch) => {
+  handle('feedback:setState', async (ids, patch) => {
+    // Danh dau xong: ghi kem dong nhat ky phien ban de CTV cung thay da sua gi
+    if (patch.status === 'daSua' && !patch.changelog && ids[0]) {
+      const d = await fixDetail(getSettings().projectDir ?? '', ids[0]).catch(() => null)
+      if (d?.found && d.changelog.length) patch = { ...patch, changelog: d.changelog }
+    }
     setFeedbackState(ids, patch)
     broadcast('feedback:changed', feedbackList())
   })
+  handle('feedback:fixDetail', (id) => fixDetail(getSettings().projectDir ?? '', id))
   handle('feedback:fix', async (input) => {
-    const key = await fixFeedback(input, (k, text) => void videos.chat().send(k, text))
+    const key = await fixFeedback(getSettings().projectDir ?? '', input, (k, text) =>
+      videos.chat().send(k, text)
+    )
     broadcast('feedback:changed', feedbackList())
     return key
   })

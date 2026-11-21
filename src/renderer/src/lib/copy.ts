@@ -842,7 +842,28 @@ export const copy = {
     saveHint: (n: number) => `Cả ${n} chuyển sang "Đang sửa". CTV thấy trạng thái này.`,
     saved: 'Đã lưu lần sửa.',
     openChat: 'Mở cuộc trò chuyện sửa',
-    markFixed: (v: string) => `Đánh dấu đã sửa trong bản ${v}`
+    markFixed: (v: string) => `Đánh dấu đã sửa trong bản ${v}`,
+    fixed: {
+      title: (v?: string) => (v ? `Đã sửa trong bản ${v}` : 'Đã sửa'),
+      sub: (name: string, n: number, date?: string) =>
+        [`lần sửa "${name}"`, `${n} góp ý`, date].filter(Boolean).join(' · '),
+      summary: 'TÓM TẮT CỦA BẠN',
+      summaryPh: 'Một dòng cho người gửi biết đã sửa gì',
+      summaryAdd: 'Thêm tóm tắt',
+      summaryEdit: 'Sửa tóm tắt',
+      save: 'Lưu',
+      changelog: 'Ghi vào nhật ký phiên bản',
+      lessons: 'Bài học AI ghi lại',
+      none: 'Không có',
+      files: (n: number) => `File trong bộ công cụ đã đổi · ${n}`,
+      since: (v: string) => `so với bản ${v}`,
+      loading: 'Đang đọc lần sửa…',
+      notFound: 'Máy này không có lần sửa này.',
+      reopen: 'Mở lại góp ý',
+      original: 'Xem góp ý gốc',
+      hideOriginal: 'Ẩn góp ý gốc',
+      more: (n: number) => `+${n} dòng nữa`
+    }
   },
   settings: {
     nav: 'Cài đặt',
@@ -928,6 +949,7 @@ export const copy = {
     newest: 'Mới nhất',
     goBack: (v: string) => `Quay lại bản ${v}`,
     goUp: (v: string) => `Lên bản ${v}`,
+    usingVersion: (v: string) => `Bạn đang dùng bản ${v}`,
     switchConfirm: (v: string) => `Chuyển sang bản ${v}? Bài của bạn giữ nguyên.`,
     switchDone: (v: string) => `Đã chuyển sang bản ${v}.`,
     switchFail: 'Chưa đổi được bản. Bài của bạn vẫn nguyên. Thử lại sau ít phút.',

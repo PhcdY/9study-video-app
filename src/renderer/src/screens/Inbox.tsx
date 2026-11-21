@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
-import { FolderOpen, Play, X } from 'lucide-react'
+import { ChevronRight, CircleCheck, FolderOpen, Play, X } from 'lucide-react'
 import type { FeedbackItem, FeedbackStatus } from '../../../shared/feedback'
+import type { FixDetail } from '../../../shared/fix-notes'
 import {
   batchName,
   branchName,
@@ -286,6 +287,10 @@ function Detail({
   const taughtLines = (it.taught ?? '').split(/\r?\n/).slice(0, 40)
   const taughtCount = taughtLines.filter((l) => /^\+\+\+ /.test(l)).length
   const fixedIn = it.state.fixedIn ?? next
+  const done = it.state.status === 'daSua'
+  const [showOrig, setShowOrig] = useState(false)
+  // Mo lai: con lan sua thi ve "Dang sua", khong thi ve "Moi"
+  const reopenTo = it.state.batch ? 'dangSua' : 'moi'
 
   const setStatus = (v: string): void => {
     const [st, ver] = v.split(':') as [FeedbackStatus, string | undefined]
@@ -314,112 +319,324 @@ function Detail({
               .join(' · ')}
           </p>
         </div>
-        <label className="sr-only" htmlFor="st">
-          {t.statusLabel}
-        </label>
-        <Select
-          id="st"
-          value={status}
-          onChange={(e) => setStatus(e.target.value)}
-          className="h-9 w-auto text-[13px] font-semibold"
-        >
-          <option value="moi">{f.status.moi}</option>
-          <option value="dangSua">{f.status.dangSua}</option>
-          {fixedIn && <option value={`daSua:${fixedIn}`}>{f.fixedIn(fixedIn)}</option>}
-          {!fixedIn && <option value="daSua:">{f.status.daSua}</option>}
-          <option value="khongSua">{f.status.khongSua}</option>
-        </Select>
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        <div className="min-w-0 flex-[999_1_420px] overflow-hidden rounded-xl bg-navy">
-          {it.paths.doan ? (
-            <video controls src={fileUrl(it.paths.doan)} className="aspect-video w-full bg-black" />
-          ) : (
-            <div className="flex aspect-video items-center justify-center text-sm text-white/70">
-              {t.noClip}
-            </div>
-          )}
-          <div className="flex items-center gap-3 px-3.5 py-2.5 text-[13px] text-white">
-            {it.spot.time !== undefined && <span>{mmss(it.spot.time)}</span>}
-            <span className="flex-1" />
-            {it.paths.caVideo && (
-              <button
-                type="button"
-                onClick={() => void api.invoke('shell:openPath', it.paths.caVideo!)}
-                className="cursor-pointer text-xs font-semibold text-white underline"
-              >
-                {t.fullVideo}
-              </button>
-            )}
-          </div>
-        </div>
-        <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-3">
-          {it.paths.storyboard && (
-            <div className="overflow-hidden rounded-xl border border-vien bg-white">
-              <img
-                src={fileUrl(it.paths.storyboard)}
-                alt={t.storyboard(label)}
-                className="block aspect-video w-full border-b border-[#EEF1F8] bg-[#FBFCFF] object-contain"
-              />
-              <div className="px-3 py-2 text-xs text-phu">{t.storyboard(label)}</div>
-            </div>
-          )}
-          {it.paths.audio && <AudioRow src={it.paths.audio} speak={it.spot.speak} it={it} />}
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-4">
-        <section className="flex min-w-0 flex-[1_1_320px] flex-col gap-2 rounded-xl border border-vien bg-white px-4 py-3.5">
-          <h2 className="m-0 text-[13px] font-bold text-phu">{t.wrote(it.author)}</h2>
-          <p className="m-0 text-sm leading-relaxed whitespace-pre-wrap">{it.desc}</p>
-          <p className="m-0 text-xs text-phu">
-            {t.meta(
-              f.kindsShort[it.kind],
-              it.scope === 'chung' ? t.scopeChung : t.scopeVideo,
-              f.size(sizeOf(it))
-            )}
-          </p>
-        </section>
-        <section className="flex min-w-0 flex-[1_1_320px] flex-col gap-2 rounded-xl border border-vien bg-white px-4 py-3.5">
-          <h2 className="m-0 text-[13px] font-bold text-phu">{t.taught(it.author, taughtCount)}</h2>
-          {it.taught ? (
-            <pre className="m-0 max-h-60 overflow-auto rounded-lg bg-nen px-3 py-2.5 font-[Consolas,monospace] text-xs leading-relaxed whitespace-pre-wrap">
-              {taughtLines.map((l, i) => (
-                <span
-                  key={i}
-                  className={cn(
-                    'block',
-                    /^\+(?!\+\+)/.test(l) && 'text-xong',
-                    /^-(?!--)/.test(l) && 'text-loi',
-                    /^(\+\+\+|diff |index |---)/.test(l) && 'font-bold text-navy'
-                  )}
-                >
-                  {l || ' '}
-                </span>
-              ))}
-            </pre>
-          ) : (
-            <p className="m-0 text-[13px] text-phu">{t.taughtNone}</p>
-          )}
-        </section>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2 pt-1">
-        {it.state.status === 'dangSua' && it.state.batch ? (
-          <Button size="sm" onClick={() => onOpenChat(`he-gopy-${it.state.batch!.branch}`)}>
-            {t.openChat}
+        {done ? (
+          <Button variant="outline" size="sm" onClick={() => setShowOrig((v) => !v)}>
+            {showOrig ? t.fixed.hideOriginal : t.fixed.original}
           </Button>
         ) : (
-          <Button size="sm" onClick={onFix}>
-            {t.toFix}
+          <>
+            <label className="sr-only" htmlFor="st">
+              {t.statusLabel}
+            </label>
+            <Select
+              id="st"
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="h-9 w-auto text-[13px] font-semibold"
+            >
+              <option value="moi">{f.status.moi}</option>
+              <option value="dangSua">{f.status.dangSua}</option>
+              {fixedIn && <option value={`daSua:${fixedIn}`}>{f.fixedIn(fixedIn)}</option>}
+              {!fixedIn && <option value="daSua:">{f.status.daSua}</option>}
+              <option value="khongSua">{f.status.khongSua}</option>
+            </Select>
+          </>
+        )}
+      </div>
+
+      {done && (
+        <FixedSection it={it} onOpenChat={onOpenChat} onReopen={() => setStatus(reopenTo)} />
+      )}
+
+      {(!done || showOrig) && (
+        <>
+          <div className="flex flex-wrap gap-4">
+            <div className="min-w-0 flex-[999_1_420px] overflow-hidden rounded-xl bg-navy">
+              {it.paths.doan ? (
+                <video
+                  controls
+                  src={fileUrl(it.paths.doan)}
+                  className="aspect-video w-full bg-black"
+                />
+              ) : (
+                <div className="flex aspect-video items-center justify-center text-sm text-white/70">
+                  {t.noClip}
+                </div>
+              )}
+              <div className="flex items-center gap-3 px-3.5 py-2.5 text-[13px] text-white">
+                {it.spot.time !== undefined && <span>{mmss(it.spot.time)}</span>}
+                <span className="flex-1" />
+                {it.paths.caVideo && (
+                  <button
+                    type="button"
+                    onClick={() => void api.invoke('shell:openPath', it.paths.caVideo!)}
+                    className="cursor-pointer text-xs font-semibold text-white underline"
+                  >
+                    {t.fullVideo}
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex min-w-0 flex-[1_1_240px] flex-col gap-3">
+              {it.paths.storyboard && (
+                <div className="overflow-hidden rounded-xl border border-vien bg-white">
+                  <img
+                    src={fileUrl(it.paths.storyboard)}
+                    alt={t.storyboard(label)}
+                    className="block aspect-video w-full border-b border-[#EEF1F8] bg-[#FBFCFF] object-contain"
+                  />
+                  <div className="px-3 py-2 text-xs text-phu">{t.storyboard(label)}</div>
+                </div>
+              )}
+              {it.paths.audio && <AudioRow src={it.paths.audio} speak={it.spot.speak} it={it} />}
+            </div>
+          </div>
+
+          <div className="flex flex-wrap gap-4">
+            <section className="flex min-w-0 flex-[1_1_320px] flex-col gap-2 rounded-xl border border-vien bg-white px-4 py-3.5">
+              <h2 className="m-0 text-[13px] font-bold text-phu">{t.wrote(it.author)}</h2>
+              <p className="m-0 text-sm leading-relaxed whitespace-pre-wrap">{it.desc}</p>
+              <p className="m-0 text-xs text-phu">
+                {t.meta(
+                  f.kindsShort[it.kind],
+                  it.scope === 'chung' ? t.scopeChung : t.scopeVideo,
+                  f.size(sizeOf(it))
+                )}
+              </p>
+            </section>
+            <section className="flex min-w-0 flex-[1_1_320px] flex-col gap-2 rounded-xl border border-vien bg-white px-4 py-3.5">
+              <h2 className="m-0 text-[13px] font-bold text-phu">
+                {t.taught(it.author, taughtCount)}
+              </h2>
+              {it.taught ? (
+                <pre className="m-0 max-h-60 overflow-auto rounded-lg bg-nen px-3 py-2.5 font-[Consolas,monospace] text-xs leading-relaxed whitespace-pre-wrap">
+                  {taughtLines.map((l, i) => (
+                    <span
+                      key={i}
+                      className={cn(
+                        'block',
+                        /^\+(?!\+\+)/.test(l) && 'text-xong',
+                        /^-(?!--)/.test(l) && 'text-loi',
+                        /^(\+\+\+|diff |index |---)/.test(l) && 'font-bold text-navy'
+                      )}
+                    >
+                      {l || ' '}
+                    </span>
+                  ))}
+                </pre>
+              ) : (
+                <p className="m-0 text-[13px] text-phu">{t.taughtNone}</p>
+              )}
+            </section>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1">
+            {it.state.status === 'dangSua' && it.state.batch ? (
+              <Button size="sm" onClick={() => onOpenChat(`he-gopy-${it.state.batch!.branch}`)}>
+                {t.openChat}
+              </Button>
+            ) : (
+              <Button size="sm" onClick={onFix}>
+                {t.toFix}
+              </Button>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => void api.invoke('shell:openPath', it.dir)}
+            >
+              <FolderOpen aria-hidden className="size-4" /> {t.openFolder}
+            </Button>
+          </div>
+        </>
+      )}
+    </>
+  )
+}
+
+const ddmm = (ms: number): string => {
+  const d = new Date(ms)
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`
+}
+
+/** Gop y da xong: da sua gi trong lan sua (tom tat, nhat ky phien ban, bai hoc, file doi). */
+function FixedSection({
+  it,
+  onOpenChat,
+  onReopen
+}: {
+  it: FeedbackItem
+  onOpenChat: (key: string) => void
+  onReopen: () => void
+}): React.JSX.Element {
+  const fx = t.fixed
+  const [list] = useFeedback()
+  const b = it.state.batch
+  const [detail, setDetail] = useState<FixDetail | null | undefined>(undefined)
+  useEffect(() => {
+    let on = true
+    void api.invoke('feedback:fixDetail', it.id).then((d) => on && setDetail(d))
+    return () => {
+      on = false
+    }
+  }, [it.id, b?.branch])
+  const inBatch = b
+    ? (list?.items ?? []).filter((x) => x.state.batch?.branch === b.branch).length
+    : 1
+  const [editing, setEditing] = useState(!it.state.summary)
+  const [text, setText] = useState(it.state.summary ?? '')
+  const save = (): void => {
+    void api.invoke('feedback:setState', [it.id], {
+      status: 'daSua',
+      fixedIn: it.state.fixedIn,
+      batch: b,
+      summary: text.trim(),
+      changelog: it.state.changelog ?? (detail?.found ? detail.changelog : undefined)
+    })
+    setEditing(false)
+  }
+  const changelog = detail?.changelog ?? it.state.changelog ?? []
+
+  const list2 = (items: string[]): React.JSX.Element =>
+    items.length ? (
+      <ul className="m-0 flex list-disc flex-col gap-1.5 pl-[18px] text-sm leading-normal">
+        {items.map((l, i) => (
+          <li key={i}>{l}</li>
+        ))}
+      </ul>
+    ) : (
+      <span className="text-sm text-phu">{fx.none}</span>
+    )
+
+  return (
+    <section
+      aria-labelledby="da-sua"
+      className="flex flex-col gap-3.5 rounded-xl border border-vien bg-white px-5 py-[18px]"
+    >
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+        <CircleCheck aria-hidden className="size-[22px] text-xong" />
+        <h2 id="da-sua" className="m-0 text-[17px] font-bold">
+          {fx.title(it.state.fixedIn)}
+        </h2>
+        {b && (
+          <span className="text-[13px] text-phu">
+            · {fx.sub(b.name, inBatch, detail?.at ? ddmm(detail.at) : undefined)}
+          </span>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-1.5 rounded-[10px] bg-nen px-3.5 py-3">
+        <span className="text-xs font-bold text-phu">{fx.summary}</span>
+        {editing ? (
+          <div className="flex flex-wrap items-center gap-2">
+            <Input
+              autoFocus={!!it.state.summary}
+              value={text}
+              placeholder={fx.summaryPh}
+              aria-label={fx.summaryPh}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && save()}
+              className="h-10 min-w-0 flex-[1_1_320px] bg-white text-sm"
+            />
+            <Button size="sm" disabled={!text.trim()} onClick={save}>
+              {fx.save}
+            </Button>
+          </div>
+        ) : (
+          <span className="text-[15px] leading-normal">{it.state.summary}</span>
+        )}
+      </div>
+
+      {detail === undefined ? (
+        <p className="m-0 text-sm text-phu">{fx.loading}</p>
+      ) : (
+        <>
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-3.5">
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-bold">{fx.changelog}</span>
+              {list2(changelog)}
+            </div>
+            {detail?.found && (
+              <div className="flex flex-col gap-2">
+                <span className="text-sm font-bold">{fx.lessons}</span>
+                {list2(detail.lessons)}
+              </div>
+            )}
+          </div>
+          {detail?.found ? (
+            detail.files.length > 0 && (
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2.5">
+                  <span className="text-sm font-bold">{fx.files(detail.files.length)}</span>
+                  {detail.since && (
+                    <span className="text-xs text-phu">{fx.since(detail.since)}</span>
+                  )}
+                </div>
+                <div className="overflow-hidden rounded-[10px] border border-vien text-[13px]">
+                  {detail.files.map((file, i) => (
+                    <details
+                      key={file.path}
+                      open={i === 0}
+                      className="group border-b border-[#EEF1F8] last:border-b-0"
+                    >
+                      <summary className="flex cursor-pointer list-none items-center gap-2.5 px-3.5 py-2.5 hover:bg-nen">
+                        <ChevronRight
+                          aria-hidden
+                          className="size-4 shrink-0 text-phu transition-transform group-open:rotate-90"
+                        />
+                        <span className="min-w-0 flex-1 truncate font-[Consolas,monospace]">
+                          {file.path}
+                        </span>
+                        <b className="text-xong">+{file.added}</b>
+                        <b className="text-loi">−{file.removed}</b>
+                      </summary>
+                      <pre className="m-0 max-h-72 overflow-auto bg-navy px-3.5 py-2.5 font-[Consolas,monospace] text-xs leading-relaxed whitespace-pre-wrap text-[#dfe4ff]">
+                        {file.patch.map((l, j) => (
+                          <span
+                            key={j}
+                            className={cn(
+                              'block',
+                              l.startsWith('+') && 'text-[#8fe3ae]',
+                              l.startsWith('-') && 'text-[#ff9ea1]',
+                              l.startsWith('@@') && 'text-[#9aa5ff]'
+                            )}
+                          >
+                            {l || ' '}
+                          </span>
+                        ))}
+                        {file.added + file.removed + 1 > file.patch.length && (
+                          <span className="block text-[#9aa5ff]">
+                            {fx.more(file.added + file.removed - file.patch.length + 1)}
+                          </span>
+                        )}
+                      </pre>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            )
+          ) : (
+            <p className="m-0 text-sm text-phu">{fx.notFound}</p>
+          )}
+        </>
+      )}
+
+      <div className="flex flex-wrap gap-2.5">
+        {b && (
+          <Button variant="outline" size="sm" onClick={() => onOpenChat(`he-gopy-${b.branch}`)}>
+            {t.openChat}
           </Button>
         )}
-        <Button variant="ghost" size="sm" onClick={() => void api.invoke('shell:openPath', it.dir)}>
-          <FolderOpen aria-hidden className="size-4" /> {t.openFolder}
+        {!editing && (
+          <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+            {fx.summaryEdit}
+          </Button>
+        )}
+        <Button variant="ghost" size="sm" className="ml-auto" onClick={onReopen}>
+          {fx.reopen}
         </Button>
       </div>
-    </>
+    </section>
   )
 }
 

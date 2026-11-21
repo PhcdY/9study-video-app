@@ -85,8 +85,12 @@ export interface FeedbackState {
   status: FeedbackStatus
   /** Ban da sua (vd "4") */
   fixedIn?: string
-  /** Lan sua gop nhieu gop y */
-  batch?: { name: string; branch: string; target?: string }
+  /** Lan sua gop nhieu gop y. base: commit luc bat dau sua (de so "da sua gi") */
+  batch?: { name: string; branch: string; target?: string; base?: string }
+  /** Mot dong tom tat nguoi bao tri ghi khi danh dau xong (CTV thay) */
+  summary?: string
+  /** Dong ghi vao nhat ky phien ban trong lan sua (CTV thay) */
+  changelog?: string[]
   updatedAt: number
 }
 
