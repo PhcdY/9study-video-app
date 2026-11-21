@@ -32,6 +32,8 @@ import {
   unboundNewChats
 } from './codex/session'
 import { dropDrafts, readDrafts, recoverDraft, saveDraft } from './drafts'
+import { recordVoiceRun } from './vivibe-usage'
+import type { VoiceRunInfo } from '../../shared/vivibe'
 import { StudioService } from './studio'
 import { latestNumericTag } from './rules'
 import log from '../log'
@@ -200,6 +202,14 @@ export class VideosService extends EventEmitter {
       this.session = new CodexSession(dir)
       this.dirOfSession = dir
       this.session.on('changed', (s) => this.emit('chat', s))
+      this.session.on('voiceRun', (run: VoiceRunInfo) => {
+        try {
+          recordVoiceRun(dir, run)
+          this.emit('vivibe')
+        } catch (e) {
+          log.warn(`[vivibe] khong ghi duoc so ky tu: ${String(e)}`)
+        }
+      })
       this.session.on('turnDone', () => {
         this.changedSoon()
         this.emit('turnDone')

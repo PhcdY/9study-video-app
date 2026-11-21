@@ -42,6 +42,7 @@ const INVOKE: InvokeChannel[] = [
   'voice:speed',
   'voice:setSpeed',
   'disk:usage',
+  'vivibe:usage',
   'disk:clean'
 ]
 const EVENTS: EventChannel[] = [
@@ -52,7 +53,8 @@ const EVENTS: EventChannel[] = [
   'version:progress',
   'usage:changed',
   'feedback:changed',
-  'prefs:changed'
+  'prefs:changed',
+  'vivibe:changed'
 ]
 
 const api: Api = {

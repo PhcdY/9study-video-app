@@ -8,6 +8,7 @@ import { killAll, killOrphans } from './services/process'
 import { exe } from './services/runtime'
 import { logout, readUsage, reopenLoginPage, stopAccountClient } from './services/codex/account'
 import { VersionService } from './services/version'
+import { vivibeUsage } from './services/vivibe-usage'
 import { makeBugReport } from './services/report'
 import { getSettings, updateSettings } from './services/settings'
 import {
@@ -45,6 +46,7 @@ setup.on('changed', (snap) => broadcast('setup:changed', snap))
 const videos = new VideosService()
 videos.on('changed', (snap) => broadcast('videos:changed', snap))
 videos.on('chat', (state) => broadcast('chat:changed', state))
+videos.on('vivibe', () => broadcast('vivibe:changed', null))
 // Sau moi luot AI: doc lai luot ChatGPT con lai
 videos.on('turnDone', () => void readUsage().then((u) => broadcast('usage:changed', u)))
 const versions = new VersionService(() => getSettings().projectDir ?? '')
@@ -250,6 +252,7 @@ function registerIpc(): void {
     if (dir) writeSpeed(dir, speed)
   })
   handle('disk:usage', () => diskUsage(getSettings().projectDir ?? ''))
+  handle('vivibe:usage', (month) => vivibeUsage(getSettings().projectDir ?? '', month))
   handle('disk:clean', (which) => cleanDisk(getSettings().projectDir ?? '', which))
   handle('feedback:draft', (slug, time, beatLine) =>
     feedbackDraft(getSettings().projectDir ?? '', slug, time, beatLine)

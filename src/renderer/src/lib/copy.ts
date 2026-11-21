@@ -465,6 +465,29 @@ export const copy = {
     hint: 'Di chuột hoặc bấm để xem đủ các hạn mức',
     manage: 'Xem trong Cài đặt'
   },
+  vivibe: {
+    title: 'Đã dùng',
+    popTitle: 'VIVIBE · GIỌNG ĐỌC',
+    pickMonth: 'Chọn tháng',
+    monthName: (m: string) => {
+      const [y, mo] = m.split('-')
+      return `Tháng ${Number(mo)}/${y}`
+    },
+    charsSent: 'ký tự đã dùng',
+    sentIn: (month: string, prev: string) =>
+      `ký tự đã gửi Vivibe trong ${month.toLowerCase()} · tháng trước ${prev}`,
+    used: 'Đang dùng trong video',
+    unused: 'Không dùng',
+    unusedHint: '(tạo lại, câu đã xoá, video bỏ dở)',
+    none: 'Tháng này chưa tạo giọng đọc nào.',
+    colVideo: 'Video',
+    colSent: 'Đã tạo',
+    colUsed: 'Đang dùng',
+    colUnused: 'Không dùng',
+    runs: (n: number) => `${n} lần tạo`,
+    dropped: 'Đã bỏ',
+    how: '"Đã tạo": app cộng số ký tự mỗi lần tạo giọng đọc (Vivibe tính credit theo ký tự), kể cả video đang dở hay đã bỏ. "Đang dùng": số ký tự của các câu đang nằm trong video. Chỉ tính trên máy này, từ bản app 0.1.4. Số dư tài khoản xem trên trang Vivibe.'
+  },
   version: {
     banner: (v: string) => `Bản ${v} đã sẵn sàng.`,
     bannerAction: 'Xem và cập nhật',

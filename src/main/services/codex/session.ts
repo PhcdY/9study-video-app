@@ -15,6 +15,7 @@ import type { UserInput } from './protocol/v2/UserInput'
 import { CodexClient } from './client'
 import { trustProject } from '../runtime'
 import { describeApproval, estimateVoice, statusLabelFor } from './approvals'
+import { parseVoiceRun } from '../../../shared/vivibe'
 import log from '../../log'
 import { getSettings } from '../settings'
 
@@ -319,6 +320,11 @@ export class CodexSession extends EventEmitter {
         chat.items.push({ kind: 'ai', id: item.id, text: item.text ?? '', streaming: !completed })
       }
     } else if (item.type === 'commandExecution' || item.type === 'fileChange') {
+      // Lan tao giong doc that: bao so ky tu da gui Vivibe de ghi so
+      if (completed && item.type === 'commandExecution') {
+        const run = parseVoiceRun(item.command, item.aggregatedOutput ?? '')
+        if (run) this.emit('voiceRun', { ...run, slug: run.slug ?? chat.slug })
+      }
       const label = item.type === 'fileChange' ? 'suaFile' : statusLabelFor(item.command)
       const failed =
         completed &&

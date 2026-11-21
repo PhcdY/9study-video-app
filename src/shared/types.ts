@@ -26,6 +26,7 @@ import type {
   SubjectId,
   VideosSnapshot
 } from './video'
+import type { VivibeUsage } from './vivibe'
 
 export type SetupStepId =
   'thuMuc' | 'taiDuAn' | 'caiThuVien' | 'dangNhap' | 'keyGiong' | 'noiLuu' | 'kiemTra'
@@ -200,6 +201,8 @@ export interface InvokeMap {
   'voice:speed': { args: []; ret: number | null }
   'voice:setSpeed': { args: [speed: number]; ret: void }
   'disk:usage': { args: []; ret: DiskUsage }
+  /** Credit Vivibe da dung theo thang ("YYYY-MM"; bo trong = thang nay) */
+  'vivibe:usage': { args: [month?: string]; ret: VivibeUsage }
   'disk:clean': { args: [which: 'drafts' | 'temp']; ret: DiskUsage }
 }
 
@@ -213,6 +216,8 @@ export interface EventMap {
   'usage:changed': Usage | null
   'feedback:changed': FeedbackList
   'prefs:changed': PrefsSnapshot
+  /** Vua tao giong xong: doc lai so credit Vivibe */
+  'vivibe:changed': null
 }
 
 export type InvokeChannel = keyof InvokeMap

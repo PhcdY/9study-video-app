@@ -8,6 +8,7 @@ import {
   XCircle
 } from 'lucide-react'
 import { ChangelogBody } from '@/components/UpdateDialog'
+import { VivibeSettingsBlock } from '@/components/VivibeUsage'
 import type { DiskUsage, VersionInfo } from '../../../shared/app'
 import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
@@ -304,6 +305,9 @@ export function SettingsScreen({
                 </div>
               </div>
             )}
+            <div className="border-t border-[#EEF1F8]">
+              <VivibeSettingsBlock />
+            </div>
           </SettingsCard>
 
           <SettingsCard id="tro-ly" title={t.ai}>

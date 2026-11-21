@@ -3,6 +3,7 @@ import type { UsageWindow } from '../../../shared/app'
 import { useSetup, useUsage } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
+import { VivibePopoverSection } from '@/components/VivibeUsage'
 
 const u = copy.usage
 
@@ -135,6 +136,8 @@ export function UsagePill({
             )
           })}
           {!usage && <span className="text-sm text-phu">{u.unknown}</span>}
+          <div className="h-px bg-[#EEF1F8]" />
+          <VivibePopoverSection />
           {onOpenSettings && (
             <button
               type="button"

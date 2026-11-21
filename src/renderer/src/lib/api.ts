@@ -3,6 +3,7 @@ import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { ChatState, VideosSnapshot } from '../../../shared/video'
 import type { Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
 import type { FeedbackList } from '../../../shared/feedback'
+import type { VivibeUsage } from '../../../shared/vivibe'
 import { createMockApi } from './mock-api'
 
 // Ngoai Electron (xem giao dien trong trinh duyet khi phat trien) thi dung du lieu gia
@@ -112,4 +113,15 @@ export function useFeedback(): [FeedbackList | null, () => void] {
     return off
   }, [tick])
   return [list, () => setTick((t) => t + 1)]
+}
+
+/** Credit Vivibe da dung theo thang; tu doc lai khi vua tao giong xong. */
+export function useVivibe(month?: string): VivibeUsage | null {
+  const [u, setU] = useState<VivibeUsage | null>(null)
+  useEffect(() => {
+    const load = (): void => void api.invoke('vivibe:usage', month).then(setU)
+    load()
+    return api.on('vivibe:changed', load)
+  }, [month])
+  return u
 }
