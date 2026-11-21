@@ -31,6 +31,7 @@ import { trustProject } from '../runtime'
 import { approvalKey, describeApproval, estimateVoice, statusLabelFor } from './approvals'
 import { parseVoiceRun } from '../../../shared/vivibe'
 import { splitPicks, type PickTag } from '../../../shared/picks'
+import { CHOICE_INSTRUCTIONS } from '../../../shared/choices'
 import log from '../../log'
 import { getSettings } from '../settings'
 
@@ -382,7 +383,8 @@ export class CodexSession extends EventEmitter {
         threadId,
         cwd: this.projectDir,
         sandbox: SANDBOX,
-        approvalPolicy: approval()
+        approvalPolicy: approval(),
+        developerInstructions: CHOICE_INSTRUCTIONS
       })
       chat.threadId = threadId
       this.byThread.set(threadId, chat)
@@ -410,7 +412,8 @@ export class CodexSession extends EventEmitter {
       const res = (await c.request('thread/start', {
         cwd: this.projectDir,
         sandbox: SANDBOX,
-        approvalPolicy: approval()
+        approvalPolicy: approval(),
+        developerInstructions: CHOICE_INSTRUCTIONS
       })) as ThreadStartResponse
       chat.threadId = res.thread.id
       this.byThread.set(chat.threadId, chat)
