@@ -55,7 +55,17 @@ const setup = new SetupService()
 setup.on('changed', (snap) => broadcast('setup:changed', snap))
 const videos = new VideosService()
 videos.on('changed', (snap) => broadcast('videos:changed', snap))
-videos.on('chat', (state) => broadcast('chat:changed', state))
+// Trang thai AI tung bai (Video cua toi): chi bao khi doi
+let lastAi = ''
+videos.on('chat', (state) => {
+  broadcast('chat:changed', state)
+  const ai = videos.aiStatuses()
+  const key = JSON.stringify(ai)
+  if (key !== lastAi) {
+    lastAi = key
+    broadcast('chat:statuses', ai)
+  }
+})
 videos.on('vivibe', () => broadcast('vivibe:changed', null))
 // Sau moi luot AI: doc lai luot ChatGPT con lai
 videos.on('turnDone', () => void readUsage().then((u) => broadcast('usage:changed', u)))
@@ -181,6 +191,7 @@ function registerIpc(): void {
     void videos.chip(key, chip, slug)
   })
   handle('chat:interrupt', (key) => videos.chat().interrupt(key))
+  handle('chat:statuses', () => videos.aiStatuses())
   handle('chat:approve', (key, itemId, decision) => videos.chat().approve(key, itemId, decision))
   handle('studio:start', async () => {
     try {

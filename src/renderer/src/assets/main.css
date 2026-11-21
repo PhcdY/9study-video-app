@@ -113,3 +113,18 @@ body {
 .ai-md a {
   color: var(--color-cham);
 }
+
+/* Cham "Dang chay" nhap nhay o Video cua toi */
+@keyframes nhip {
+  0% {
+    box-shadow: 0 0 0 0 rgb(14 124 62 / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 7px rgb(14 124 62 / 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-\[nhip_1\.4s_ease-out_infinite\] {
+    animation: none;
+  }
+}

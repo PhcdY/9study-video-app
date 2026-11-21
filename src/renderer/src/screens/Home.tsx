@@ -1,21 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowRight, Check, ChevronDown, Film, Plus, Search, Trash2 } from 'lucide-react'
-import type { VideoInfo, VideoStage } from '../../../shared/video'
+import { ArrowRight, ChevronDown, Film, Plus, Search, Trash2 } from 'lucide-react'
+import type { AiStatus, VideoInfo, VideoStage } from '../../../shared/video'
 import { SUBJECTS, subjectName } from '../../../shared/prompt'
-import { api, fileUrl, useVideos } from '@/lib/api'
+import { api, fileUrl, useAiStatuses, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, Eyebrow, Page } from '@/components/ui/layout'
 
 const STAGES: VideoStage[] = ['kichBan', 'duyetHinh', 'giongDoc']
-
-const stageTone: Record<VideoStage, { text: string; dot: string }> = {
-  kichBan: { text: 'text-cham', dot: 'bg-cham' },
-  duyetHinh: { text: 'text-cham', dot: 'bg-cham' },
-  giongDoc: { text: 'text-credit', dot: 'bg-[#E08A1E]' },
-  daXuat: { text: 'text-xong', dot: 'bg-[#12A150]' }
-}
 
 function sub(v: VideoInfo): string {
   return [`${subjectName(v.subject)}${v.lop ? ` ${v.lop}` : ''}`, copy.home.loai(v.loai)]
@@ -31,6 +24,7 @@ export function HomeScreen({
   onNew: () => void
 }): React.JSX.Element {
   const snap = useVideos()
+  const ai = useAiStatuses()
   const [q, setQ] = useState('')
   const [mon, setMon] = useState('')
   const own = useMemo(() => snap?.videos.filter((v) => !v.sample) ?? [], [snap])
@@ -60,10 +54,15 @@ export function HomeScreen({
                   {latest.title}
                 </button>
               </div>
-              <StageTrail stage={latest.stage} />
-              <p className="m-0 text-sm leading-normal">
-                {latest.draft ? copy.home.draftNext : copy.home.nextStep[latest.stage]}
-              </p>
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+                <AiBadge status={aiOf(ai, latest)} />
+                {aiOf(ai, latest) && (
+                  <span aria-hidden className="text-vien-dam">
+                    ·
+                  </span>
+                )}
+                <span className={cn('font-semibold', stepTone(latest))}>{stepText(latest)}</span>
+              </div>
             </div>
             <div className="flex flex-col items-end gap-1.5">
               <Button size="md" onClick={() => onOpen(latest.slug)}>
@@ -128,7 +127,7 @@ export function HomeScreen({
             </Button>
           </Card>
         ) : (
-          <VideoTable videos={shown} onOpen={onOpen} />
+          <VideoTable videos={shown} ai={ai} onOpen={onOpen} />
         )}
       </section>
 
@@ -144,7 +143,7 @@ export function HomeScreen({
             />
           </summary>
           <div className="border-t border-vien">
-            <VideoTable videos={samples} onOpen={onOpen} flat />
+            <VideoTable videos={samples} ai={ai} onOpen={onOpen} flat />
           </div>
         </details>
       )}
@@ -152,35 +151,56 @@ export function HomeScreen({
   )
 }
 
-function StageTrail({ stage }: { stage: VideoStage }): React.JSX.Element {
-  const at = stage === 'daXuat' ? 3 : STAGES.indexOf(stage)
+/** Trang thai AI cua bai; bai da xuat ma khong chay gi thi de trong. */
+function aiOf(ai: Record<string, AiStatus>, v: VideoInfo): AiStatus | undefined {
+  const st = ai[v.slug] ?? 'dung'
+  return v.stage === 'daXuat' && !v.draft && st === 'dung' ? undefined : st
+}
+
+function stepText(v: VideoInfo): string {
+  if (v.draft) return copy.home.noScript
+  if (v.stage === 'daXuat') return copy.home.exported
+  return copy.home.step(STAGES.indexOf(v.stage) + 1, copy.stage[v.stage])
+}
+
+const stepTone = (v: VideoInfo): string =>
+  v.draft ? 'text-phu' : v.stage === 'daXuat' ? 'text-xong' : 'text-navy'
+
+const AI_TONE: Record<AiStatus, { text: string; dot: string }> = {
+  dang: { text: 'text-xong', dot: 'bg-xong animate-[nhip_1.4s_ease-out_infinite]' },
+  cho: { text: 'text-credit', dot: 'bg-[#E8A417]' },
+  dung: { text: 'text-phu', dot: 'bg-[#B4BCCF]' },
+  loi: { text: 'text-loi', dot: 'bg-loi' }
+}
+
+function AiBadge({ status }: { status?: AiStatus }): React.JSX.Element | null {
+  if (!status) return null
   return (
-    <ol
-      aria-label="Tiến độ"
-      className="m-0 flex list-none flex-wrap items-center gap-1.5 p-0 text-[13px]"
-    >
-      {STAGES.map((s, i) => (
-        <li key={s} className="flex items-center gap-1.5">
-          {i > 0 && (
-            <span aria-hidden className="text-vien-dam">
-              /
-            </span>
-          )}
+    <span className={cn('inline-flex items-center gap-2 font-semibold', AI_TONE[status].text)}>
+      <span aria-hidden className={cn('size-[9px] shrink-0 rounded-full', AI_TONE[status].dot)} />
+      {copy.home.ai[status]}
+    </span>
+  )
+}
+
+/** Ba vach tien do (xong / dang o buoc nay / chua toi) va chu "Buoc 2/3 · Duyet hinh". */
+function StepBar({ v }: { v: VideoInfo }): React.JSX.Element {
+  const at = v.draft ? -1 : v.stage === 'daXuat' ? 3 : STAGES.indexOf(v.stage)
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div aria-hidden className="flex gap-1">
+        {STAGES.map((s, i) => (
           <span
-            aria-current={i === at ? 'step' : undefined}
+            key={s}
             className={cn(
-              'flex items-center gap-1',
-              i < at && 'font-semibold text-xong',
-              i === at && 'font-bold text-cham',
-              i > at && 'text-phu'
+              'h-1.5 w-11 rounded',
+              i < at ? 'bg-xong' : i === at ? 'bg-cham' : 'bg-vien'
             )}
-          >
-            {i < at && <Check aria-hidden className="size-3.5" strokeWidth={2.6} />}
-            {copy.stage[s]}
-          </span>
-        </li>
-      ))}
-    </ol>
+          />
+        ))}
+      </div>
+      <span className={cn('font-semibold', stepTone(v))}>{stepText(v)}</span>
+    </div>
   )
 }
 
@@ -210,16 +230,18 @@ function Thumb({ v, large }: { v: VideoInfo; large?: boolean }): React.JSX.Eleme
 
 function VideoTable({
   videos,
+  ai,
   onOpen,
   flat
 }: {
   videos: VideoInfo[]
+  ai: Record<string, AiStatus>
   onOpen: (key: string) => void
   flat?: boolean
 }): React.JSX.Element {
   return (
     <div className={cn('overflow-x-auto bg-white', !flat && 'rounded-xl border border-vien')}>
-      <table className="w-full min-w-[640px] border-collapse text-sm">
+      <table className="w-full min-w-[760px] border-collapse text-sm">
         <thead>
           <tr className="text-left text-xs font-bold text-phu">
             <th scope="col" className="border-b border-vien px-4 py-2.5">
@@ -228,8 +250,11 @@ function VideoTable({
             <th scope="col" className="w-[110px] border-b border-vien px-4 py-2.5">
               {copy.home.colSubject}
             </th>
-            <th scope="col" className="w-[220px] border-b border-vien px-4 py-2.5">
-              {copy.home.colStage}
+            <th scope="col" className="w-[230px] border-b border-vien px-4 py-2.5">
+              {copy.home.colStep}
+            </th>
+            <th scope="col" className="w-[160px] border-b border-vien px-4 py-2.5">
+              {copy.home.colStatus}
             </th>
             <th scope="col" className="w-[120px] border-b border-vien px-4 py-2.5 text-right">
               {copy.home.colUpdated}
@@ -261,22 +286,11 @@ function VideoTable({
               </td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5">{subjectName(v.subject)}</td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5">
-                {v.draft ? (
-                  <span className="inline-flex items-center gap-2 font-semibold text-credit">
-                    <span className="size-2 rounded-full bg-[#E08A1E]" />
-                    {copy.home.draftStatus}
-                  </span>
-                ) : (
-                  <span
-                    className={cn(
-                      'inline-flex items-center gap-2 font-semibold',
-                      stageTone[v.stage].text
-                    )}
-                  >
-                    <span className={cn('size-2 rounded-full', stageTone[v.stage].dot)} />
-                    {copy.stageStatus[v.stage]}
-                  </span>
-                )}
+                <StepBar v={v} />
+              </td>
+              <td className="border-b border-[#EEF1F8] px-4 py-2.5">
+                {/* Video mau: chi hien khi co viec (khong ghi "Da dung" cho ca danh sach) */}
+                <AiBadge status={flat && aiOf(ai, v) === 'dung' ? undefined : aiOf(ai, v)} />
               </td>
               <td className="border-b border-[#EEF1F8] px-4 py-2.5 text-right text-phu tabular-nums">
                 {copy.home.shortDate(v.updatedAt)}

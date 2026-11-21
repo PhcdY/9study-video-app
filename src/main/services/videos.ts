@@ -3,6 +3,7 @@ import { EventEmitter } from 'node:events'
 import path from 'node:path'
 import { existsSync, watch, type FSWatcher } from 'node:fs'
 import type {
+  AiStatus,
   AudioLine,
   VideoInfo,
   ChipId,
@@ -194,6 +195,11 @@ export class VideosService extends EventEmitter {
   }
 
   // ---------- chat ----------
+
+  /** Trang thai AI tung bai (khong khoi dong Codex neu chua chay). */
+  aiStatuses(): Record<string, AiStatus> {
+    return this.session?.statuses() ?? {}
+  }
 
   /** Ten cac bai AI dang lam viec (khong khoi dong Codex neu chua chay). */
   async busyTitles(): Promise<string[]> {

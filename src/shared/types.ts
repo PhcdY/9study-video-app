@@ -17,6 +17,7 @@ import type {
   FeedbackState
 } from './feedback'
 import type {
+  AiStatus,
   ApprovalDecision,
   AudioLine,
   ChatState,
@@ -192,6 +193,8 @@ export interface InvokeMap {
   'chat:send': { args: [key: string, text: string]; ret: void }
   'chat:chip': { args: [key: string, chip: ChipId, slug: string]; ret: void }
   'chat:interrupt': { args: [key: string]; ret: void }
+  /** Trang thai AI theo slug / khoa cuoc tro chuyen */
+  'chat:statuses': { args: []; ret: Record<string, AiStatus> }
   'chat:approve': {
     args: [key: string, itemId: string, decision: ApprovalDecision]
     ret: void
@@ -255,6 +258,7 @@ export interface EventMap {
   'prefs:changed': PrefsSnapshot
   /** Vua tao giong xong: doc lai so credit Vivibe */
   'vivibe:changed': null
+  'chat:statuses': Record<string, AiStatus>
 }
 
 export type InvokeChannel = keyof InvokeMap

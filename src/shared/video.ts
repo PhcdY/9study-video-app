@@ -179,3 +179,12 @@ export type ChipId =
   | 'nghiOnDungHoanChinh'
   | 'xuatVideo'
   | 'xuatLaiVideo'
+
+/** Trang thai AI cua mot bai: dang chay, cho ban duyet (the xin quyen), da dung, gap loi. */
+export type AiStatus = 'dang' | 'cho' | 'dung' | 'loi'
+
+export function aiStatusOf(items: ChatItem[], busy: boolean): AiStatus {
+  if (items.some((it) => it.kind === 'approval' && it.state === 'pending')) return 'cho'
+  if (busy) return 'dang'
+  return items.at(-1)?.kind === 'error' ? 'loi' : 'dung'
+}

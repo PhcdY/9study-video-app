@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Api, SetupSnapshot } from '../../../shared/types'
-import type { ChatState, VideosSnapshot } from '../../../shared/video'
+import type { AiStatus, ChatState, VideosSnapshot } from '../../../shared/video'
 import type { AppUpdate, Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
 import type { FeedbackList } from '../../../shared/feedback'
 import type { VivibeUsage } from '../../../shared/vivibe'
@@ -149,4 +149,15 @@ export function useRestartToUpdate(): {
     confirm: () => void api.invoke('app:restartToUpdate'),
     cancel: () => setBusy(null)
   }
+}
+
+/** Trang thai AI tung bai (theo slug / khoa cuoc tro chuyen). */
+export function useAiStatuses(): Record<string, AiStatus> {
+  const [s, setS] = useState<Record<string, AiStatus>>({})
+  useEffect(() => {
+    const off = api.on('chat:statuses', setS)
+    void api.invoke('chat:statuses').then(setS)
+    return off
+  }, [])
+  return s
 }

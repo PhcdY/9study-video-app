@@ -4,7 +4,14 @@ import { EventEmitter } from 'node:events'
 import path from 'node:path'
 import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync, statSync } from 'node:fs'
 import { app } from 'electron'
-import type { ApprovalDecision, ChatErrorCode, ChatItem, ChatState } from '../../../shared/video'
+import {
+  aiStatusOf,
+  type AiStatus,
+  type ApprovalDecision,
+  type ChatErrorCode,
+  type ChatItem,
+  type ChatState
+} from '../../../shared/video'
 import type { ServerRequest } from './protocol/ServerRequest'
 import type { ThreadItem } from './protocol/v2/ThreadItem'
 import type { Turn } from './protocol/v2/Turn'
@@ -173,6 +180,17 @@ export class CodexSession extends EventEmitter {
     })
     await c.start()
     return c
+  }
+
+  /** Trang thai AI theo khoa cuoc tro chuyen va theo slug video (chi cac cuoc da mo trong lan chay nay). */
+  statuses(): Record<string, AiStatus> {
+    const out: Record<string, AiStatus> = {}
+    for (const c of this.chats.values()) {
+      const st = aiStatusOf(c.items, c.busy)
+      out[c.key] = st
+      if (c.slug) out[c.slug] = st
+    }
+    return out
   }
 
   /** Khoa cac cuoc tro chuyen AI dang lam viec. */

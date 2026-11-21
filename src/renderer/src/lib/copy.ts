@@ -1,6 +1,7 @@
 // Toan bo chu tieng Viet tren giao dien. Khong dung thuat ngu ky thuat (git, terminal, npm, sandbox...).
 import type { ErrorCode, MachineCheck, SetupStepId, TaskId } from '../../../shared/types'
 import type {
+  AiStatus,
   ApprovalTitle,
   ChatErrorCode,
   ChipId,
@@ -257,16 +258,18 @@ export const copy = {
       'Bấm Làm video mới để bắt đầu. AI sẽ cùng bạn viết kịch bản, duyệt hình rồi tạo giọng đọc.',
     colLesson: 'Bài',
     colSubject: 'Môn',
-    colStage: 'Trạng thái',
+    colStep: 'Bước',
+    colStatus: 'Trạng thái',
+    step: (n: number, name: string) => `Bước ${n}/3 · ${name}`,
+    noScript: 'Chưa có kịch bản',
+    exported: 'Đã xuất video',
+    ai: {
+      dang: 'Đang chạy',
+      cho: 'Chờ bạn duyệt',
+      dung: 'Đã dừng',
+      loi: 'Gặp lỗi'
+    } satisfies Record<AiStatus, string>,
     colUpdated: 'Cập nhật',
-    nextStep: {
-      kichBan: 'Việc tiếp theo: đọc kịch bản và duyệt với AI.',
-      duyetHinh: 'Việc tiếp theo: xem storyboard và duyệt hình. Chưa tốn credit.',
-      giongDoc: 'Việc tiếp theo: nghe thử giọng đọc rồi xuất video.',
-      daXuat: 'Video đã xuất xong. Mở để xem hoặc xuất lại.'
-    } satisfies Record<VideoStage, string>,
-    draftNext: 'AI chưa viết xong kịch bản. Mở ra rồi bấm "Làm tiếp kịch bản".',
-    draftStatus: 'Dừng giữa chừng',
     drop: 'Bỏ video',
     dropTitle: 'Bỏ video đang dở này?',
     dropDesc: 'Cuộc trò chuyện với AI về video này cũng mất. Không lấy lại được.',
