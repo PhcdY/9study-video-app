@@ -108,3 +108,45 @@ export interface PrefsSnapshot extends Prefs {
   /** Noi luu video thanh pham */
   outputDir?: string
 }
+
+/** Ban app moi da tai xong, cho khoi dong lai de cai. */
+export interface AppUpdate {
+  version: string
+  /** Ban dang chay */
+  current: string
+  /** Cac dong "co gi moi" lay tu trang phat hanh */
+  notes: string[]
+  /** Trang phat hanh tren GitHub */
+  url: string
+}
+
+/** Lay cac dong gach dau dong tu ghi chu phat hanh (HTML cua GitHub hoac Markdown). */
+export function releaseNoteLines(notes: unknown): string[] {
+  const text =
+    typeof notes === 'string'
+      ? notes
+      : Array.isArray(notes)
+        ? notes
+            .map((n) => (n && typeof n === 'object' && 'note' in n ? String(n.note ?? '') : ''))
+            .join('\n')
+        : ''
+  const decode = (x: string): string =>
+    x
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ')
+      .trim()
+  const li = [...text.matchAll(/<li[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => decode(m[1]))
+  const lines = li.length
+    ? li
+    : text
+        .split(/\r?\n/)
+        .filter((l) => /^\s*[-*]\s+/.test(l))
+        .map((l) => decode(l.replace(/^\s*[-*]\s+/, '').replace(/\*\*|`/g, '')))
+  return lines.filter(Boolean)
+}

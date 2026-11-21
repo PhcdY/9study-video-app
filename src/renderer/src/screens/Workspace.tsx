@@ -4,11 +4,12 @@ import { Button } from '@/components/ui/button'
 import type { FeedbackTarget } from '@/screens/Feedback'
 import type { VideoStage } from '../../../shared/video'
 import { subjectName } from '../../../shared/prompt'
-import { useChat, useVideos } from '@/lib/api'
+import { useAppUpdate, useChat, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { ChatPanel } from '@/components/workspace/ChatPanel'
 import { UsagePill } from '@/components/UsagePill'
+import { UpdatePill } from '@/components/UpdatePill'
 import {
   AudioTab,
   FinalTab,
@@ -38,6 +39,7 @@ export function WorkspaceScreen({
 }): React.JSX.Element {
   const chat = useChat(chatKey)
   const videos = useVideos()
+  const update = useAppUpdate()
   const slug = chat?.slug ?? (chatKey.startsWith('moi-') ? undefined : chatKey)
   // Video moi dang do (chua co thu muc): tim theo khoa cuoc tro chuyen
   const video = videos?.videos.find((v) => v.slug === (slug ?? chatKey))
@@ -78,6 +80,7 @@ export function WorkspaceScreen({
             <MessageSquareWarning aria-hidden className="size-4" /> {copy.feedback.open}
           </Button>
         )}
+        {update && <UpdatePill update={update} />}
         <UsagePill />
       </div>
 

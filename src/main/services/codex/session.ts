@@ -175,6 +175,11 @@ export class CodexSession extends EventEmitter {
     return c
   }
 
+  /** Khoa cac cuoc tro chuyen AI dang lam viec. */
+  busyKeys(): string[] {
+    return [...this.chats.values()].filter((c) => c.busy).map((c) => c.key)
+  }
+
   stop(): void {
     this.client?.stop()
   }

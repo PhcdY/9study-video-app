@@ -22,8 +22,22 @@ export const copy = {
   skip: 'Bỏ qua, làm sau',
   canLeave: 'Bạn có thể để app chạy và làm việc khác.',
   loading: 'Đang xem máy đã chuẩn bị tới đâu…',
-  updateReady: (v: string) => `Bản app mới ${v} đã tải xong.`,
-  restartToUpdate: 'Khởi động lại để cập nhật',
+  appUpdate: {
+    pill: 'Cập nhật app',
+    title: (v: string) => `Bản app ${v} đã sẵn sàng`,
+    sub: (cur: string) => `Đã tải xong · bạn đang dùng ${cur}`,
+    whatsNew: 'Có gì mới',
+    seeAll: 'Xem tất cả',
+    restartNow: 'Khởi động lại ngay',
+    later: 'Để sau',
+    restartAnyway: 'Vẫn khởi động lại',
+    note: 'Bài của bạn giữ nguyên. Để sau thì app tự cập nhật khi bạn tắt app.',
+    busy: (titles: string[]) =>
+      `AI đang làm việc ở bài ${titles.map((x) => `"${x}"`).join(', ')}. Khởi động lại bây giờ sẽ dừng việc đó.`,
+    ready: (v: string) => `${v} đã tải xong`,
+    whatsNewIn: (v: string) => `Có gì mới trong ${v}`,
+    restart: 'Khởi động lại để cập nhật'
+  },
 
   steps: {
     thuMuc: {

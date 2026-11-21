@@ -9,6 +9,8 @@ const INVOKE: InvokeChannel[] = [
   'dialog:pickFolder',
   'app:openLoginPage',
   'app:restartToUpdate',
+  'app:update',
+  'app:busyWork',
   'app:version',
   'app:openTeamFolder',
   'videos:list',

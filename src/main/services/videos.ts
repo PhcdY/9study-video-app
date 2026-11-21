@@ -195,6 +195,14 @@ export class VideosService extends EventEmitter {
 
   // ---------- chat ----------
 
+  /** Ten cac bai AI dang lam viec (khong khoi dong Codex neu chua chay). */
+  async busyTitles(): Promise<string[]> {
+    const keys = this.session?.busyKeys() ?? []
+    if (!keys.length) return []
+    const list = (await this.list()).videos
+    return keys.map((k) => list.find((v) => v.slug === k)?.title ?? k)
+  }
+
   chat(): CodexSession {
     const dir = this.projectDir
     if (!this.session || this.dirOfSession !== dir) {

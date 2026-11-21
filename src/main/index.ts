@@ -38,7 +38,7 @@ import { cleanDisk, diskUsage } from './services/disk'
 import type { Prefs, PrefsSnapshot } from '../shared/app'
 import type { FeedbackList } from '../shared/feedback'
 import { existsSync, mkdirSync, watch, type FSWatcher } from 'node:fs'
-import { restartToUpdate, startUpdater } from './services/updater'
+import { restartToUpdate, startUpdater, updateInfo } from './services/updater'
 import { VideosService } from './services/videos'
 import { handleFileScheme, isInside, registerFileScheme } from './services/files-protocol'
 
@@ -161,6 +161,8 @@ function registerIpc(): void {
   handle('dialog:pickFolder', (defaultPath) => pickFolder(defaultPath))
   handle('app:openLoginPage', () => reopenLoginPage())
   handle('app:restartToUpdate', () => restartToUpdate())
+  handle('app:update', () => updateInfo())
+  handle('app:busyWork', () => videos.busyTitles())
   handle('app:version', () => app.getVersion())
   handle('app:openTeamFolder', () => shell.openExternal(TEAM_FEEDBACK_FOLDER_URL))
 

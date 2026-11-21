@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { ChatState, VideosSnapshot } from '../../../shared/video'
-import type { Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
+import type { AppUpdate, Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
 import type { FeedbackList } from '../../../shared/feedback'
 import type { VivibeUsage } from '../../../shared/vivibe'
 import { createMockApi } from './mock-api'
@@ -20,9 +20,14 @@ export function useSetup(): SetupSnapshot | null {
   return snap
 }
 
-export function useUpdateReady(): string | null {
-  const [v, setV] = useState<string | null>(null)
-  useEffect(() => api.on('app:updateReady', (p) => setV(p.version)), [])
+/** Ban app moi da tai xong (null neu chua co). */
+export function useAppUpdate(): AppUpdate | null {
+  const [v, setV] = useState<AppUpdate | null>(null)
+  useEffect(() => {
+    const off = api.on('app:updateReady', setV)
+    void api.invoke('app:update').then((u) => u && setV(u))
+    return off
+  }, [])
   return v
 }
 
@@ -124,4 +129,24 @@ export function useVivibe(month?: string): VivibeUsage | null {
     return api.on('vivibe:changed', load)
   }, [month])
   return u
+}
+
+/** Khoi dong lai de cai ban moi; AI dang lam thi hoi lai truoc. */
+export function useRestartToUpdate(): {
+  busy: string[] | null
+  ask: () => Promise<void>
+  confirm: () => void
+  cancel: () => void
+} {
+  const [busy, setBusy] = useState<string[] | null>(null)
+  return {
+    busy,
+    ask: async () => {
+      const titles = await api.invoke('app:busyWork')
+      if (titles.length) setBusy(titles)
+      else void api.invoke('app:restartToUpdate')
+    },
+    confirm: () => void api.invoke('app:restartToUpdate'),
+    cancel: () => setBusy(null)
+  }
 }

@@ -13,7 +13,16 @@ import { BugReportPanel, MyBugs } from '@/components/BugReport'
 import type { DiskUsage, VersionInfo } from '../../../shared/app'
 import { VOICES, VOICE_GROUPS, suggestedVoice } from '../../../shared/prompt'
 import type { StepState } from '../../../shared/types'
-import { api, useFeedback, usePrefs, useSetup, useUsage } from '@/lib/api'
+import {
+  api,
+  useAppUpdate,
+  useFeedback,
+  usePrefs,
+  useRestartToUpdate,
+  useSetup,
+  useUsage
+} from '@/lib/api'
+import { BusyWarning } from '@/components/UpdatePill'
 import { headline } from '../../../shared/feedback-rules'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
@@ -44,6 +53,8 @@ export function SettingsScreen({
   const [showBug, setShowBug] = useState(false)
   const [active, setActive] = useState('thu-muc')
   const [prefs, savePrefs] = usePrefs()
+  const appUpdate = useAppUpdate()
+  const restart = useRestartToUpdate()
   const [fb] = useFeedback()
   const [showSent, setShowSent] = useState(false)
   const [name, setName] = useState<string | null>(null)
@@ -507,7 +518,51 @@ export function SettingsScreen({
                 </ul>
               </div>
             )}
-            <SettingRow label={t.appName(appVersion)} />
+            {appUpdate ? (
+              <>
+                <SettingRow
+                  label={
+                    <span className="flex flex-wrap items-center gap-2.5">
+                      {t.appName(appVersion)}
+                      <span className="rounded-full bg-cham-nhat px-2.5 py-0.5 text-xs font-bold text-cham">
+                        {copy.appUpdate.ready(appUpdate.version)}
+                      </span>
+                    </span>
+                  }
+                  desc={
+                    <a
+                      href={appUpdate.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="font-semibold text-cham no-underline hover:underline"
+                    >
+                      {copy.appUpdate.whatsNewIn(appUpdate.version)}
+                    </a>
+                  }
+                >
+                  {!restart.busy && (
+                    <Button size="sm" onClick={() => void restart.ask()}>
+                      {copy.appUpdate.restart}
+                    </Button>
+                  )}
+                </SettingRow>
+                {restart.busy && (
+                  <div className="flex flex-col gap-2.5 pb-4">
+                    <BusyWarning titles={restart.busy} />
+                    <div className="flex gap-2.5">
+                      <Button size="sm" onClick={restart.cancel}>
+                        {copy.appUpdate.later}
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={restart.confirm}>
+                        {copy.appUpdate.restartAnyway}
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <SettingRow label={t.appName(appVersion)} />
+            )}
             <CheckRow
               checked={prefs?.autoUpdateApp !== false}
               onChange={(v) => void savePrefs({ autoUpdateApp: v })}

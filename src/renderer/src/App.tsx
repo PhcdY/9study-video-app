@@ -1,6 +1,6 @@
 import { useState } from 'react'
-import { Loader2, RefreshCw } from 'lucide-react'
-import { api, useFeedback, usePrefs, useSetup, useUpdateReady, useVersion } from '@/lib/api'
+import { Loader2 } from 'lucide-react'
+import { useFeedback, usePrefs, useSetup, useAppUpdate, useVersion } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { SetupScreen } from '@/screens/Setup'
@@ -14,6 +14,7 @@ import { FeedbackScreen, type FeedbackTarget } from '@/screens/Feedback'
 import { InboxScreen } from '@/screens/Inbox'
 import { GuideScreen } from '@/screens/Guide'
 import { UsagePill } from '@/components/UsagePill'
+import { UpdatePill } from '@/components/UpdatePill'
 import logoNgang from '@/assets/brand/logo-ngang.png'
 import { UpdateBanner, UpdateDialog } from '@/components/UpdateDialog'
 
@@ -30,7 +31,7 @@ type Route =
 
 function App(): React.JSX.Element {
   const snap = useSetup()
-  const update = useUpdateReady()
+  const update = useAppUpdate()
   // Lan dau thay cai dat xong: mo app da xong tu truoc thi vao thang Video cua toi,
   // vua cai xong trong phien nay thi hien man "May ban da san sang" mot lan.
   const [route, setRoute] = useState<Route | null>(null)
@@ -103,23 +104,12 @@ function App(): React.JSX.Element {
               </nav>
             )}
             <div className="ml-auto flex items-center gap-3">
-              {update && (
-                <div className="flex items-center gap-3 rounded-[10px] border border-vien px-3 py-1.5 text-sm">
-                  <b>{copy.updateReady(update)}</b>
-                  <button
-                    type="button"
-                    className="flex cursor-pointer items-center gap-1 font-bold text-cham"
-                    onClick={() => void api.invoke('app:restartToUpdate')}
-                  >
-                    <RefreshCw aria-hidden className="size-4" /> {copy.restartToUpdate}
-                  </button>
-                </div>
-              )}
               {ready && current?.name === 'inbox' && (
                 <span className="rounded-md bg-[#F1F3FA] px-2.5 py-1 text-xs font-semibold text-phu">
                   {copy.inbox.mode}
                 </span>
               )}
+              {update && <UpdatePill update={update} />}
               {ready && <UsagePill onOpenSettings={() => setRoute({ name: 'settings' })} />}
             </div>
           </div>

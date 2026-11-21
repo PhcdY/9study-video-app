@@ -4,6 +4,7 @@ import type {
   Prefs,
   PrefsSnapshot,
   UpdateProgress,
+  AppUpdate,
   UpdateResult,
   Usage,
   VersionInfo
@@ -171,6 +172,10 @@ export interface InvokeMap {
   'dialog:pickFolder': { args: [defaultPath: string]; ret: string | null }
   'app:openLoginPage': { args: []; ret: void }
   'app:restartToUpdate': { args: []; ret: void }
+  /** Ban app moi da tai xong (null neu chua co) */
+  'app:update': { args: []; ret: AppUpdate | null }
+  /** Ten cac bai AI dang lam viec (de canh bao truoc khi khoi dong lai) */
+  'app:busyWork': { args: []; ret: string[] }
   'app:version': { args: []; ret: string }
   /** Mo thu muc gop y chung cua doi tren trinh duyet (link co dinh trong app) */
   'app:openTeamFolder': { args: []; ret: void }
@@ -241,7 +246,7 @@ export interface InvokeMap {
 /** Su kien (main -> renderer). */
 export interface EventMap {
   'setup:changed': SetupSnapshot
-  'app:updateReady': { version: string }
+  'app:updateReady': AppUpdate
   'videos:changed': VideosSnapshot
   'chat:changed': ChatState
   'version:progress': UpdateProgress
