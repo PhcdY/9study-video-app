@@ -1,6 +1,13 @@
 import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
-import { useFeedback, usePrefs, useSetup, useAppUpdate, useVersion } from '@/lib/api'
+import {
+  useFeedback,
+  useFeedbackDirCheck,
+  usePrefs,
+  useSetup,
+  useAppUpdate,
+  useVersion
+} from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { SetupScreen } from '@/screens/Setup'
@@ -50,11 +57,14 @@ function App(): React.JSX.Element {
     (feedback?.bugs.filter((b) => b.state.status === 'moi').length ?? 0)
   const ready = !!current && current.name !== 'ready'
   const [version, reloadVersion] = useVersion()
+  // Thu muc gop y chung chua dung: cham cam o muc Cai dat
+  const fbDir = useFeedbackDirCheck()
 
   const navItem = (
     name: 'home' | 'settings' | 'inbox' | 'guide',
     label: string,
-    badge?: number
+    badge?: number,
+    warn?: boolean
   ): React.JSX.Element => (
     <button
       type="button"
@@ -73,6 +83,7 @@ function App(): React.JSX.Element {
           {badge}
         </span>
       )}
+      {warn && <span aria-hidden className="ml-1.5 size-2 rounded-full bg-[#E08A1E]" />}
     </button>
   )
 
@@ -99,7 +110,12 @@ function App(): React.JSX.Element {
               <nav aria-label="Chính" className="flex items-stretch gap-1 self-stretch">
                 {navItem('home', copy.nav.videos)}
                 {prefs?.maintainer && navItem('inbox', copy.inbox.nav, newFeedback)}
-                {navItem('settings', copy.settings.nav)}
+                {navItem(
+                  'settings',
+                  copy.settings.nav,
+                  undefined,
+                  !!fbDir && fbDir.status !== 'dung'
+                )}
                 {navItem('guide', copy.nav.guide)}
               </nav>
             )}

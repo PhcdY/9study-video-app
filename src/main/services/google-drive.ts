@@ -4,7 +4,7 @@ import path from 'node:path'
 import { createWriteStream, existsSync, mkdirSync, rmSync } from 'node:fs'
 import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
-import { net, shell } from 'electron'
+import { app, net, shell } from 'electron'
 import { GOOGLE_DRIVE_SETUP_URL } from '../../shared/team'
 import { cacheRoot } from './runtime'
 import { run } from './process'
@@ -12,6 +12,8 @@ import { DRIVE_FOLDER_NAMES } from './rules'
 
 /** O Google Drive (vd G:\My Drive) neu Drive da cai va da dang nhap. */
 export function findGoogleDrive(): string | null {
+  // Chi de thu giao dien tren may dev: gia nhu may khong co Drive
+  if (!app.isPackaged && process.env.NINESTUDY_NO_DRIVE) return null
   for (const letter of 'DEFGHIJKLMNOPQRSTUVWXYZ') {
     for (const name of DRIVE_FOLDER_NAMES) {
       const p = `${letter}:\\${name}`

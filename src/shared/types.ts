@@ -14,7 +14,8 @@ import type {
   FeedbackDraft,
   FeedbackInput,
   FeedbackList,
-  FeedbackState
+  FeedbackState,
+  FeedbackDirCheck
 } from './feedback'
 import type {
   AiStatus,
@@ -253,6 +254,10 @@ export interface InvokeMap {
   /** Gom gop y thanh mot lan sua; openNow thi mo Codex va tra ve khoa cuoc tro chuyen */
   'feedback:fix': { args: [input: BatchInput]; ret: string | null }
   'feedback:pickDir': { args: []; ret: PrefsSnapshot | null }
+  /** Thu muc gop y chung co dung la cua doi trong Google Drive */
+  'feedback:checkDir': { args: []; ret: FeedbackDirCheck }
+  /** Nguoi bao tri danh dau thu muc dang dung la thu muc chung cua doi */
+  'feedback:markTeam': { args: []; ret: FeedbackDirCheck }
   /** Da sua gi trong lan sua cua gop y (nhat ky phien ban, bai hoc, file doi); may nguoi bao tri */
   'feedback:fixDetail': { args: [id: string]; ret: FixDetail | null }
   /** Toc do doc chung (scripts/tts_config.json); null neu bo cong cu chua co */

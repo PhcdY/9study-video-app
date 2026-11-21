@@ -25,6 +25,8 @@ import {
   feedbackDir,
   feedbackDraft,
   fixFeedback,
+  checkFeedbackDir,
+  markTeamFolder,
   fixDetail,
   listFeedback,
   machineId,
@@ -413,6 +415,12 @@ function registerIpc(): void {
     }
     setFeedbackState(ids, patch)
     broadcast('feedback:changed', feedbackList())
+  })
+  handle('feedback:checkDir', () => checkFeedbackDir())
+  handle('feedback:markTeam', () => {
+    markTeamFolder()
+    broadcast('feedback:changed', feedbackList())
+    return checkFeedbackDir()
   })
   handle('feedback:fixDetail', (id) => fixDetail(getSettings().projectDir ?? '', id))
   handle('feedback:fix', async (input) => {

@@ -7,6 +7,7 @@ import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, Eyebrow, Page } from '@/components/ui/layout'
+import { FeedbackDirBanner } from '@/components/FeedbackDir'
 
 const STAGES: VideoStage[] = ['kichBan', 'duyetHinh', 'giongDoc']
 
@@ -38,6 +39,7 @@ export function HomeScreen({
 
   return (
     <Page className="gap-8">
+      <FeedbackDirBanner />
       {latest && (
         <section aria-labelledby="lam-tiep" className="flex flex-col gap-3">
           <Eyebrow id="lam-tiep">{copy.home.continueTitle}</Eyebrow>

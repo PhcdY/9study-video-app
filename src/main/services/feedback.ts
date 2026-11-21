@@ -22,8 +22,10 @@ import type {
   FeedbackItem,
   FeedbackMeta,
   FeedbackSpot,
-  FeedbackState
+  FeedbackState,
+  FeedbackDirCheck
 } from '../../shared/feedback'
+import { TEAM_MARKER } from '../../shared/feedback'
 import { getSettings, updateSettings } from './settings'
 import { childEnv, exe } from './runtime'
 import { run } from './process'
@@ -36,6 +38,7 @@ import {
   type TimelineLine
 } from '../../shared/feedback-rules'
 import { DRIVE_FOLDER_NAMES } from './rules'
+import { findGoogleDrive } from './google-drive'
 import { parseFixDiff, type FixDetail } from '../../shared/fix-notes'
 import { redact } from '../redact'
 import log from '../log'
@@ -57,6 +60,81 @@ export function feedbackDir(): string | undefined {
       }
     }
   return set
+}
+
+const inside = (child: string, parent: string): boolean => {
+  const c = path.resolve(child).toLowerCase()
+  const p = path.resolve(parent).toLowerCase()
+  return c === p || c.startsWith(p.endsWith(path.sep) ? p : p + path.sep)
+}
+
+/** Thu muc la cua doi: co file danh dau, hoac da co goi gop y / bao loi cua may khac. */
+function isTeamFolder(dir: string): { ok: boolean; marked: boolean } {
+  const marked = existsSync(path.join(dir, TEAM_MARKER))
+  if (marked) return { ok: true, marked }
+  const me = getSettings().machineId
+  const others = (d: string): boolean => {
+    try {
+      return readdirSync(d, { withFileTypes: true }).some((e) => {
+        if (!e.isDirectory()) return false
+        try {
+          const m = JSON.parse(readFileSync(path.join(d, e.name, 'meta.json'), 'utf8')) as {
+            machine?: string
+          }
+          return !!m.machine && m.machine !== me
+        } catch {
+          return false
+        }
+      })
+    } catch {
+      return false
+    }
+  }
+  return { ok: others(dir) || others(path.join(dir, '_BaoLoi')), marked }
+}
+
+/**
+ * Kiem tra thu muc gop y chung co dung la thu muc cua doi trong Google Drive.
+ * Thay thu muc dung trong Drive (vd nguoi dung vua them loi tat) thi tu chuyen sang.
+ */
+export function checkFeedbackDir(): FeedbackDirCheck {
+  const drive = findGoogleDrive() ?? undefined
+  const set = getSettings().feedbackDir
+  const candidate = drive ? path.join(drive, FEEDBACK_FOLDER) : undefined
+  const judge = (dir: string): FeedbackDirCheck => {
+    if (!existsSync(dir)) return { status: 'mat', dir, drive, marked: false }
+    if (!drive || !inside(dir, path.parse(drive).root))
+      return { status: 'ngoaiDrive', dir, drive, marked: false }
+    const team = isTeamFolder(dir)
+    return { status: team.ok ? 'dung' : 'khongPhaiCuaDoi', dir, drive, marked: team.marked }
+  }
+  const cur = set ? judge(set) : feedbackDir() ? judge(feedbackDir()!) : undefined
+  if (cur?.status === 'dung') return cur
+  // Thu muc trong Drive tot hon thu muc dang chon: tu chuyen
+  if (candidate && existsSync(candidate)) {
+    const c = judge(candidate)
+    if (c.status === 'dung' || !cur || cur.status !== 'khongPhaiCuaDoi') {
+      if (!set || path.resolve(set) !== path.resolve(candidate)) {
+        updateSettings({ feedbackDir: candidate })
+        log.info(`[gop y] tu chuyen thu muc gop y sang ${candidate}`)
+      }
+      return c
+    }
+  }
+  if (cur) return cur
+  return { status: drive ? 'chuaCo' : 'khongCoDrive', drive, marked: false }
+}
+
+/** Nguoi bao tri danh dau thu muc dang dung la thu muc chung cua doi. */
+export function markTeamFolder(): boolean {
+  const dir = feedbackDir()
+  if (!dir || !existsSync(dir)) return false
+  writeFileSync(
+    path.join(dir, TEAM_MARKER),
+    'Thu muc gop y chung cua doi 9Study Video. App dung file nay de nhan ra dung thu muc. Dung xoa.\r\n',
+    'utf8'
+  )
+  return true
 }
 
 export function machineId(): string {

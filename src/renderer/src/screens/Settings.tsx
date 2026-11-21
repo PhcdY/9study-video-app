@@ -16,6 +16,7 @@ import type { StepState } from '../../../shared/types'
 import {
   api,
   useAppUpdate,
+  useFeedbackDirCheck,
   useFeedback,
   usePrefs,
   useRestartToUpdate,
@@ -24,6 +25,7 @@ import {
 } from '@/lib/api'
 import { BusyWarning } from '@/components/UpdatePill'
 import { LegacySettings } from '@/components/Legacy'
+import { FeedbackDirBadge, FeedbackDirGuide, FeedbackDirWarning } from '@/components/FeedbackDir'
 import { headline } from '../../../shared/feedback-rules'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
@@ -55,6 +57,8 @@ export function SettingsScreen({
   const [active, setActive] = useState('thu-muc')
   const [prefs, savePrefs] = usePrefs()
   const appUpdate = useAppUpdate()
+  const fbDir = useFeedbackDirCheck()
+  const [guide, setGuide] = useState(false)
   const restart = useRestartToUpdate()
   const [fb] = useFeedback()
   const [showSent, setShowSent] = useState(false)
@@ -163,9 +167,13 @@ export function SettingsScreen({
               )}
             >
               {sec.title}
+              {sec.id === 'gop-y' && fbDir && fbDir.status !== 'dung' && (
+                <span aria-hidden className="ml-2 size-2 rounded-full bg-[#E08A1E]" />
+              )}
             </button>
           ))}
         </nav>
+        {guide && <FeedbackDirGuide onClose={() => setGuide(false)} />}
 
         <div className="flex min-w-0 flex-[999_1_600px] flex-col gap-5">
           <SettingsCard id="thu-muc" title={t.folders}>
@@ -617,12 +625,29 @@ export function SettingsScreen({
           </SettingsCard>
 
           <SettingsCard id="gop-y" title={t.feedback}>
+            {fbDir && <FeedbackDirWarning check={fbDir} onFix={() => setGuide(true)} />}
             <SettingRow
-              label={t.feedbackDir}
+              label={
+                <span className="flex flex-wrap items-center gap-2.5">
+                  {t.feedbackDir}
+                  {fbDir && <FeedbackDirBadge check={fbDir} />}
+                </span>
+              }
               value={prefs?.feedbackDirInUse ?? '—'}
               desc={prefs?.feedbackDirInUse ? undefined : t.feedbackDirNone}
-              descTone={prefs?.feedbackDirInUse ? 'ok' : undefined}
             >
+              {prefs?.maintainer &&
+                fbDir?.dir &&
+                !fbDir.marked &&
+                (fbDir.status === 'dung' || fbDir.status === 'khongPhaiCuaDoi') && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => void api.invoke('feedback:markTeam')}
+                  >
+                    {copy.gopYCheck.mark}
+                  </Button>
+                )}
               <Button
                 variant="ghost"
                 size="sm"

@@ -121,3 +121,25 @@ export interface FeedbackList {
   /** Thu muc gop y dang dung; khong co thi chua dat */
   dir?: string
 }
+
+/**
+ * Thu muc gop y chung co dung khong:
+ * dung | chuaCo (chua ket noi) | khongCoDrive (chua cai / chua chay Google Drive)
+ * ngoaiDrive (thu muc khong nam trong Drive, khong dong bo) | khongPhaiCuaDoi (trong Drive nhung khong phai thu muc chung)
+ * mat (thu muc da chon khong con).
+ */
+export type FeedbackDirStatus =
+  'dung' | 'chuaCo' | 'khongCoDrive' | 'ngoaiDrive' | 'khongPhaiCuaDoi' | 'mat'
+
+export interface FeedbackDirCheck {
+  status: FeedbackDirStatus
+  /** Thu muc dang dung */
+  dir?: string
+  /** O Google Drive (vd G:\My Drive), neu co */
+  drive?: string
+  /** Co file danh dau thu muc cua doi */
+  marked: boolean
+}
+
+/** File danh dau thu muc gop y chung cua doi (nguoi bao tri tao mot lan, Drive dong bo cho moi nguoi). */
+export const TEAM_MARKER = '_9study-doi.txt'

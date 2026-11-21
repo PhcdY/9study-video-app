@@ -3,7 +3,7 @@ import type { Api, SetupSnapshot } from '../../../shared/types'
 import type { AiStatus, ChatState, VideosSnapshot } from '../../../shared/video'
 import type { LegacyScan } from '../../../shared/legacy'
 import type { AppUpdate, Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
-import type { FeedbackList } from '../../../shared/feedback'
+import type { FeedbackDirCheck, FeedbackList } from '../../../shared/feedback'
 import type { VivibeUsage } from '../../../shared/vivibe'
 import { createMockApi } from './mock-api'
 
@@ -185,4 +185,26 @@ export function useLegacyScan(
     }
   }, [dir, enabled, key])
   return { scan: res && res.key === key ? res.scan : undefined, progress }
+}
+
+/** Thu muc gop y chung co dung khong; poll = kiem tra lai moi vai giay (khi dang huong dan sua). */
+export function useFeedbackDirCheck(poll = false): FeedbackDirCheck | null {
+  const [c, setC] = useState<FeedbackDirCheck | null>(null)
+  useEffect(() => {
+    let on = true
+    const load = (): void => {
+      void api.invoke('feedback:checkDir').then((r) => on && setC(r))
+    }
+    load()
+    const off1 = api.on('feedback:changed', load)
+    const off2 = api.on('prefs:changed', load)
+    const id = poll ? setInterval(load, 3000) : undefined
+    return () => {
+      on = false
+      off1()
+      off2()
+      if (id) clearInterval(id)
+    }
+  }, [poll])
+  return c
 }

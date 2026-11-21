@@ -51,6 +51,8 @@ const INVOKE: InvokeChannel[] = [
   'feedback:setState',
   'feedback:fix',
   'feedback:pickDir',
+  'feedback:checkDir',
+  'feedback:markTeam',
   'feedback:fixDetail',
   'voice:speed',
   'voice:setSpeed',

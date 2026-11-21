@@ -181,6 +181,45 @@ export const copy = {
     nhanTroChuyen: { label: 'Gắn trò chuyện cũ vào video', hint: 'vài giây' },
     congCredit: { label: 'Cộng credit Vivibe đã dùng', hint: 'vài giây' }
   } satisfies Record<TaskId, { label: string; hint: string }>,
+  gopYCheck: {
+    why: {
+      chuaCo: () => 'Chưa kết nối thư mục góp ý của đội.',
+      khongCoDrive: () => 'Máy chưa có Google Drive, hoặc Drive đang tắt.',
+      ngoaiDrive: (dir?: string) =>
+        `Thư mục ${dir ?? ''} không nằm trong Google Drive nên không đồng bộ cho đội.`,
+      khongPhaiCuaDoi: (dir?: string) =>
+        `Thư mục ${dir ?? ''} không phải thư mục chung của đội (có thể là thư mục bạn tự tạo).`,
+      mat: (dir?: string) => `Không thấy thư mục ${dir ?? ''}. Google Drive có thể đang tắt.`
+    },
+    warnTitle: 'Góp ý của bạn chưa tới được đội',
+    fix: 'Sửa giúp tôi',
+    ok: 'Đã kết nối',
+    wrong: 'Chưa đúng',
+    mark: 'Đánh dấu thư mục của đội',
+    banner: 'Chưa kết nối thư mục góp ý của đội.',
+    bannerSub: 'Góp ý và báo lỗi của bạn chưa tới được người phụ trách.',
+    connect: 'Kết nối ngay',
+    later: 'Để sau',
+    title: 'Kết nối thư mục góp ý của đội',
+    sub: 'App kiểm tra lại vài giây một lần. Làm xong bước nào, bước đó tự tích.',
+    s1: 'Google Drive đã cài và đăng nhập',
+    s1Ok: (drive: string) => `Thấy ${drive}`,
+    s1No: 'Chưa thấy Google Drive trên máy.',
+    installDrive: 'Cài Google Drive',
+    s2: 'Thêm thư mục của đội vào Drive của tôi',
+    s2Lines: [
+      'Bấm "Mở thư mục của đội" (xin quyền nếu Drive hỏi).',
+      'Chuột phải vào thư mục 9Study_GopY › Sắp xếp › Thêm lối tắt › Drive của tôi.'
+    ],
+    s3: 'App nhận ra thư mục của đội',
+    s3Wait: (drive?: string) =>
+      drive ? `Đang chờ thư mục xuất hiện trong ${drive}…` : 'Đang chờ…',
+    s3NotTeam:
+      'Thư mục này chưa có dấu của đội. Nếu đúng là thư mục chung, nhờ người phụ trách bấm "Đánh dấu thư mục của đội".',
+    pickManual: 'Chọn thư mục bằng tay',
+    close: 'Đóng',
+    done: 'Đã kết nối đúng thư mục của đội.'
+  },
   legacy: {
     title: 'Bạn đã làm video trước đây',
     found: (dir: string) => `App tìm thấy bộ công cụ cũ ở ${dir}. Nhận lại những gì bạn muốn giữ:`,
