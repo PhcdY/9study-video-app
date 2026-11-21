@@ -679,10 +679,23 @@ export const copy = {
     descLabel: 'Chuyện gì xảy ra?',
     optional: '(không bắt buộc)',
     descPh: 'Ví dụ: bấm Xuất video thì chạy tới 80% rồi báo lỗi, thử 2 lần vẫn vậy.',
-    shotsTitle: 'Ảnh app tự chụp lúc báo lỗi',
-    noShots: 'Chưa có ảnh nào. Mỗi khi app hiện thông báo lỗi, app tự chụp cửa sổ app.',
+    shotsTitle: 'Ảnh gửi kèm',
+    shotsSub: 'Ảnh app tự chụp lúc lỗi và ảnh bạn thêm từ máy. Bỏ tick ảnh nào không muốn gửi.',
     shotsHint:
       'App chỉ chụp cửa sổ của app (không chụp màn hình khác), giữ 3 lần gần nhất. Bỏ tick ảnh nào không muốn gửi.',
+    addImage: 'Thêm ảnh từ máy',
+    addImageSub: 'hoặc dán Ctrl+V, kéo thả vào đây',
+    adding: 'Đang thêm ảnh…',
+    yourImage: 'Ảnh của bạn',
+    removeImage: (name: string) => `Bỏ ảnh ${name}`,
+    addFail: {
+      khongPhaiAnh: (name: string) =>
+        `“${name}” không phải ảnh nên chưa thêm được. Chọn file .png hoặc .jpg, mỗi ảnh dưới 15 MB.`,
+      quaLon: (name: string) =>
+        `Ảnh “${name}” lớn quá (trên 15 MB). Chụp lại nhỏ hơn hoặc chọn ảnh khác.`,
+      quaNhieu: () => 'Đã đủ 6 ảnh. Bỏ bớt một ảnh rồi thêm ảnh khác.',
+      loi: (name: string) => `Chưa thêm được ảnh “${name}”. Thử lại nhé.`
+    },
     shotAlt: (t: string) => `Cửa sổ app lúc ${t}`,
     shotPick: (t: string) => `Gửi kèm ảnh lúc ${t}`,
     time: (ms: number) => {

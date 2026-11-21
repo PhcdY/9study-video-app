@@ -40,7 +40,33 @@ export interface BugItem extends BugMeta {
 
 export interface BugSendInput {
   desc?: string
+  /** Anh app tu chup va anh CTV tu them tu may (id tu 'bugs:addImage') */
   shotIds: string[]
+}
+
+/** Anh CTV them tu may: toi da bao nhieu anh, moi anh bao nhieu MB. */
+export const MAX_ADDED_IMAGES = 6
+export const MAX_IMAGE_BYTES = 15 * 1024 * 1024
+
+export type AddImageResult =
+  | { ok: true; shot: ErrorShot }
+  | { ok: false; code: 'khongPhaiAnh' | 'quaLon' | 'quaNhieu' | 'loi' }
+
+const IMAGE_EXT: Record<string, string> = {
+  png: '.png',
+  jpg: '.jpg',
+  jpeg: '.jpg',
+  webp: '.webp',
+  gif: '.gif',
+  bmp: '.bmp'
+}
+
+/** Duoi file anh hop le tu ten file hoac kieu MIME ("image/png"); khong phai anh thi null. */
+export function imageExt(name: string, mime?: string): string | null {
+  const byName = /\.([a-z0-9]+)$/i.exec(name)?.[1]?.toLowerCase()
+  if (byName && IMAGE_EXT[byName]) return IMAGE_EXT[byName]
+  const byMime = /^image\/([a-z0-9]+)$/i.exec(mime ?? '')?.[1]?.toLowerCase()
+  return byMime && IMAGE_EXT[byMime] ? IMAGE_EXT[byMime] : null
 }
 
 /** Dong loi trong nhat ky electron-log: "[...] [error] ..." hoac "[warn]". */

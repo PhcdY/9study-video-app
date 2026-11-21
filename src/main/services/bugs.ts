@@ -1,5 +1,6 @@
 // Bao loi app:
 // - Anh luc loi: moi khi giao dien hien thong bao loi, chup cua so app (giu 3 anh gan nhat).
+// - Anh tu may: CTV chon file / dan / keo tha anh vao o bao loi.
 // - Gui bao loi: ghi nhat ky (da che), thong tin may, mo ta, anh vao 9Study_GopY/_BaoLoi/<goi>.
 // Khong bao gio gui .env, key, token (writeReportFiles da loai).
 import { app, type WebContents } from 'electron'
@@ -16,6 +17,10 @@ import {
 } from 'node:fs'
 import {
   errorLines,
+  imageExt,
+  MAX_ADDED_IMAGES,
+  MAX_IMAGE_BYTES,
+  type AddImageResult,
   type BugItem,
   type BugMeta,
   type BugSendInput,
@@ -72,6 +77,44 @@ export async function captureError(wc: WebContents, key: string, label: string):
   }
 }
 
+// Anh CTV tu them tu may (chon file, dan, keo tha): luu tam trong anh-loi/them, nho trong phien.
+const addedDir = (): string => path.join(shotsDir(), 'them')
+const added = new Map<string, ErrorShot>()
+
+/** Bo het anh CTV vua them (mo lai o bao loi, hoac gui xong). */
+export function clearAddedImages(): void {
+  added.clear()
+  rmSync(addedDir(), { recursive: true, force: true })
+}
+
+export function addImage(name: string, mime: string, data: Uint8Array): AddImageResult {
+  const ext = imageExt(name, mime)
+  if (!ext || data.byteLength === 0) return { ok: false, code: 'khongPhaiAnh' }
+  if (data.byteLength > MAX_IMAGE_BYTES) return { ok: false, code: 'quaLon' }
+  if (added.size >= MAX_ADDED_IMAGES) return { ok: false, code: 'quaNhieu' }
+  try {
+    // Lan dau trong phien: don anh con sot tu lan truoc
+    if (!added.size) rmSync(addedDir(), { recursive: true, force: true })
+    mkdirSync(addedDir(), { recursive: true })
+    const id = `them-${Date.now()}-${added.size}`
+    const file = path.join(addedDir(), `${id}${ext}`)
+    writeFileSync(file, data)
+    const shot: ErrorShot = { id, at: Date.now(), label: path.basename(name).slice(0, 120), file }
+    added.set(id, shot)
+    return { ok: true, shot }
+  } catch (e) {
+    log.warn(`[bao loi] khong luu duoc anh them: ${String(e)}`)
+    return { ok: false, code: 'loi' }
+  }
+}
+
+export function removeImage(id: string): void {
+  const s = added.get(id)
+  if (!s) return
+  added.delete(id)
+  rmSync(s.file, { force: true })
+}
+
 function cFreeGb(): number | undefined {
   try {
     const s = statfsSync('C:/')
@@ -111,9 +154,15 @@ export async function sendBugReport(
     const errs = existsSync(mainLog)
       ? errorLines(readFileSync(mainLog, 'utf8').split(/\r?\n/).slice(-3000).join('\n'))
       : { count: 0, last: [] }
-    const shots = listShots().filter((s) => input.shotIds.includes(s.id))
+    const shots = [
+      ...listShots().filter((s) => input.shotIds.includes(s.id)),
+      ...input.shotIds.flatMap((id) => {
+        const s = added.get(id)
+        return s && existsSync(s.file) ? [s] : []
+      })
+    ]
     if (shots.length) mkdirSync(path.join(dir, 'anh'), { recursive: true })
-    for (const s of shots) copyFileSync(s.file, path.join(dir, 'anh', `${s.id}.png`))
+    for (const s of shots) copyFileSync(s.file, path.join(dir, 'anh', path.basename(s.file)))
     const meta: BugMeta = {
       id: name,
       author,
@@ -125,9 +174,10 @@ export async function sendBugReport(
       cFreeGb: cFreeGb(),
       errorCount: errs.count,
       lastErrors: errs.last,
-      shots: shots.map((s) => ({ file: `${s.id}.png`, label: s.label, at: s.at }))
+      shots: shots.map((s) => ({ file: path.basename(s.file), label: s.label, at: s.at }))
     }
     writeFileSync(path.join(dir, 'meta.json'), JSON.stringify(meta, null, 2), 'utf8')
+    clearAddedImages()
     log.info(`[bao loi] da gui vao ${dir}`)
     return { ok: true }
   } catch (e) {

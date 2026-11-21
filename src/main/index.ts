@@ -12,7 +12,10 @@ import { VersionService } from './services/version'
 import { vivibeUsage } from './services/vivibe-usage'
 import { TEAM_FEEDBACK_FOLDER_URL } from '../shared/team'
 import {
+  addImage,
   allowedShotRoot,
+  clearAddedImages,
+  removeImage,
   captureError,
   listBugs,
   listShots,
@@ -367,7 +370,13 @@ function registerIpc(): void {
     const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0]
     if (win) await captureError(win.webContents, key, label)
   })
-  handle('bugs:shots', () => listShots())
+  // O bao loi vua mo: bo anh them con sot tu lan mo truoc
+  handle('bugs:shots', () => {
+    clearAddedImages()
+    return listShots()
+  })
+  handle('bugs:addImage', (name, mime, data) => addImage(name, mime, data))
+  handle('bugs:removeImage', (id) => removeImage(id))
   handle('bugs:send', async (input) => {
     const res = await sendBugReport(input, {
       toolkitVersion: lastVersion ?? (await videos.toolkitVersion())
