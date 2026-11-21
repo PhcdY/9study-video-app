@@ -212,8 +212,11 @@ export const copy = {
     } satisfies Record<VideoStage, string>,
     draftNext: 'AI chưa viết xong kịch bản. Mở ra rồi bấm "Làm tiếp kịch bản".',
     draftStatus: 'Dừng giữa chừng',
-    drop: 'Bỏ',
-    dropConfirm: 'Bỏ luôn?',
+    drop: 'Bỏ video',
+    dropTitle: 'Bỏ video đang dở này?',
+    dropDesc: 'Cuộc trò chuyện với AI về video này cũng mất. Không lấy lại được.',
+    dropCancel: 'Giữ lại',
+    colActions: 'Thao tác',
     dropLabel: (t: string) => `Bỏ video đang dở: ${t}`,
     updatedAt: (ms: number) => {
       const d = new Date(ms)

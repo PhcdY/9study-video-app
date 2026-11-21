@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { ArrowRight, Check, ChevronDown, Film, Plus, Search } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowRight, Check, ChevronDown, Film, Plus, Search, Trash2 } from 'lucide-react'
 import type { VideoInfo, VideoStage } from '../../../shared/video'
 import { SUBJECTS, subjectName } from '../../../shared/prompt'
 import { api, fileUrl, useVideos } from '@/lib/api'
@@ -234,11 +234,14 @@ function VideoTable({
             <th scope="col" className="w-[120px] border-b border-vien px-4 py-2.5 text-right">
               {copy.home.colUpdated}
             </th>
+            <th scope="col" className="w-12 border-b border-vien px-2 py-2.5">
+              <span className="sr-only">{copy.home.colActions}</span>
+            </th>
           </tr>
         </thead>
         <tbody>
           {videos.map((v) => (
-            <tr key={v.slug} className="hover:bg-nen">
+            <tr key={v.slug} className="group hover:bg-nen">
               <td className="border-b border-[#EEF1F8] px-4 py-2.5">
                 <div className="flex items-center gap-3">
                   <Thumb v={v} />
@@ -275,8 +278,11 @@ function VideoTable({
                   </span>
                 )}
               </td>
-              <td className="border-b border-[#EEF1F8] px-4 py-2.5 text-right text-phu">
-                {v.draft ? <DropDraft v={v} /> : copy.home.shortDate(v.updatedAt)}
+              <td className="border-b border-[#EEF1F8] px-4 py-2.5 text-right text-phu tabular-nums">
+                {copy.home.shortDate(v.updatedAt)}
+              </td>
+              <td className="border-b border-[#EEF1F8] px-2 py-2.5 text-right">
+                {v.draft && <DropDraft v={v} />}
               </td>
             </tr>
           ))}
@@ -286,24 +292,76 @@ function VideoTable({
   )
 }
 
-/** Bo video moi dang do: bam "Bo" roi "Bo luon?" de chac chan. */
+/** Bo video moi dang do: nut thung rac hien khi re chuot vao hang, bam thi hoi lai trong o nho. */
 function DropDraft({ v }: { v: VideoInfo }): React.JSX.Element {
-  const [sure, setSure] = useState(false)
+  // Vi tri o hoi lai (co dinh theo man hinh de khung bang khong cat mat)
+  const [at, setAt] = useState<{ top: number; right: number } | null>(null)
+  const open = !!at
+  const setOpen = (v: boolean): void => {
+    const r = btn.current?.getBoundingClientRect()
+    setAt(v && r ? { top: r.bottom + 6, right: window.innerWidth - r.right } : null)
+  }
+  const box = useRef<HTMLDivElement>(null)
+  const btn = useRef<HTMLButtonElement>(null)
+  useEffect(() => {
+    if (!open) return
+    const close = (e: MouseEvent): void => {
+      if (!box.current?.contains(e.target as Node)) setAt(null)
+    }
+    const away = (): void => setAt(null)
+    document.addEventListener('mousedown', close)
+    window.addEventListener('scroll', away, true)
+    window.addEventListener('resize', away)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      window.removeEventListener('scroll', away, true)
+      window.removeEventListener('resize', away)
+    }
+  }, [open])
   return (
-    <span className="inline-flex items-center gap-2">
-      {!sure && copy.home.shortDate(v.updatedAt)}
+    <div
+      ref={box}
+      className="relative inline-flex"
+      onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+    >
       <button
         type="button"
         aria-label={copy.home.dropLabel(v.title)}
-        onClick={() => (sure ? void api.invoke('videos:dropDraft', v.slug) : setSure(true))}
-        onBlur={() => setSure(false)}
+        ref={btn}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
         className={cn(
-          'cursor-pointer text-[13px] font-semibold',
-          sure ? 'text-loi' : 'text-phu hover:text-loi'
+          'flex size-8 cursor-pointer items-center justify-center rounded-lg text-phu transition-opacity hover:bg-loi-nen hover:text-loi focus-visible:opacity-100',
+          open ? 'bg-loi-nen text-loi opacity-100' : 'opacity-0 group-hover:opacity-100'
         )}
       >
-        {sure ? copy.home.dropConfirm : copy.home.drop}
+        <Trash2 aria-hidden className="size-4" />
       </button>
-    </span>
+      {at && (
+        <div
+          role="dialog"
+          aria-label={copy.home.dropTitle}
+          style={{ top: at.top, right: at.right }}
+          className="fixed z-50 flex w-64 flex-col gap-3 rounded-xl border border-vien bg-white p-4 text-left shadow-[0_12px_32px_rgba(14,16,70,0.16)]"
+        >
+          <div className="flex flex-col gap-1">
+            <span className="text-sm font-bold text-navy">{copy.home.dropTitle}</span>
+            <span className="text-[13px] leading-snug text-phu">{copy.home.dropDesc}</span>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              {copy.home.dropCancel}
+            </Button>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={() => void api.invoke('videos:dropDraft', v.slug)}
+            >
+              {copy.home.drop}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
