@@ -3,6 +3,8 @@ import { app, shell, BrowserWindow } from 'electron'
 import { join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import log from './log'
+// Logo NiniStudio cho cua so va thanh tac vu (ban chay thu dung electron.exe nen phai gan rieng)
+import icon from '../../resources/icon.png?asset'
 import { handle, broadcast, pickFiles, pickFolder } from './ipc'
 import { SetupService } from './services/setup'
 import { killAll, killOrphans } from './services/process'
@@ -157,6 +159,7 @@ function createWindow(): void {
     minHeight: 680,
     show: false,
     title: 'NiniStudio',
+    icon,
     backgroundColor: '#F6F8FE',
     autoHideMenuBar: true,
     webPreferences: {

@@ -599,7 +599,8 @@ export function voiceOf(projectDir: string, slug: string): string | undefined {
     const m = JSON.parse(
       readFileSync(path.join(projectDir, 'public', 'audio', slug, 'manifest.json'), 'utf8')
     ) as Record<string, unknown>
-    const v = m.voice ?? m.voice_id ?? m.voiceId
+    // Uu tien ten giong (voice_name); "voice" la ma giong, chi dung khi khong co ten
+    const v = m.voice_name ?? m.voiceName ?? m.voice ?? m.voice_id ?? m.voiceId
     return typeof v === 'string' ? v : undefined
   } catch {
     return undefined

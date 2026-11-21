@@ -732,6 +732,18 @@ export const copy = {
     hint: 'Di chuột hoặc bấm để xem đủ các hạn mức',
     manage: 'Xem trong Cài đặt'
   },
+  // Nguoi gui (gop y, bao loi): "Gửi hôm nay lúc 00:49"
+  sender: {
+    at: (ms: number) => {
+      const d = new Date(ms)
+      const hm = d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      const day = new Date(d).setHours(0, 0, 0, 0)
+      const today = new Date().setHours(0, 0, 0, 0)
+      if (day === today) return `Gửi hôm nay lúc ${hm}`
+      if (today - day === 86_400_000) return `Gửi hôm qua lúc ${hm}`
+      return `Gửi ngày ${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')} lúc ${hm}`
+    }
+  },
   bug: {
     descLabel: 'Chuyện gì xảy ra?',
     optional: '(không bắt buộc)',
@@ -779,15 +791,13 @@ export const copy = {
     noDesc: '(Không có mô tả)',
     status: { moi: 'Chưa xem', dangXem: 'Đang xem', daXuLy: 'Đã xử lý' },
     // Hop thu nguoi bao tri
-    tabFeedback: (n: number) => `Góp ý về video${n ? ` · ${n} mới` : ''}`,
-    tabBugs: (n: number) => `Báo lỗi app${n ? ` · ${n} mới` : ''}`,
+    tabFeedback: 'Góp ý về video',
+    tabBugs: 'Báo lỗi app',
+    newCount: (n: number) => `${n} mới`,
     empty: 'Chưa có báo lỗi nào.',
     listLabel: 'Danh sách báo lỗi',
-    meta: (who: string, when: string, app: string, kit?: string) =>
-      [`${who} · ${when}`, `app ${app}`, kit ? `bộ công cụ bản ${kit}` : '']
-        .filter(Boolean)
-        .join(' · '),
-    sentAt: (who: string, when: string) => `${who} gửi lúc ${when}`,
+    // Dong phu trong danh sach: ai gui, luc nao. Ban app, bo cong cu xem o chi tiet
+    meta: (who: string, when: string) => `${who} · ${when}`,
     statusLabel: 'Trạng thái',
     tileApp: 'App',
     tileKit: 'Bộ công cụ',
@@ -1323,10 +1333,15 @@ export const copy = {
     tickHint: 'Tick nhiều góp ý để gộp thành một lần sửa.',
     pick: (t: string) => `Chọn góp ý: ${t}`,
     general: 'Luật chung',
-    sentBy: (who: string, when: string) => `${who} gửi · ${when}`,
-    version: (v: string) => `bản ${v}`,
-    app: (v: string) => `app ${v}`,
-    voice: (v: string) => `giọng ${v}`,
+    info: {
+      label: 'Thông tin góp ý',
+      video: 'Video',
+      subject: 'Môn',
+      voice: 'Giọng đọc',
+      kit: 'Bộ công cụ',
+      kitValue: (v: string) => `Bản ${v}`,
+      app: 'App'
+    },
     statusLabel: 'Trạng thái',
     wrote: (who: string) => `${who} viết`,
     meta: (kind: string, scope: string, size: string) =>

@@ -121,3 +121,13 @@ export function nextVersion(latest?: string): string | undefined {
   const n = Number(latest)
   return Number.isFinite(n) && latest ? String(n + 1) : undefined
 }
+
+/**
+ * Ten giong de hien cho nguoi doc. Goi gop y cu ghi ma giong (vd "qzVeAh5fVgdi41wrdb7P6J")
+ * thay vi ten: ma thi bo, khong hien.
+ */
+export function readableVoice(v: string | undefined): string | undefined {
+  const s = v?.trim()
+  if (!s) return undefined
+  return /^[A-Za-z0-9_-]{16,}$/.test(s) && /\d/.test(s) ? undefined : s
+}
