@@ -198,6 +198,7 @@ function registerIpc(): void {
   handle('videos:list', () => videos.list())
   handle('videos:script', (slug) => videos.script(slug))
   handle('videos:audio', (slug) => videos.audio(slug))
+  handle('videos:storyFrames', (slug) => videos.storyFrames(slug))
   handle('videos:lessons', (subject, lop) => videos.lessons(subject, lop))
   handle('videos:create', (input) => videos.create(input))
   handle('videos:resumeDraft', (key) => videos.resumeDraft(key))

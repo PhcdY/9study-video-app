@@ -3,6 +3,7 @@ import { Check, ChevronLeft, MessageSquareWarning } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import type { FeedbackTarget } from '@/screens/Feedback'
 import type { VideoStage } from '../../../shared/video'
+import { togglePick, type Pick } from '../../../shared/picks'
 import { subjectName } from '../../../shared/prompt'
 import { api, useAppUpdate, useChat, useVideos } from '@/lib/api'
 import { copy } from '@/lib/copy'
@@ -47,6 +48,11 @@ export function WorkspaceScreen({
   // Tab do nguoi dung chon; khi video sang buoc moi thi tu ve tab hop voi buoc do
   const [picked, setPicked] = useState<{ tab: Tab; stage: VideoStage } | null>(null)
   const tab = picked && picked.stage === stage ? picked.tab : DEFAULT_TAB[stage]
+  // Anh / cau dang chon de nho AI sua (theo tung video)
+  const [chosen, setChosen] = useState<{ key: string; list: Pick[] }>({ key: chatKey, list: [] })
+  const picks = chosen.key === chatKey ? chosen.list : []
+  const setPicks = (list: Pick[]): void => setChosen({ key: chatKey, list })
+  const onPick = (p: Pick, many: boolean): void => setPicks(togglePick(picks, p, many))
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -91,6 +97,8 @@ export function WorkspaceScreen({
           slug={slug}
           stage={stage}
           draft={!slug && !!video?.draft}
+          picks={picks}
+          onPicksChange={setPicks}
         />
         <section
           aria-label="Kết quả"
@@ -125,6 +133,10 @@ export function WorkspaceScreen({
             {tab === 'storyboard' && (
               <StoryboardTab
                 video={video}
+                slug={slug}
+                picks={picks}
+                onPick={onPick}
+                onFeedback={(beatLine) => slug && onFeedback({ slug, beatLine, kind: 'hinh' })}
                 onRefresh={
                   slug && !chat?.busy
                     ? () => void api.invoke('chat:chip', chatKey, 'xuatLaiStoryboard', slug)
@@ -137,6 +149,8 @@ export function WorkspaceScreen({
               <AudioTab
                 slug={slug}
                 version={video?.updatedAt}
+                picks={picks}
+                onPick={onPick}
                 onWrong={(beatLine) => slug && onFeedback({ slug, beatLine, kind: 'giong' })}
               />
             )}

@@ -1,6 +1,16 @@
 import { useEffect, useRef, useState } from 'react'
-import { FolderOpen, Loader2, MessageSquareWarning, Play, RefreshCw } from 'lucide-react'
-import type { AudioLine, ScriptData, VideoInfo } from '../../../../shared/video'
+import {
+  Check,
+  FolderOpen,
+  Loader2,
+  MessageSquareWarning,
+  MousePointerClick,
+  Play,
+  RefreshCw
+} from 'lucide-react'
+import type { AudioLine, ScriptData, StoryFrame, VideoInfo } from '../../../../shared/video'
+import { isPicked, type Pick } from '../../../../shared/picks'
+import { cn } from '@/lib/utils'
 import { api, fileUrl } from '@/lib/api'
 import { copy } from '@/lib/copy'
 import { Button } from '@/components/ui/button'
@@ -79,19 +89,61 @@ export function ScriptTab({
   )
 }
 
-/** Storyboard do skill xuat ra (trang HTML anh nhung san). */
+/** Bam anh / cau: bam thuong chon mot, giu Ctrl (Shift) de chon nhieu. */
+export type OnPick = (p: Pick, many: boolean) => void
+const manyKey = (e: React.MouseEvent): boolean => e.ctrlKey || e.metaKey || e.shiftKey
+const plainSpeak = (s?: string): string => (s ?? '').replace(/<\/?en>/g, '')
+
+function PickHint({ children }: { children: React.ReactNode }): React.JSX.Element {
+  return (
+    <p className="m-0 flex items-center gap-2 text-sm text-phu">
+      <MousePointerClick aria-hidden className="size-4 shrink-0" />
+      {children}
+    </p>
+  )
+}
+
+/**
+ * Storyboard: app tu xep anh tung cau (anh PNG trong thu muc storyboard) de bam chon duoc.
+ * Thu muc khong co anh tung cau thi hien trang HTML skill xuat ra nhu cu.
+ */
 export function StoryboardTab({
   video,
-  onRefresh
+  slug,
+  onRefresh,
+  picks,
+  onPick,
+  onFeedback
 }: {
   video?: VideoInfo
+  slug?: string
   /** Nho AI xuat lai storyboard day du; undefined khi AI dang lam */
   onRefresh?: () => void
+  picks: Pick[]
+  onPick: OnPick
+  /** Gop y cho doi ve mot anh */
+  onFeedback?: (beatLine: string) => void
 }): React.JSX.Element {
-  if (!video?.storyboardHtml) return <Empty>{w.noStoryboard}</Empty>
+  const [frames, setFrames] = useState<StoryFrame[] | null>(null)
+  const version = video?.updatedAt
+  useEffect(() => {
+    if (!slug) return
+    let alive = true
+    void api.invoke('videos:storyFrames', slug).then((f) => alive && setFrames(f))
+    return () => {
+      alive = false
+    }
+  }, [slug, version])
+  if (!video?.storyboardHtml && !frames?.length) return <Empty>{w.noStoryboard}</Empty>
+  const beats: { id: string; head: StoryFrame; items: StoryFrame[] }[] = []
+  for (const f of frames ?? []) {
+    const last = beats[beats.length - 1]
+    if (last?.id === f.beatId) last.items.push(f)
+    else beats.push({ id: f.beatId, head: f, items: [f] })
+  }
   return (
     <div className="flex flex-1 flex-col gap-3">
-      {video.storyboardStale && (
+      {video?.storyboardStale && (
         <div
           role="status"
           className="flex flex-wrap items-center gap-3 rounded-xl border border-credit/30 bg-credit-nen px-4 py-3 text-[15px] text-credit"
@@ -106,12 +158,106 @@ export function StoryboardTab({
           )}
         </div>
       )}
-      <iframe
-        title={copy.workspace.tabs.storyboard}
-        src={fileUrl(video.storyboardHtml, video.updatedAt)}
-        sandbox="allow-scripts"
-        className="min-h-[640px] w-full flex-1 rounded-xl border border-vien bg-white"
-      />
+      {frames === null ? null : frames.length === 0 && video?.storyboardHtml ? (
+        <iframe
+          title={copy.workspace.tabs.storyboard}
+          src={fileUrl(video.storyboardHtml, video.updatedAt)}
+          sandbox="allow-scripts"
+          className="min-h-[640px] w-full flex-1 rounded-xl border border-vien bg-white"
+        />
+      ) : (
+        <>
+          <PickHint>{w.pickHintStoryboard}</PickHint>
+          {beats.map((b) => (
+            <section key={b.id} className="flex flex-col gap-2.5">
+              <h2 className="m-0 flex flex-wrap items-baseline gap-x-2 text-base font-bold">
+                <span>
+                  {[w.scene(b.head.scene) || b.id, b.head.section].filter(Boolean).join(' · ')}
+                </span>
+                {b.head.keyword && (
+                  <span className="text-sm font-semibold text-cham">
+                    <Markdown text={b.head.keyword} />
+                  </span>
+                )}
+              </h2>
+              <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-3.5">
+                {b.items.map((f) => (
+                  <FrameCard
+                    key={f.id}
+                    frame={f}
+                    selected={isPicked(picks, 'hinh', f.id)}
+                    onPick={onPick}
+                    onFeedback={onFeedback}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </>
+      )}
+    </div>
+  )
+}
+
+function FrameCard({
+  frame: f,
+  selected,
+  onPick,
+  onFeedback
+}: {
+  frame: StoryFrame
+  selected: boolean
+  onPick: OnPick
+  onFeedback?: (beatLine: string) => void
+}): React.JSX.Element {
+  const speak = plainSpeak(f.speak)
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-pressed={selected}
+        aria-label={`${f.label}: ${speak}`}
+        onClick={(e) =>
+          onPick({ kind: 'hinh', id: f.id, label: f.label, speak, image: f.file }, manyKey(e))
+        }
+        className={cn(
+          'flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white p-0 text-left',
+          selected
+            ? 'border-cham shadow-[0_0_0_4px_var(--color-cham-nhat)]'
+            : 'border-vien hover:border-vien-dam'
+        )}
+      >
+        <span className="relative block w-full border-b border-nen-nhan bg-[#FBFCFF]">
+          <img
+            src={fileUrl(f.file, f.version)}
+            alt=""
+            loading="lazy"
+            className="block aspect-video w-full object-contain"
+          />
+          {selected && (
+            <span className="absolute top-2 left-2 flex h-[26px] items-center gap-1 rounded-full bg-cham pr-2.5 pl-1.5 text-xs font-bold text-white">
+              <Check aria-hidden className="size-3.5" strokeWidth={2.6} /> {w.picked}
+            </span>
+          )}
+        </span>
+        <span className="flex flex-col gap-1 px-3 pt-2.5 pb-3">
+          <span className={cn('text-xs font-bold', selected ? 'text-cham' : 'text-phu')}>
+            {f.label}
+          </span>
+          <span className="pr-8 text-[13px] leading-snug">{speak}</span>
+        </span>
+      </button>
+      {onFeedback && (
+        <button
+          type="button"
+          aria-label={w.feedbackFrame(f.label)}
+          title={copy.feedback.open}
+          onClick={() => onFeedback(f.id)}
+          className="absolute right-2 bottom-2 flex size-8 cursor-pointer items-center justify-center rounded-lg bg-white/90 hover:bg-nen"
+        >
+          <MessageSquareWarning aria-hidden className="size-[15px] text-phu" />
+        </button>
+      )}
     </div>
   )
 }
@@ -153,15 +299,19 @@ export function StudioTab({ compositionId }: { compositionId?: string }): React.
   )
 }
 
-/** Nghe tung cau giong doc (public/audio/<slug>/). */
+/** Nghe tung cau giong doc (public/audio/<slug>/); bam vao cau de nho AI sua giong cau do. */
 export function AudioTab({
   slug,
   version,
+  picks,
+  onPick,
   onWrong
 }: {
   slug?: string
   version?: number
-  /** "Doc sai": mo gop y cho dung cau nay */
+  picks: Pick[]
+  onPick: OnPick
+  /** Gop y cho doi ve cau nay */
   onWrong?: (beatLine: string) => void
 }): React.JSX.Element {
   const [lines, setLines] = useState<AudioLine[]>([])
@@ -177,22 +327,47 @@ export function AudioTab({
   return (
     <div className="flex flex-col gap-3">
       <div className="text-sm text-phu">{w.audioCount(lines.length)}</div>
+      <PickHint>{w.pickHintAudio}</PickHint>
       <div className="overflow-hidden rounded-xl border border-vien bg-white">
-        {lines.map((l) => (
-          <div
-            key={l.id}
-            className="flex flex-wrap items-center gap-3.5 border-b border-[#EEF1F8] px-4 py-3"
-          >
-            <span className="w-20 text-xs font-bold text-phu">{l.id}</span>
-            <span className="min-w-[240px] flex-1 text-[15px] leading-snug">{l.speak}</span>
-            <audio controls preload="none" src={fileUrl(l.file, version)} className="h-9" />
-            {onWrong && (
-              <Button variant="ghost" size="sm" onClick={() => onWrong(l.id)}>
-                {w.readWrong}
-              </Button>
-            )}
-          </div>
-        ))}
+        {lines.map((l) => {
+          const label = l.label ?? l.id
+          const speak = plainSpeak(l.speak)
+          const selected = isPicked(picks, 'giong', l.id)
+          return (
+            <div
+              key={l.id}
+              className={cn(
+                'flex flex-wrap items-center gap-3 border-b border-nen-nhan py-2 pr-3 pl-2',
+                selected && 'bg-[#F3F4FF] shadow-[inset_0_0_0_2px_var(--color-cham)]'
+              )}
+            >
+              <button
+                type="button"
+                aria-pressed={selected}
+                onClick={(e) => onPick({ kind: 'giong', id: l.id, label, speak }, manyKey(e))}
+                className="flex min-h-12 min-w-[240px] flex-1 cursor-pointer flex-col gap-0.5 rounded-lg border-none bg-transparent px-2 py-1.5 text-left hover:bg-nen"
+              >
+                <span className="flex items-center gap-2">
+                  <span className={cn('text-xs font-bold', selected ? 'text-cham' : 'text-phu')}>
+                    {label}
+                  </span>
+                  {selected && (
+                    <span className="inline-flex h-[22px] items-center gap-0.5 rounded-full bg-cham pr-2 pl-1 text-[11px] font-bold text-white">
+                      <Check aria-hidden className="size-3" strokeWidth={2.8} /> {w.picked}
+                    </span>
+                  )}
+                </span>
+                <span className="text-[15px] leading-snug">{speak}</span>
+              </button>
+              <audio controls preload="none" src={fileUrl(l.file, version)} className="h-9" />
+              {onWrong && (
+                <Button variant="ghost" size="sm" onClick={() => onWrong(l.id)}>
+                  {w.readWrong}
+                </Button>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )

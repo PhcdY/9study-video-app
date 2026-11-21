@@ -1,7 +1,19 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertCircle, Check, CircleAlert, Loader2, Send, Square, TriangleAlert } from 'lucide-react'
+import {
+  AlertCircle,
+  Check,
+  CircleAlert,
+  Image as ImageIcon,
+  Loader2,
+  Send,
+  Square,
+  TriangleAlert,
+  Volume2,
+  X
+} from 'lucide-react'
 import type { ApprovalDecision, ChatItem, ChatState, VideoStage } from '../../../../shared/video'
 import { STAGE_CHIPS } from '../../../../shared/prompt'
+import { withPicks, type Pick, type PickKind } from '../../../../shared/picks'
 import { api, useAiModels } from '@/lib/api'
 import { ErrorSnap } from '@/components/ErrorSnap'
 import { AiPicker } from '@/components/AiPicker'
@@ -20,7 +32,9 @@ export function ChatPanel({
   slug,
   stage,
   wide,
-  draft
+  draft,
+  picks = [],
+  onPicksChange
 }: {
   chatKey: string
   chat: ChatState | null
@@ -30,6 +44,9 @@ export function ChatPanel({
   draft?: boolean
   /** Chiem het chieu ngang (man tro chuyen rieng, khong co tab ket qua) */
   wide?: boolean
+  /** Anh / cau dang chon ben tab ket qua: gan vao loi nhan ke tiep */
+  picks?: Pick[]
+  onPicksChange?: (p: Pick[]) => void
 }): React.JSX.Element {
   const [text, setText] = useState('')
   const [width, setWidth] = useState(readWidth)
@@ -70,8 +87,11 @@ export function ChatPanel({
     const msg = text.trim()
     if (!msg || busy) return
     setText('')
-    void api.invoke('chat:send', chatKey, msg)
+    void api.invoke('chat:send', chatKey, withPicks(msg, picks))
+    if (picks.length) onPicksChange?.([])
   }
+  const nHinh = picks.filter((p) => p.kind === 'hinh').length
+  const nGiong = picks.length - nHinh
 
   return (
     <section
@@ -164,44 +184,77 @@ export function ChatPanel({
       )}
 
       <div className={cn('px-5 pb-5', viewing && 'hidden')}>
-        <div className="flex items-end gap-2 rounded-[10px] border-[1.5px] border-vien-dam py-2 pr-2 pl-3.5 focus-within:border-cham">
-          <label htmlFor="nhan-ai" className="sr-only">
-            {c.label}
-          </label>
-          <textarea
-            id="nhan-ai"
-            rows={2}
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault()
-                send()
-              }
-            }}
-            placeholder={c.placeholder}
-            className="flex-1 resize-none border-none bg-transparent text-[15px] leading-normal outline-none"
-          />
-          {busy ? (
-            <Button
-              variant="outline"
-              size="md"
-              onClick={() => void api.invoke('chat:interrupt', chatKey)}
-            >
-              <Square aria-hidden className="size-4" /> {c.stop}
-            </Button>
-          ) : (
-            <button
-              type="button"
-              aria-label={c.send}
-              disabled={!text.trim()}
-              onClick={send}
-              className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-cham disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Send aria-hidden className="size-[18px] text-white" />
-            </button>
+        <div
+          className={cn(
+            'flex flex-col gap-2 rounded-[10px] border-[1.5px] py-2 pr-2 pl-3 focus-within:border-cham',
+            picks.length ? 'border-cham' : 'border-vien-dam'
           )}
+        >
+          {picks.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="text-xs font-semibold text-phu">{c.picking}</span>
+              {picks.map((p) => (
+                <span
+                  key={`${p.kind}-${p.id}`}
+                  className="inline-flex h-[30px] items-center gap-1.5 rounded-full bg-cham-nhat pr-1 pl-2.5 text-[13px] font-bold text-cham"
+                >
+                  <PickIcon kind={p.kind} />
+                  <span className="sr-only">{c.pickKind[p.kind]}</span>
+                  {p.label}
+                  <button
+                    type="button"
+                    aria-label={c.unpick(p.label)}
+                    onClick={() => onPicksChange?.(picks.filter((x) => x !== p))}
+                    className="flex size-6 cursor-pointer items-center justify-center rounded-full hover:bg-white"
+                  >
+                    <X aria-hidden className="size-3.5" strokeWidth={2.4} />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex items-end gap-2">
+            <label htmlFor="nhan-ai" className="sr-only">
+              {c.label}
+            </label>
+            <textarea
+              id="nhan-ai"
+              rows={2}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault()
+                  send()
+                }
+              }}
+              placeholder={picks.length ? c.pickPlaceholder(nHinh, nGiong) : c.placeholder}
+              className="flex-1 resize-none border-none bg-transparent text-[15px] leading-normal outline-none"
+            />
+            {busy ? (
+              <Button
+                variant="outline"
+                size="md"
+                onClick={() => void api.invoke('chat:interrupt', chatKey)}
+              >
+                <Square aria-hidden className="size-4" /> {c.stop}
+              </Button>
+            ) : (
+              <button
+                type="button"
+                aria-label={c.send}
+                disabled={!text.trim()}
+                onClick={send}
+                className="flex size-10 shrink-0 cursor-pointer items-center justify-center rounded-[10px] bg-cham disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <Send aria-hidden className="size-[18px] text-white" />
+              </button>
+            )}
+          </div>
         </div>
+        {nGiong > 0 && (
+          <p className="m-0 mt-2 px-0.5 text-xs leading-normal text-credit">{c.pickCost}</p>
+        )}
         {chat && (
           <div className="mt-2">
             <AiPicker
@@ -220,8 +273,24 @@ function Item({ item, chatKey }: { item: ChatItem; chatKey: string }): React.JSX
   switch (item.kind) {
     case 'user':
       return (
-        <div className="max-w-[85%] self-end rounded-[10px_14px_4px_14px] bg-cham-nhat px-3.5 py-2.5 text-[15px] leading-normal whitespace-pre-wrap">
-          {item.text}
+        <div className="flex max-w-[85%] flex-col items-end gap-1.5 self-end">
+          {item.picks?.length ? (
+            <div className="flex flex-wrap justify-end gap-1.5">
+              {item.picks.map((p, i) => (
+                <span
+                  key={i}
+                  className="inline-flex h-[26px] items-center gap-1.5 rounded-full border border-vien-dam bg-white px-2.5 text-xs font-bold text-cham"
+                >
+                  <PickIcon kind={p.kind} small />
+                  <span className="sr-only">{c.pickKind[p.kind]}</span>
+                  {p.label}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <div className="rounded-[10px_14px_4px_14px] bg-cham-nhat px-3.5 py-2.5 text-[15px] leading-normal whitespace-pre-wrap">
+            {item.text}
+          </div>
         </div>
       )
     case 'ai':
@@ -246,6 +315,11 @@ function Item({ item, chatKey }: { item: ChatItem; chatKey: string }): React.JSX
         </div>
       )
   }
+}
+
+function PickIcon({ kind, small }: { kind: PickKind; small?: boolean }): React.JSX.Element {
+  const Icon = kind === 'hinh' ? ImageIcon : Volume2
+  return <Icon aria-hidden className={small ? 'size-[13px]' : 'size-3.5'} strokeWidth={2.2} />
 }
 
 function Status({

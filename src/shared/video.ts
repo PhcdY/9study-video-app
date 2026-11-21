@@ -1,5 +1,6 @@
 // Kieu dung chung cho man Video cua toi, form Lam video moi va man mot video.
 import type { AiChoice } from './ai-model'
+import type { PickTag } from './picks'
 
 /** Ba buoc lam video tren giao dien, cong buoc da xuat. */
 export type VideoStage = 'kichBan' | 'duyetHinh' | 'giongDoc' | 'daXuat'
@@ -69,6 +70,24 @@ export interface AudioLine {
   id: string
   file: string
   speak?: string
+  /** vd "Cảnh 2 · câu 1" */
+  label?: string
+}
+
+/** Mot anh storyboard (cuoi mot cau loi doc). */
+export interface StoryFrame {
+  /** vd "b02-l01" */
+  id: string
+  beatId: string
+  scene?: number
+  section?: string
+  keyword?: string
+  /** vd "Cảnh 2 · câu 1" */
+  label: string
+  speak?: string
+  file: string
+  /** Lan sua anh (de giao dien tai lai anh moi) */
+  version: number
 }
 
 export interface Lesson {
@@ -80,7 +99,7 @@ export interface Lesson {
 // ---------- chat ----------
 
 export type ChatItem =
-  | { kind: 'user'; id: string; text: string }
+  | { kind: 'user'; id: string; text: string; picks?: PickTag[] }
   | { kind: 'ai'; id: string; text: string; streaming?: boolean }
   | {
       kind: 'status'
