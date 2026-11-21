@@ -90,7 +90,7 @@ export async function makeBugReport(extra: Record<string, string> = {}): Promise
     const desktop = app.getPath('desktop')
     mkdirSync(desktop, { recursive: true })
     const stamp = new Date().toISOString().slice(0, 16).replace(/[-:T]/g, '')
-    const zip = path.join(desktop, `9study-bao-loi-${stamp}.zip`)
+    const zip = path.join(desktop, `ninistudio-bao-loi-${stamp}.zip`)
     // tar cua Windows (bsdtar) tao zip trong thu muc khong dau, roi Node chep ra Desktop
     // (Desktop co the nam trong OneDrive voi ten co dau: tar.exe khong ghi duoc duong dan do)
     const tmpZip = path.join(work, 'bao-loi.zip')

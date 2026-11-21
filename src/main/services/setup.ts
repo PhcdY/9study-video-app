@@ -132,7 +132,7 @@ export class SetupService extends EventEmitter {
       outputDir: env.get('OUTPUT_DIR') ?? '',
       suggestedProjectDir: this.projectDir || defaultProjectDir(),
       suggestedOutputDir: this.driveDir
-        ? path.join(this.driveDir, '9Study Video')
+        ? path.join(this.driveDir, 'NiniStudio')
         : path.join(path.dirname(this.projectDir || defaultProjectDir()), 'VideoXuat'),
       driveFound: !!this.driveDir,
       existingRepos: this.existingRepos,

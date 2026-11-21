@@ -22,7 +22,7 @@ import { InboxScreen } from '@/screens/Inbox'
 import { GuideScreen } from '@/screens/Guide'
 import { UsagePill } from '@/components/UsagePill'
 import { UpdatePill } from '@/components/UpdatePill'
-import logoNgang from '@/assets/brand/logo-ngang.png'
+import logoMark from '@/assets/brand/logo-mark.svg'
 import { UpdateBanner, UpdateDialog } from '@/components/UpdateDialog'
 
 type Route =
@@ -100,8 +100,11 @@ function App(): React.JSX.Element {
             )}
           >
             <span className="flex items-center gap-2">
-              <img src={logoNgang} alt={copy.appName} className="h-7 w-auto" draggable={false} />
-              <span className="text-base font-extrabold text-cham">{copy.appNameAccent}</span>
+              <img src={logoMark} alt="" className="size-8" draggable={false} />
+              <span className="text-[19px] font-extrabold tracking-tight text-navy">
+                {copy.appNameMain}
+                <span className="text-cham">{copy.appNameAccent}</span>
+              </span>
               {snap && !snap.allDone && (
                 <span className="ml-1 text-sm text-phu">· {copy.setupTitle}</span>
               )}

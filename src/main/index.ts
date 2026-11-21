@@ -1,3 +1,4 @@
+import './app-identity'
 import { app, shell, BrowserWindow } from 'electron'
 import { join, resolve } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -146,7 +147,7 @@ function createWindow(): void {
     minWidth: 1024,
     minHeight: 680,
     show: false,
-    title: '9Study Video',
+    title: 'NiniStudio',
     backgroundColor: '#F6F8FE',
     autoHideMenuBar: true,
     webPreferences: {

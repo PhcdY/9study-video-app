@@ -10,7 +10,7 @@
 @import '@fontsource/plus-jakarta-sans/latin-800.css';
 @import 'tailwindcss';
 
-/* Mau va chu theo he thong giao dien 9Study Video (artifact thiet ke, artboard Main) */
+/* Mau va chu theo he thong giao dien NiniStudio (artifact thiet ke, artboard Main) */
 @theme {
   --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
 

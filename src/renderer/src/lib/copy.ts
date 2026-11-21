@@ -10,8 +10,9 @@ import type {
 } from '../../../shared/video'
 
 export const copy = {
-  appName: '9Study',
-  appNameAccent: 'Video',
+  appName: 'NiniStudio',
+  appNameMain: 'Nini',
+  appNameAccent: 'Studio',
   setupTitle: 'Chuẩn bị máy',
   progress: (done: number, total: number) => `Xong ${done} / ${total} bước`,
   stepOf: (n: number, total: number) => `Bước ${n} / ${total}`,
@@ -780,7 +781,7 @@ export const copy = {
     keptDesc: 'các video đang làm và góp ý bạn đã dạy AI. Video đã xuất không bị đụng tới.',
     needAi:
       'Bạn đã dạy AI sửa một số file của bộ công cụ (hoặc đang dùng bản thử nghiệm). Để giữ an toàn bài của bạn, AI sẽ cùng bạn cập nhật trong một cuộc trò chuyện.',
-    needApp: (v: string) => `Bản mới cần app 9Study Video ${v} trở lên. Hãy cập nhật app trước.`,
+    needApp: (v: string) => `Bản mới cần app NiniStudio ${v} trở lên. Hãy cập nhật app trước.`,
     later: 'Để sau',
     update: 'Cập nhật, khoảng 1 phút',
     updateWithAi: 'Nhờ AI cập nhật',
@@ -1344,7 +1345,7 @@ export const copy = {
     logoutConfirm: 'Đăng xuất khỏi ChatGPT? Muốn dùng trợ lý AI lại thì phải đăng nhập lại.',
     versions: 'Phiên bản',
     toolkit: 'Bộ công cụ làm video',
-    appName: (v: string) => `App 9Study Video · ${v}`,
+    appName: (v: string) => `App NiniStudio · ${v}`,
     viewUpdate: 'Xem bản mới',
     support: 'Hỗ trợ',
     recheck: 'Chạy lại kiểm tra máy',

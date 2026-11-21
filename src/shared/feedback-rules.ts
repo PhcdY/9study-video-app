@@ -55,7 +55,7 @@ export function guessTarget(kind: FeedbackKind, subject: string): string {
     case 'noiDung':
       return subject ? `.agents/mon/${subject}.md` : '.agents/skills/viet-kich-ban'
     case 'loiApp':
-      return 'app 9Study Video'
+      return 'app NiniStudio'
   }
 }
 

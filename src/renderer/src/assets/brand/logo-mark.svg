@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96">
+  <!-- NiniStudio: Nini deo tai nghe phong thu. Nguon cua build/icon.png va logo tren thanh dau app. -->
+  <rect width="96" height="96" rx="22" fill="#3d4aef"/>
+  <path d="M38 38Q30 28 33 17Q40 22 44 26Q42 14 50 7Q53 17 54 24Q58 17 67 15Q63 28 58 38Z" fill="#8fb4ff"/>
+  <circle cx="48" cy="58" r="24" fill="#fff"/>
+  <rect x="36" y="56" width="7" height="9" rx="3.5" fill="#0e1046"/>
+  <rect x="53" y="56" width="7" height="9" rx="3.5" fill="#0e1046"/>
+  <path d="M34 52l10 2.5M62 52l-10 2.5" stroke="#0e1046" stroke-width="3" stroke-linecap="round"/>
+  <path d="M43 71q5 3.5 10 0" fill="none" stroke="#0e1046" stroke-width="3" stroke-linecap="round"/>
+  <path d="M21 58a27 27 0 0 1 54 0" fill="none" stroke="#0e1046" stroke-width="6" stroke-linecap="round"/>
+  <rect x="14" y="50" width="12" height="20" rx="5" fill="#0e1046"/>
+  <rect x="70" y="50" width="12" height="20" rx="5" fill="#0e1046"/>
+  <rect x="17" y="54" width="4" height="12" rx="2" fill="#4b87f4"/>
+  <rect x="75" y="54" width="4" height="12" rx="2" fill="#4b87f4"/>
+</svg>

@@ -75,11 +75,11 @@ export function bugAiPrompt(bug: BugItem, who: 'app' | 'ngoai'): string {
   const head =
     who === 'app'
       ? [
-          `Đọc báo lỗi của app 9Study Video trong thư mục ${bug.dir} (meta.json, thong-tin.txt, thư mục nhật ký và ảnh lúc lỗi). Chỉ đọc, không sửa file nào.`,
+          `Đọc báo lỗi của app NiniStudio trong thư mục ${bug.dir} (meta.json, thong-tin.txt, thư mục nhật ký và ảnh lúc lỗi). Chỉ đọc, không sửa file nào.`,
           'Cho tôi biết: lỗi xảy ra lúc người gửi làm gì, do đâu (máy người gửi, bộ công cụ, hay chính app), và cách khắc phục. Nếu do app thì chỉ rõ dòng nhật ký cho thấy điều đó để báo người phát triển app.'
         ]
       : [
-          'Đọc báo lỗi của app 9Study Video trong thư mục:',
+          'Đọc báo lỗi của app NiniStudio trong thư mục:',
           bug.dir,
           '(meta.json, thong-tin.txt, thư mục nhật ký và ảnh lúc lỗi). Tìm nguyên nhân trong mã app, sửa, rồi báo lại đã sửa gì.'
         ]

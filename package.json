@@ -1,10 +1,10 @@
 {
   "name": "9study-video",
-  "productName": "9Study Video",
+  "productName": "NiniStudio",
   "version": "0.1.5",
-  "description": "App Windows giup cong tac vien lam video giai thich ban chat bang bo cong cu 9Study",
+  "description": "App Windows giup cong tac vien lam video giai thich ban chat bang bo cong cu video",
   "main": "./out/main/index.js",
-  "author": "9Study",
+  "author": "NiniStudio",
   "private": true,
   "scripts": {
     "format": "prettier --write .",
