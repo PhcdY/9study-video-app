@@ -1,7 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { AlertCircle, Check, CircleAlert, Loader2, Send, Square, TriangleAlert } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  CircleAlert,
+  Loader2,
+  MessageCircleQuestion,
+  Send,
+  Square,
+  TriangleAlert
+} from 'lucide-react'
 import type { ApprovalDecision, ChatItem, ChatState, VideoStage } from '../../../../shared/video'
 import { STAGE_CHIPS } from '../../../../shared/prompt'
+import { findChoices, type ChoiceOption, type ChoiceQuestion } from '../../../../shared/choices'
 import { api, useAiModels } from '@/lib/api'
 import { ErrorSnap } from '@/components/ErrorSnap'
 import { AiPicker } from '@/components/AiPicker'
@@ -34,9 +47,28 @@ export function ChatPanel({
   const [text, setText] = useState('')
   const [width, setWidth] = useState(readWidth)
   const listRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLTextAreaElement>(null)
   const busy = !!chat?.busy
   const items = useMemo(() => chat?.items ?? [], [chat])
   const models = useAiModels()
+
+  // Viec dang cho nguoi dung chon: cot noi canh khung chat, van keo len doc chat ma tra loi duoc
+  const approvals = items.filter(
+    (i): i is Extract<ChatItem, { kind: 'approval' }> =>
+      i.kind === 'approval' && i.state === 'pending'
+  )
+  const lastItem = items[items.length - 1]
+  const ask = useMemo(
+    () =>
+      !busy && lastItem?.kind === 'ai' && !lastItem.streaming ? findChoices(lastItem.text) : null,
+    [busy, lastItem]
+  )
+  const trayId = approvals[0]?.id ?? (ask ? lastItem?.id : undefined)
+  // Thu gon theo tung yeu cau: yeu cau moi thi khay mo lai
+  const [collapsedId, setCollapsedId] = useState<string | null>(null)
+  const trayOpen = !!trayId && collapsedId !== trayId
+  const sectionRef = useRef<HTMLElement>(null)
+  const outside = useTrayOutside(sectionRef, !!wide)
 
   // Tro chuyen cu (truoc khi co app) cua video nay: xem lai, hoac mo tiep cuoc Codex
   const [oldChats, setOldChats] = useState<LegacyChat[]>([])
@@ -72,9 +104,19 @@ export function ChatPanel({
     setText('')
     void api.invoke('chat:send', chatKey, msg)
   }
+  const pick = (q: ChoiceQuestion, opt: ChoiceOption): void => {
+    if (busy) return
+    const reply = q.yesNo
+      ? opt.key === 'co'
+        ? c.tray.replyYes
+        : c.tray.replyNo
+      : c.tray.reply(opt.key, opt.label)
+    void api.invoke('chat:send', chatKey, reply)
+  }
 
   return (
     <section
+      ref={sectionRef}
       aria-label={c.label}
       style={
         // Luon chua it nhat 700px cho phan ket qua ben phai (day tab khong bi cat)
@@ -109,9 +151,25 @@ export function ChatPanel({
       ) : (
         <div ref={listRef} className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto p-5">
           {items.length === 0 && !busy && <p className="m-0 text-sm text-phu">{c.empty}</p>}
-          {items.map((it) => (
-            <Item key={it.id} item={it} chatKey={chatKey} />
-          ))}
+          {items.map((it) =>
+            it.kind === 'approval' && it.state === 'pending' ? (
+              <TrayMarker
+                key={it.id}
+                label={c.tray.markerApproval}
+                outside={outside}
+                onClick={() => setCollapsedId(null)}
+              />
+            ) : (
+              <Item key={it.id} item={it} chatKey={chatKey} />
+            )
+          )}
+          {ask && (
+            <TrayMarker
+              label={c.tray.markerAsk}
+              outside={outside}
+              onClick={() => setCollapsedId(null)}
+            />
+          )}
           {busy &&
             !items.some(
               (i) =>
@@ -163,12 +221,63 @@ export function ChatPanel({
         </div>
       )}
 
+      {!viewing && trayId && (
+        <div
+          className={cn(
+            'absolute z-20 flex max-h-[calc(100%-40px)] flex-col',
+            trayOpen ? 'w-[300px]' : 'w-max whitespace-nowrap',
+            // Ngoai: canh phai khung chat, de len mep phan ket qua. Khong du cho: noi tren o nhan
+            outside
+              ? 'bottom-5 left-[calc(100%+12px)]'
+              : 'right-4 bottom-[150px] max-w-[calc(100%-32px)]'
+          )}
+        >
+          {!trayOpen ? (
+            <button
+              type="button"
+              onClick={() => setCollapsedId(null)}
+              className="flex cursor-pointer items-center gap-2 rounded-full border-[1.5px] border-cham bg-cham-nhat px-3.5 py-2 text-left text-sm font-semibold text-cham-dam shadow-[0_6px_20px_rgba(14,16,70,0.14)] hover:bg-[#e2e5fd]"
+            >
+              <MessageCircleQuestion aria-hidden className="size-4 shrink-0" />
+              <span className="flex-1">
+                {approvals.length ? c.tray.collapsedApproval : c.tray.collapsedAsk}
+              </span>
+              <span className="text-[13px] font-semibold">{c.tray.expand}</span>
+              <ChevronUp aria-hidden className="size-4 shrink-0" />
+            </button>
+          ) : approvals.length ? (
+            <div className="flex min-h-0 flex-col gap-1.5 overflow-y-auto rounded-xl shadow-[0_6px_20px_rgba(14,16,70,0.14)]">
+              <ApprovalCard
+                item={approvals[0]}
+                chatKey={chatKey}
+                onCollapse={() => setCollapsedId(trayId)}
+              />
+              {approvals.length > 1 && (
+                <p className="m-0 rounded-lg bg-white px-2 py-1 text-[13px] text-phu">
+                  {c.tray.more(approvals.length - 1)}
+                </p>
+              )}
+            </div>
+          ) : (
+            ask && (
+              <ChoiceCard
+                q={ask}
+                onPick={(o) => pick(ask, o)}
+                onCollapse={() => setCollapsedId(trayId)}
+                onType={() => inputRef.current?.focus()}
+              />
+            )
+          )}
+        </div>
+      )}
+
       <div className={cn('px-5 pb-5', viewing && 'hidden')}>
         <div className="flex items-end gap-2 rounded-[10px] border-[1.5px] border-vien-dam py-2 pr-2 pl-3.5 focus-within:border-cham">
           <label htmlFor="nhan-ai" className="sr-only">
             {c.label}
           </label>
           <textarea
+            ref={inputRef}
             id="nhan-ai"
             rows={2}
             value={text}
@@ -248,6 +357,120 @@ function Item({ item, chatKey }: { item: ChatItem; chatKey: string }): React.JSX
   }
 }
 
+/** Cau hoi lua chon cua AI, ghim tren o nhan: bam la gui luon. */
+function ChoiceCard({
+  q,
+  onPick,
+  onCollapse,
+  onType
+}: {
+  q: ChoiceQuestion
+  onPick: (o: ChoiceOption) => void
+  onCollapse: () => void
+  onType: () => void
+}): React.JSX.Element {
+  const options: ChoiceOption[] = q.yesNo
+    ? [
+        { key: 'co', label: c.tray.yes },
+        { key: 'khong', label: c.tray.no }
+      ]
+    : q.options
+  return (
+    <div
+      role="group"
+      aria-label={c.tray.ask}
+      className="flex min-h-0 flex-col gap-2 overflow-y-auto rounded-xl border-[1.5px] border-cham bg-white px-3.5 py-3 shadow-[0_6px_20px_rgba(14,16,70,0.14)]"
+    >
+      <div className="flex items-center gap-2 text-[13px] font-bold text-cham-dam">
+        <MessageCircleQuestion aria-hidden className="size-4 shrink-0" />
+        <span className="flex-1">{c.tray.ask}</span>
+        <CollapseButton onClick={onCollapse} />
+      </div>
+      <div className="text-[15px] leading-normal font-semibold">{q.question}</div>
+      {q.yesNo ? (
+        <div className="flex flex-wrap gap-2">
+          {options.map((o, i) => (
+            <Button
+              key={o.key}
+              size="md"
+              variant={i === 0 ? undefined : 'outline'}
+              onClick={() => onPick(o)}
+            >
+              {o.label}
+            </Button>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col gap-1.5">
+          {options.map((o) => (
+            <button
+              key={o.key}
+              type="button"
+              onClick={() => onPick(o)}
+              className="flex w-full cursor-pointer items-start gap-2.5 rounded-[10px] border border-vien-dam bg-nen px-3 py-2 text-left hover:border-cham hover:bg-cham-nhat focus-visible:border-cham"
+            >
+              <span className="mt-px flex size-[22px] shrink-0 items-center justify-center rounded-full bg-cham-nhat text-xs font-bold text-cham-dam">
+                {o.key}
+              </span>
+              <span className="min-w-0 flex-1 text-sm leading-snug">
+                <span className="font-semibold text-navy">{o.label}</span>
+                {o.detail && <span className="block text-[13px] text-phu">{o.detail}</span>}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+      <button
+        type="button"
+        onClick={onType}
+        className="cursor-pointer self-start border-none bg-transparent p-0 text-[13px] text-phu underline-offset-2 hover:underline"
+      >
+        {c.tray.hint}
+      </button>
+    </div>
+  )
+}
+
+function CollapseButton({ onClick }: { onClick: () => void }): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={c.tray.collapse}
+      title={c.tray.collapse}
+      className="ml-auto flex size-7 shrink-0 cursor-pointer items-center justify-center rounded-md text-phu hover:bg-nen"
+    >
+      <ChevronDown aria-hidden className="size-4" />
+    </button>
+  )
+}
+
+/** Dau nho trong cuoc tro chuyen: viec nay dang cho o cot lua chon. */
+function TrayMarker({
+  label,
+  outside,
+  onClick
+}: {
+  label: string
+  outside: boolean
+  onClick: () => void
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex cursor-pointer items-center gap-1.5 self-start rounded-full border-none bg-cham-nhat px-3 py-1 text-[13px] font-semibold text-cham-dam hover:bg-[#e2e5fd]"
+    >
+      {label}
+      {outside ? (
+        <ArrowRight aria-hidden className="size-3.5" />
+      ) : (
+        <MessageCircleQuestion aria-hidden className="size-3.5" />
+      )}
+    </button>
+  )
+}
+
 function Status({
   label,
   running,
@@ -276,10 +499,13 @@ function Status({
 
 function ApprovalCard({
   item,
-  chatKey
+  chatKey,
+  onCollapse
 }: {
   item: Extract<ChatItem, { kind: 'approval' }>
   chatKey: string
+  /** Dang nam trong khay tren o nhan: co nut thu gon */
+  onCollapse?: () => void
 }): React.JSX.Element {
   const pending = item.state === 'pending'
   const title =
@@ -299,9 +525,13 @@ function ApprovalCard({
       {item.costly && (
         <div className="flex items-center gap-2 text-[13px] font-bold text-credit">
           <CircleAlert aria-hidden className="size-4" /> {c.costly}
+          {onCollapse && <CollapseButton onClick={onCollapse} />}
         </div>
       )}
-      <div className="text-base font-bold">{title}</div>
+      <div className="flex items-start gap-2">
+        <div className="flex-1 text-base font-bold">{title}</div>
+        {onCollapse && !item.costly && <CollapseButton onClick={onCollapse} />}
+      </div>
       {item.command && (
         <code className="block rounded-md bg-white px-2.5 py-2 font-mono text-xs break-all text-navy">
           {item.command}
@@ -344,6 +574,26 @@ function ApprovalCard({
       )}
     </div>
   )
+}
+
+// ---------- cot lua chon: dat ben phai khung chat neu du cho ----------
+
+const TRAY_SPACE = 300 + 24
+
+/** Man video: luon co phan ket qua ben phai. Man chi co chat: do khoang trong ben phai. */
+function useTrayOutside(ref: React.RefObject<HTMLElement | null>, wide: boolean): boolean {
+  const [roomy, setRoomy] = useState(false)
+  useEffect(() => {
+    if (!wide) return
+    // Goi lai ngay luc bat dau quan sat va moi khi cua so doi kich thuoc
+    const ro = new ResizeObserver(() => {
+      const el = ref.current
+      if (el) setRoomy(window.innerWidth - el.getBoundingClientRect().right >= TRAY_SPACE)
+    })
+    ro.observe(document.documentElement)
+    return () => ro.disconnect()
+  }, [ref, wide])
+  return !wide || roomy
 }
 
 // ---------- keo doi do rong khung chat ----------
