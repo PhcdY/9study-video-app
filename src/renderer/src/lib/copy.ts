@@ -689,98 +689,369 @@ export const copy = {
   },
   guide: {
     title: 'Hướng dẫn',
-    lead: 'Đọc một lần là làm được. Chỗ nào chưa rõ thì hỏi AI ngay trong khung chat.',
+    search: 'Tìm trong hướng dẫn',
+    noResult: (q: string) => `Không thấy mục nào có "${q}".`,
+    clear: 'Xoá tìm kiếm',
+    views: { cards: 'Thẻ', read: 'Đọc một trang' },
+    viewLabel: 'Kiểu xem',
+    onThisPage: 'Trên trang này',
+    stepCount: (n: number) => `${n} bước`,
+    readTime: (min: number) => `khoảng ${min} phút đọc`,
+    results: (n: number) => `${n} kết quả`,
+    zoom: 'Phóng to ảnh',
+    close: 'Đóng',
+    tip: 'Mẹo',
+    groups: { batDau: 'Bắt đầu', chinhVideo: 'Chỉnh video', doi: 'Đội và hỗ trợ' },
     sections: [
       {
+        id: 'cai-dat-lan-dau',
+        group: 'batDau',
+        title: 'Cài đặt lần đầu',
+        lead: 'Lần đầu mở app, app dẫn bạn qua từng bước. Mỗi bước có nút làm giúp, bạn chỉ cần bấm và đăng nhập.',
+        steps: [
+          {
+            t: 'Làm theo từng bước',
+            d: 'App tự tải bộ công cụ và cài thư viện. Bước nào lỗi thì bấm "Thử lại" hoặc "Sửa giúp tôi".',
+            shot: 'setup'
+          },
+          {
+            t: 'Đăng nhập ChatGPT',
+            d: 'Trình duyệt mở trang ChatGPT. Đăng nhập xong thì quay lại app, bước này tự xong.'
+          },
+          {
+            t: 'Dán key giọng đọc Vivibe',
+            d: 'Key chỉ lưu trên máy bạn. Chưa có key thì bỏ qua, dán sau trong Cài đặt › Giọng đọc Vivibe.'
+          },
+          {
+            t: 'Google Drive và thư mục góp ý',
+            d: 'App tải và mở bộ cài Google Drive. Sau đó mở thư mục của đội và thêm lối tắt vào Drive của tôi.',
+            tip: 'Hai bước này bỏ qua được. Bỏ qua thì vẫn làm video bình thường, chỉ chưa gửi được góp ý.'
+          },
+          {
+            t: 'Kiểm tra máy',
+            d: 'App chạy thử một lượt. Thấy "Máy bạn đã sẵn sàng" là xong.'
+          }
+        ]
+      },
+      {
+        id: 'lam-video',
+        group: 'batDau',
         title: 'Làm một video',
+        lead: 'Mỗi video đi qua 3 bước: kịch bản, hình, giọng đọc. AI làm, bạn duyệt. Hai bước đầu không tốn credit.',
         steps: [
-          'Bấm "Làm video mới", chọn môn, lớp, bài rồi bấm "Bắt đầu viết kịch bản".',
-          'Đọc kịch bản ở tab Kịch bản. Muốn sửa gì thì nhắn AI, ví dụ "câu 2 cảnh 3 nói ngắn lại".',
-          'Kịch bản ổn thì bấm "Duyệt kịch bản, sang bước 2". AI dựng hình, xem ở tab Storyboard.',
-          'Hình ổn thì bấm "Duyệt hình, sang bước 3". AI tạo giọng đọc (tốn credit Vivibe, app hỏi trước). Câu nào đọc sai thì bấm "Đọc sai" ở tab Nghe thử.',
-          'Giọng ổn thì bấm "Giọng ổn, dựng bản hoàn chỉnh" rồi "Xuất video". Video nằm ở tab Thành phẩm.'
+          {
+            t: 'Bấm "Làm video mới"',
+            d: 'Ở trang Video, bấm "Làm video mới".',
+            shot: 'home',
+            mark: 'Bấm ở đây'
+          },
+          {
+            t: 'Chọn môn, lớp, bài',
+            d: 'Điền tên bài rồi bấm "Bắt đầu viết kịch bản". AI viết kịch bản trong vài phút.',
+            shot: 'new',
+            mark: 'Bấm ở đây',
+            tip: 'Ý bản chất để trống thì AI đề xuất 2–3 góc nhìn cho bạn chọn.'
+          },
+          {
+            t: 'Đọc kịch bản, nhắn AI sửa',
+            d: 'Kịch bản nằm ở tab Kịch bản. Muốn đổi gì thì nhắn, ví dụ "câu 2 cảnh 3 nói ngắn lại".',
+            shot: 'script',
+            mark: 'Nhắn AI ở đây'
+          },
+          {
+            t: 'Duyệt hình ở Storyboard',
+            d: 'Kịch bản ổn thì bấm "Duyệt kịch bản, sang bước 2". AI dựng hình. Hình ổn thì bấm "Duyệt hình, sang bước 3".',
+            shot: 'storyboard'
+          },
+          {
+            t: 'Nghe thử giọng đọc',
+            d: 'AI tạo giọng (tốn credit Vivibe, app hỏi trước). Câu nào đọc sai thì bấm "Đọc sai" ở tab Nghe thử.',
+            shot: 'audio'
+          },
+          {
+            t: 'Xuất video',
+            d: 'Giọng ổn thì bấm "Giọng ổn, dựng bản hoàn chỉnh" rồi "Xuất video". Video nằm ở tab Thành phẩm.',
+            shot: 'final'
+          }
         ]
       },
       {
-        title: 'Khi AI xin phép',
-        steps: [
-          'Việc tốn credit (tạo giọng đọc) hoặc cần mạng thì app hỏi bạn trước.',
-          'Đọc dòng mô tả. Thấy đúng việc bạn vừa nhờ thì bấm "Đồng ý".',
-          'Không chắc thì bấm "Để sau" và hỏi AI việc đó để làm gì.'
-        ]
-      },
-      {
-        title: 'Thấy lỗi lặp ở nhiều video',
-        steps: [
-          'Lỗi chỉ ở video này: nhắn AI sửa là đủ.',
-          'Lỗi lặp ở video khác, hoặc luật chưa hợp: bấm "Góp ý cho đội" (hoặc "Góp ý tại đây" khi xem video).',
-          'Chọn chỗ lỗi, loại lỗi, viết vài chữ rồi gửi. Xem trạng thái trong Cài đặt › Góp ý cho đội.'
-        ]
-      },
-      {
-        title: 'Khi app báo lỗi',
-        steps: [
-          'Bấm nút app đưa ra (Thử lại, Sửa giúp tôi).',
-          'Vẫn lỗi: vào Cài đặt › Hỗ trợ › "Gửi báo lỗi", gửi file trên Desktop cho người phụ trách.',
-          'Máy chậm hoặc ổ C đầy: Cài đặt › Ổ đĩa › Dọn.'
-        ]
-      },
-      {
+        id: 'form-video-moi',
+        group: 'batDau',
         title: 'Điền form "Làm video mới"',
+        lead: 'Chỉ tên bài là bắt buộc. Điền thêm thì video sát ý bạn hơn và AI ít hỏi lại.',
         steps: [
-          'Bước 1 và 2 (kịch bản, hình) không tốn credit giọng đọc. Giọng chỉ được tạo ở bước 3, sau khi bạn đồng ý.',
-          'Ý bản chất để trống thì AI đề xuất 2–3 góc nhìn cho bạn chọn.',
-          'Giọng đọc đổi được tới trước khi tạo giọng ở bước 3.',
-          'Phần "Thêm chi tiết" không bắt buộc. Điền càng nhiều, video càng sát ý bạn và AI càng ít hỏi lại.',
-          '"Học sinh đã học / chưa học": học sinh ảo dùng đúng hai ô này để đọc thử kịch bản như người xem thật.',
-          '"Video trước trong chuỗi": AI đọc video đó để không dạy lại và nối tiếp đúng chỗ.',
-          '"Lỗi hay mắc" thành đoạn "Bẫy thường gặp", "Dạng bài thi" thành đoạn "Trong đề thi".'
+          {
+            t: 'Môn, lớp, loại video',
+            d: 'Bài học giảng một bài trong sách; hiện tượng giải thích một chuyện ngoài đời bằng kiến thức của bài.',
+            shot: 'new'
+          },
+          {
+            t: 'Ý bản chất',
+            d: 'Điều cốt lõi học sinh phải hiểu sau video. Để trống thì AI đề xuất 2–3 góc nhìn cho bạn chọn.'
+          },
+          {
+            t: 'Giọng đọc',
+            d: 'App chọn sẵn giọng mặc định của môn. Đổi được tới trước khi tạo giọng ở bước 3.'
+          },
+          {
+            t: 'Học sinh đã học / chưa học',
+            d: 'Học sinh ảo dùng đúng hai ô này để đọc thử kịch bản như người xem thật.'
+          },
+          {
+            t: 'Video trước trong chuỗi',
+            d: 'AI đọc video đó để không dạy lại và nối tiếp đúng chỗ.'
+          },
+          {
+            t: 'Lỗi hay mắc, dạng bài thi',
+            d: '"Lỗi hay mắc" thành đoạn "Bẫy thường gặp", "Dạng bài thi" thành đoạn "Trong đề thi".'
+          }
         ]
       },
       {
-        title: 'Gửi báo lỗi app',
+        id: 'ai-xin-phep',
+        group: 'batDau',
+        title: 'Khi AI xin phép',
+        lead: 'Việc tốn credit (tạo giọng đọc) hoặc cần mạng thì AI hỏi bạn trước, ngay trong khung chat.',
         steps: [
-          'Mỗi khi app hiện thông báo lỗi, app tự chụp cửa sổ app (không chụp màn hình khác), giữ 3 lần gần nhất.',
-          'Cài đặt › Hỗ trợ › "Gửi báo lỗi": viết vài chữ, tick ảnh muốn gửi, bấm "Gửi cho người phụ trách".',
-          'Báo lỗi vào thư mục chung, mục Báo lỗi (khác chỗ góp ý). Key Vivibe và mật khẩu đã được che.',
-          'Chưa có thư mục chung thì bấm "Lưu ra Desktop" rồi gửi file cho người phụ trách.'
+          {
+            t: 'Đọc dòng mô tả',
+            d: 'Thấy đúng việc bạn vừa nhờ thì bấm "Đồng ý".'
+          },
+          {
+            t: 'Không chắc thì để sau',
+            d: 'Bấm "Để sau" rồi hỏi AI việc đó để làm gì. AI không làm khi bạn chưa đồng ý.'
+          },
+          {
+            t: 'Việc tốn credit',
+            d: 'Có dòng "Việc này tốn credit Vivibe". Chỉ đồng ý khi các câu nghe thử đã ổn.'
+          }
         ]
       },
       {
-        title: 'Cài đặt',
+        id: 'kich-ban',
+        group: 'chinhVideo',
+        title: 'Kịch bản',
+        lead: 'Kịch bản chia theo cảnh và câu. Lời đọc là câu AI sẽ đọc, chữ trên hình là chữ hiện trong video.',
         steps: [
-          'Thư mục dự án: bộ công cụ và các bài bạn đang làm. Key Vivibe chỉ lưu trên máy bạn.',
-          'Giọng mặc định theo môn: màn "Làm video mới" chọn sẵn giọng này, đổi từng video vẫn được.',
-          'Tốc độ đọc chung: chỉ đổi khi nghe cả bài thấy nhanh hoặc chậm. Đoạn nào nhanh quá thì nhờ AI chia câu ngắn hơn.',
-          'Khi nào AI hỏi trước: "Việc tốn credit hoặc cần mạng" thì sửa kịch bản, dựng hình AI tự làm; "Mọi lệnh" chắc nhất nhưng phải bấm đồng ý nhiều lần.',
-          'Tự dọn bộ nhớ AI sau mỗi bước: AI nhanh hơn, đỡ tốn Usage ChatGPT; quyết định quan trọng vẫn được giữ.',
-          'Phiên bản: bấm tên bản để xem bản đó có gì. Đổi bản thì bài của bạn vẫn giữ nguyên. Bản app mới tải ngầm, cài khi mở lại app.',
-          'Ổ đĩa: ảnh nháp và storyboard tạo lại được bất cứ lúc nào; file tạm xoá được khi không đang xuất video.',
-          'Credit Vivibe: "Đã tạo" là số ký tự app gửi Vivibe mỗi lần tạo giọng (kể cả video bỏ dở), "Đang dùng" là số ký tự các câu đang nằm trong video. Số dư xem trên trang Vivibe.'
+          {
+            t: 'Đọc ở tab Kịch bản',
+            d: 'Đọc to từng câu xem có giống lời giảng không. Chữ trên hình nên ngắn hơn lời đọc.',
+            shot: 'script'
+          },
+          {
+            t: 'Nhắn AI sửa',
+            d: 'Nói rõ chỗ: "câu 2 cảnh 3 nói ngắn lại". Sửa nhiều chỗ thì gom vào một tin nhắn.'
+          },
+          {
+            t: 'Nhờ học sinh ảo đọc thử',
+            d: 'Bấm "Nhờ học sinh ảo đọc thử". AI đọc như học sinh thật và chỉ chỗ khó hiểu.'
+          },
+          {
+            t: 'Duyệt kịch bản',
+            d: 'Ổn thì bấm "Duyệt kịch bản, sang bước 2". Sau đó vẫn nhắn AI sửa kịch bản được.'
+          }
         ]
       },
       {
+        id: 'storyboard',
+        group: 'chinhVideo',
+        title: 'Storyboard và chuyển động',
+        lead: 'Storyboard là ảnh từng câu, chụp lúc câu đó đã hiện đủ. Xem chuyển động để thấy video chạy thật.',
+        steps: [
+          {
+            t: 'Xem ảnh từng câu',
+            d: 'Tab Storyboard xếp ảnh theo cảnh. Đây là bản nháp, thời gian ước theo số chữ.',
+            shot: 'storyboard'
+          },
+          {
+            t: 'Nhắn AI sửa hình',
+            d: 'Ví dụ "cảnh 3 đổi màu đường cong sang chấm". Sửa xong bấm "Xuất lại storyboard" để xem ảnh mới.'
+          },
+          {
+            t: 'Xem chuyển động',
+            d: 'Tab "Xem chuyển động" › "Mở bản xem chuyển động". Lần đầu mất khoảng 10–30 giây.',
+            shot: 'motion',
+            mark: 'Bấm ở đây'
+          },
+          {
+            t: 'Duyệt hình',
+            d: 'Hình ổn thì bấm "Duyệt hình, sang bước 3". Chưa tốn credit.'
+          }
+        ]
+      },
+      {
+        id: 'giong-doc',
+        group: 'chinhVideo',
+        title: 'Giọng đọc và xuất',
+        lead: 'Giọng đọc là bước duy nhất tốn credit Vivibe. App hỏi trước mỗi lần tạo giọng.',
+        steps: [
+          {
+            t: 'Đồng ý tạo giọng',
+            d: 'AI hỏi "Tạo giọng đọc cho bài". Đọc lại kịch bản lần cuối rồi bấm "Đồng ý".'
+          },
+          {
+            t: 'Nghe thử',
+            d: 'Tab Nghe thử có từng câu. Câu nào đọc sai thì bấm "Đọc sai" ngay cạnh câu đó.',
+            shot: 'audio'
+          },
+          {
+            t: 'Xuất video',
+            d: 'Bấm "Giọng ổn, dựng bản hoàn chỉnh" rồi "Xuất video". Video ở tab Thành phẩm và trong thư mục lưu video.',
+            shot: 'final'
+          },
+          {
+            t: 'Xem credit đã dùng',
+            d: 'Bấm Usage góc trên bên phải. Chi tiết theo tháng, theo video ở Cài đặt › Giọng đọc Vivibe.',
+            shot: 'usage',
+            tip: '"Đã tạo" là số ký tự app gửi Vivibe, kể cả video bỏ dở. "Đang dùng" là số ký tự các câu đang nằm trong video.'
+          }
+        ]
+      },
+      {
+        id: 'gop-y',
+        group: 'doi',
+        title: 'Góp ý cho đội',
+        lead: 'Lỗi chỉ ở video này thì nhắn AI sửa là đủ. Lỗi lặp ở nhiều video thì góp ý để người phụ trách sửa cho cả đội.',
+        steps: [
+          {
+            t: 'Bấm "Góp ý cho đội"',
+            d: 'Nút ở góc trên màn làm video, hoặc "Góp ý tại đây" khi xem video.',
+            shot: 'feedback'
+          },
+          {
+            t: 'Chọn chỗ lỗi, viết vài chữ',
+            d: 'Chọn loại lỗi, nói lỗi gì rồi gửi. Mặc định chỉ gửi đoạn 20 giây quanh chỗ lỗi cho nhẹ Drive.'
+          },
+          {
+            t: 'Xem góp ý đã sửa gì',
+            d: 'Cài đặt › Góp ý cho đội › Xem. Bấm góp ý đã sửa để đọc tóm tắt. Còn dùng bản cũ thì bấm "Lên bản N".',
+            shot: 'sent'
+          }
+        ]
+      },
+      {
+        id: 'thu-muc-gop-y',
+        group: 'doi',
         title: 'Thư mục góp ý chung',
+        lead: 'Góp ý và báo lỗi đi qua một thư mục Google Drive của đội. Mỗi máy cần nối thư mục này một lần.',
         steps: [
-          'Cài đặt › Góp ý cho đội › "Mở thư mục của đội", xin quyền nếu Drive hỏi.',
-          'Chuột phải vào thư mục › Sắp xếp › Thêm lối tắt › Drive của tôi. App tự thấy sau khoảng nửa phút.',
-          'Tên của bạn hiện trong góp ý để đội biết ai gửi. Mặc định chỉ gửi đoạn 20 giây quanh chỗ lỗi cho nhẹ Drive.'
+          {
+            t: 'Mở thư mục của đội',
+            d: 'Cài đặt › Góp ý cho đội › "Mở thư mục của đội". Drive hỏi quyền thì bấm xin quyền.',
+            shot: 'settingsFeedback',
+            mark: 'Bấm ở đây'
+          },
+          {
+            t: 'Thêm lối tắt vào Drive của tôi',
+            d: 'Chuột phải vào thư mục › Sắp xếp › Thêm lối tắt › Drive của tôi. App tự thấy sau khoảng nửa phút.'
+          },
+          {
+            t: 'Ghi tên của bạn',
+            d: 'Tên hiện trong góp ý để đội biết ai gửi.',
+            shot: 'settingsName'
+          }
         ]
       },
       {
-        title: 'Người bảo trì: xử lý góp ý',
+        id: 'bao-loi',
+        group: 'doi',
+        title: 'Khi app báo lỗi',
+        lead: 'Thường chỉ cần bấm nút app đưa ra: Thử lại, Sửa giúp tôi. Vẫn lỗi thì gửi báo lỗi cho người phụ trách.',
         steps: [
-          'Bật "Chế độ người bảo trì" trong Cài đặt › Góp ý cho đội (chỉ trên máy người phụ trách bộ công cụ).',
-          'Tick nhiều góp ý để gộp thành một lần sửa. "Chỗ sửa dự kiến" app đoán theo loại lỗi và môn, Codex tự kiểm lại.',
-          'Tên nhánh tự đặt theo quy ước [môn]_fix_[mô tả]. "Đưa vào bản" chọn bản chưa phát hành, hoặc "+ Tạo bản mới".',
-          '"Lưu lần sửa, làm sau": các góp ý chuyển sang "Đang sửa", CTV thấy trạng thái này. Phát hành bản đó xong, app tự đổi sang "Đã sửa trong bản N".'
+          {
+            t: 'Bấm nút app đưa ra',
+            d: 'Mỗi thông báo lỗi có nút sửa. Bấm thử trước khi báo lỗi.'
+          },
+          {
+            t: 'Gửi báo lỗi',
+            d: 'Cài đặt › Hỗ trợ › "Gửi báo lỗi". Viết vài chữ, tick ảnh muốn gửi, bấm "Gửi cho người phụ trách".',
+            shot: 'bug',
+            tip: 'Mỗi lần hiện lỗi, app tự chụp cửa sổ app (không chụp màn hình khác) và giữ 3 lần gần nhất. Key Vivibe và mật khẩu đã được che.'
+          },
+          {
+            t: 'Chưa có thư mục chung',
+            d: 'Bấm "Lưu ra Desktop" rồi gửi file đó cho người phụ trách.'
+          },
+          {
+            t: 'Máy chậm, ổ C đầy',
+            d: 'Cài đặt › Ổ đĩa › Dọn. Ảnh nháp và storyboard tạo lại được bất cứ lúc nào.'
+          }
         ]
       },
       {
-        title: 'Lên bản mới của bộ công cụ',
+        id: 'cai-dat',
+        group: 'doi',
+        title: 'Cài đặt',
+        lead: 'Những chỗ bạn hay đổi trong Cài đặt.',
         steps: [
-          'Có bản mới thì trang Video hiện thông báo. Bấm "Xem bản mới" để đọc có gì mới.',
-          'Bấm "Cập nhật". Bài của bạn giữ nguyên. Nếu bạn đã dạy AI điều gì, app nhờ AI đổi bản giúp.'
+          {
+            t: 'Giọng đọc',
+            d: 'Giọng mặc định theo môn: form "Làm video mới" chọn sẵn giọng này. Tốc độ đọc chung chỉ đổi khi nghe cả bài thấy nhanh hoặc chậm.',
+            shot: 'settingsVoice'
+          },
+          {
+            t: 'Khi nào AI hỏi trước',
+            d: '"Việc tốn credit hoặc cần mạng": sửa kịch bản, dựng hình AI tự làm. "Mọi lệnh": chắc nhất nhưng phải bấm đồng ý nhiều lần.'
+          },
+          {
+            t: 'Tự dọn bộ nhớ AI',
+            d: 'Sau mỗi bước AI dọn bớt bộ nhớ: nhanh hơn, đỡ tốn Usage ChatGPT. Quyết định quan trọng vẫn được giữ.'
+          },
+          {
+            t: 'Ổ đĩa',
+            d: 'Ảnh nháp và storyboard tạo lại được. File tạm xoá được khi không đang xuất video.'
+          }
+        ]
+      },
+      {
+        id: 'len-ban',
+        group: 'doi',
+        title: 'Lên bản mới',
+        lead: 'Bộ công cụ có bản mới khi đội sửa xong góp ý. Đổi bản thì bài của bạn vẫn giữ nguyên.',
+        steps: [
+          {
+            t: 'Xem bản mới có gì',
+            d: 'Trang Video hiện thông báo khi có bản mới. Bấm "Xem bản mới" để đọc có gì mới.'
+          },
+          {
+            t: 'Đổi bản',
+            d: 'Cài đặt › Phiên bản: bấm tên bản để xem bản đó có gì, rồi "Lên bản N" hoặc "Quay lại bản N".',
+            shot: 'settingsVersion'
+          },
+          {
+            t: 'Bản app mới',
+            d: 'Tải ngầm, cài khi bạn mở lại app. Thấy nút "Khởi động lại" ở góc trên thì bấm khi rảnh.'
+          }
+        ]
+      },
+      {
+        id: 'bao-tri',
+        group: 'doi',
+        title: 'Người bảo trì',
+        lead: 'Chỉ dành cho máy người phụ trách bộ công cụ. Bật "Chế độ người bảo trì" trong Cài đặt › Góp ý cho đội.',
+        steps: [
+          {
+            t: 'Gộp góp ý thành một lần sửa',
+            d: 'Tick nhiều góp ý. "Chỗ sửa dự kiến" app đoán theo loại lỗi và môn, Codex tự kiểm lại.'
+          },
+          {
+            t: 'Đặt tên và chọn bản',
+            d: 'Tên nhánh tự đặt theo quy ước [môn]_fix_[mô tả]. "Đưa vào bản" chọn bản chưa phát hành, hoặc "+ Tạo bản mới".'
+          },
+          {
+            t: 'Sửa ngay hoặc để sau',
+            d: '"Lưu lần sửa, làm sau": góp ý chuyển sang "Đang sửa", CTV thấy trạng thái này. Phát hành bản đó xong, app tự đổi sang "Đã sửa trong bản N".'
+          },
+          {
+            t: 'Xem lại đã sửa gì',
+            d: 'Tab Xong: nhật ký phiên bản, bài học AI ghi lại và các file đã đổi. Ghi một dòng tóm tắt để CTV đọc.',
+            shot: 'inbox'
+          },
+          {
+            t: 'Báo lỗi app',
+            d: 'Tab "Báo lỗi app" tách khỏi góp ý: xem ảnh lúc lỗi, nhật ký, rồi đánh dấu đã xử lý.'
+          }
         ]
       }
     ]

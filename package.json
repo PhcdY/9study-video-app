@@ -14,6 +14,7 @@
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
     "test": "vitest run",
     "fetch-runtimes": "node scripts/fetch-runtimes.mjs",
+    "chup-huong-dan": "node scripts/chup-huong-dan.mjs",
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
