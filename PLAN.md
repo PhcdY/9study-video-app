@@ -1,6 +1,6 @@
 # App làm video cho cộng tác viên — Kế hoạch
 
-> Trạng thái: Mốc 1–3 xong trên máy dev (bản 0.1.3), chờ người dùng thử trên máy mình và máy ảo sạch, rồi Mốc 4 (CTV dùng thử). Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
+> Trạng thái: Mốc 1–3 xong trên máy dev (bản 0.1.4), chờ người dùng thử trên máy mình và máy ảo sạch, rồi Mốc 4 (CTV dùng thử). Viết ngày 19/11/2026 dựa trên nhánh `main-codex` (bản 2 + "Chưa phát hành"). Cập nhật 20/11/2026: chốt phạm vi bản 1 gọn (mục 1b) và thời gian thực tế (mục 6).
 > Tên tạm của app: **9Study Video** (đổi sau).
 
 ---
@@ -393,7 +393,11 @@ Người dùng đổi ý: bản 1 phải đủ như thiết kế, kể cả ph�
 - [x] Credit Vivibe: đọc dòng "tổng N ký tự" mỗi lần `vivibe_tts.py` chạy thật (kể cả lần AI tự chạy), ghi `vivibe-usage.json`; thống kê theo tháng, theo video, chia "đang dùng trong video" / "không dùng" (tạo lại, câu xoá, video bỏ). Số dư tài khoản: Vivibe chưa có cách đọc công khai.
 - [x] Cài đặt lần đầu thêm bước Google Drive (tải bộ cài từ Google, kiểm chữ ký Google LLC, mở bộ cài, chờ đăng nhập) và bước Thư mục góp ý chung (nút mở link thư mục đội, hướng dẫn thêm lối tắt, app tự tìm mỗi 5 giây). Cả hai bỏ qua được.
 - [x] Báo lỗi gửi thẳng vào `9Study_GopY/_BaoLoi` (tách khỏi góp ý, không gộp lần sửa): mô tả, nhật ký đã che, thông tin máy, ảnh app tự chụp cửa sổ lúc hiện lỗi (giữ 3 ảnh). Hộp thư có tab "Báo lỗi app" với trạng thái Chưa xem / Đang xem / Đã xử lý; CTV thấy trạng thái trong Cài đặt › Hỗ trợ. Vẫn lưu ra Desktop được khi chưa có Drive.
-- Chưa thử: cài Google Drive thật trên máy sạch, link thư mục đội với tài khoản CTV, Drive đồng bộ báo lỗi giữa 2 máy.
+- [x] Hộp thư người bảo trì: ô "Đưa vào bản" là danh sách chọn, dòng cuối "+ Tạo bản mới…".
+- [x] Bớt chữ nhỏ trên app: chỉ giữ chữ báo trạng thái hoặc cần để quyết định; phần giải thích chuyển vào Hướng dẫn.
+- [x] Góp ý xong xem lại đã sửa gì: người bảo trì thấy dòng nhật ký phiên bản, bài học, file đã đổi (so nhánh sửa với commit lúc bắt đầu sửa), ghi một dòng tóm tắt; CTV thấy tóm tắt + nhật ký và nút "Lên bản N".
+- [x] Trang Hướng dẫn mới: mục lục 3 nhóm, tìm không dấu, kiểu Thẻ / Đọc một trang (nhớ lựa chọn), 17 ảnh app thật có khoanh chỗ bấm. Chụp lại bằng `npm run chup-huong-dan` (che email, đường dẫn máy dev).
+- Chưa thử: cài Google Drive thật trên máy sạch, link thư mục đội với tài khoản CTV, Drive đồng bộ báo lỗi giữa 2 máy, nút "Lên bản N" với bản mới thật, một lần sửa góp ý thật bằng Codex.
 
 ### Mốc 3 — hoàn thiện (chia việc 20/11/2026)
 
