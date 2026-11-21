@@ -385,6 +385,16 @@ Người dùng đổi ý: bản 1 phải đủ như thiết kế, kể cả ph�
 - Ghi chú cách làm: gói góp ý ở `src/main/services/feedback.ts`, luật thuần (tra giây, tên nhánh, câu lệnh cho Codex) ở `src/shared/feedback-rules.ts` có bài thử. Tốc độ đọc sửa đúng số `speed` trong `scripts/tts_config.json`; khi đổi bản app trả file về như cũ rồi ghi lại tốc độ, nên đổi tốc độ không làm hỏng "đổi bản an toàn". Đã thử trên máy dev: gửi góp ý từ giây 0:12 ra đúng cảnh/câu, gói có đoạn 20 giây, ảnh storyboard, nguồn video, không có `.env`; hộp thư hiện đủ, gộp 2 góp ý, "Lưu lần sửa" chuyển sang Đang sửa và CTV thấy trạng thái. Chưa thử: "Mở Codex với N góp ý" chạy thật (tốn lượt), thư mục Drive thật đồng bộ giữa 2 máy.
 - [x] Logo 9Study trên thanh đầu, icon app từ biểu tượng 9Study (`build/icon.png` 512×512), ô "Usage" hiện từng hạn mức (5 giờ / tuần / 30 ngày) kèm thanh và giờ làm mới, ảnh storyboard làm hình thu nhỏ, bỏ chân trang và dòng mô tả thừa.
 
+### Mốc 3c — góp ý của người dùng 21/11/2026 (bản vẽ: https://claude.ai/artifact/5CqRVz5gZJvYPhjZVJDuiE)
+
+- [x] Video bấm làm rồi dừng ngay (AI chưa tạo thư mục) vẫn hiện trong "Bài của bạn" (`drafts.json` + tìm lại từ file ghi cuộc trò chuyện của Codex), nút "Làm tiếp kịch bản", bỏ bằng thùng rác hiện khi rê chuột.
+- [x] Usage: thanh đầu chỉ hiện hạn mức ngắn nhất (5h), rê chuột / bấm mới hiện đủ. Chữ tài khoản theo chuẩn ChatGPT (ChatGPT Free/Plus/Pro, 5-hour limit, Weekly limit).
+- [x] Phiên bản: danh sách mọi bản, bấm tên xem mô tả (CHANGELOG), đổi sang bản bất kỳ.
+- [x] Credit Vivibe: đọc dòng "tổng N ký tự" mỗi lần `vivibe_tts.py` chạy thật (kể cả lần AI tự chạy), ghi `vivibe-usage.json`; thống kê theo tháng, theo video, chia "đang dùng trong video" / "không dùng" (tạo lại, câu xoá, video bỏ). Số dư tài khoản: Vivibe chưa có cách đọc công khai.
+- [x] Cài đặt lần đầu thêm bước Google Drive (tải bộ cài từ Google, kiểm chữ ký Google LLC, mở bộ cài, chờ đăng nhập) và bước Thư mục góp ý chung (nút mở link thư mục đội, hướng dẫn thêm lối tắt, app tự tìm mỗi 5 giây). Cả hai bỏ qua được.
+- [x] Báo lỗi gửi thẳng vào `9Study_GopY/_BaoLoi` (tách khỏi góp ý, không gộp lần sửa): mô tả, nhật ký đã che, thông tin máy, ảnh app tự chụp cửa sổ lúc hiện lỗi (giữ 3 ảnh). Hộp thư có tab "Báo lỗi app" với trạng thái Chưa xem / Đang xem / Đã xử lý; CTV thấy trạng thái trong Cài đặt › Hỗ trợ. Vẫn lưu ra Desktop được khi chưa có Drive.
+- Chưa thử: cài Google Drive thật trên máy sạch, link thư mục đội với tài khoản CTV, Drive đồng bộ báo lỗi giữa 2 máy.
+
 ### Mốc 3 — hoàn thiện (chia việc 20/11/2026)
 
 - [x] **VersionService** (`version.ts`): bản đang dùng / bản mới nhất / có gì mới đọc từ `CHANGELOG.md` của bản mới; đổi bản tầng 1 khi sạch (`git switch --detach refs/tags/<N>`, `npm install` khi `package-lock.json` đổi); tầng 2 mở cuộc trò chuyện `$phien-ban`; đọc `app-compat.json` của bản mới để chặn khi cần app mới hơn. Bài thử: đọc CHANGELOG (cả bản thật), xét an toàn, so sánh phiên bản.
