@@ -33,6 +33,7 @@ import type { VivibeUsage } from './vivibe'
 import type { FixDetail } from './fix-notes'
 import type { LegacyChat, LegacyMessage, LegacyOptions, LegacyResult, LegacyScan } from './legacy'
 import type { BugSendInput, BugStatus, ErrorShot } from './bugs'
+import type { AiChoice, AiModelOption } from './ai-model'
 
 export type SetupStepId =
   | 'thuMuc'
@@ -206,6 +207,10 @@ export interface InvokeMap {
   'chat:send': { args: [key: string, text: string]; ret: void }
   'chat:chip': { args: [key: string, chip: ChipId, slug: string]; ret: void }
   'chat:interrupt': { args: [key: string]; ret: void }
+  /** Doi model / muc suy nghi cua mot cuoc tro chuyen (ap dung tu tin nhan sau) */
+  'chat:setAi': { args: [key: string, choice: AiChoice]; ret: void }
+  /** Model tai khoan dang dang nhap dung duoc; [] neu chua lay duoc */
+  'ai:models': { args: []; ret: AiModelOption[] }
   /** Quet thu muc bo cong cu cu (mac dinh: thu muc dang nhan o buoc 2) */
   'legacy:scan': { args: [dir?: string]; ret: LegacyScan | null }
   /** Thu muc bo cong cu cu khac tren may (de nhan tu Cai dat) */

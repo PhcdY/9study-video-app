@@ -19,6 +19,13 @@ import type { ThreadStartResponse } from './protocol/v2/ThreadStartResponse'
 import type { ThreadTurnsListResponse } from './protocol/v2/ThreadTurnsListResponse'
 import type { TurnStartResponse } from './protocol/v2/TurnStartResponse'
 import type { UserInput } from './protocol/v2/UserInput'
+import type { ModelListResponse } from './protocol/v2/ModelListResponse'
+import {
+  modelDisplayName,
+  resolveAi,
+  type AiChoice,
+  type AiModelOption
+} from '../../../shared/ai-model'
 import { CodexClient } from './client'
 import { trustProject } from '../runtime'
 import { describeApproval, estimateVoice, statusLabelFor } from './approvals'
@@ -45,6 +52,8 @@ interface Chat {
   loaded: boolean
   /** Ham goi khi luot dang chay cua thread xong (ke ca luot thu gon) */
   turnWaiters: ((status?: Turn['status']) => void)[]
+  /** Model + muc suy nghi rieng; chua co thi theo mac dinh trong Cai dat */
+  ai?: AiChoice
 }
 
 /** Doi luot thu gon (hoac luot dang chay) xong toi da bao lau truoc khi gui tiep. */
@@ -106,6 +115,25 @@ export function boundThreads(projectDir: string): Set<string> {
   )
 }
 
+// ---------- luu model + muc suy nghi theo thread ----------
+
+const aiFile = (): string => path.join(app.getPath('userData'), 'ai-choices.json')
+function readAiStore(): Record<string, AiChoice> {
+  try {
+    return JSON.parse(readFileSync(aiFile(), 'utf8'))
+  } catch {
+    return {}
+  }
+}
+function saveAiChoice(threadId: string, choice: AiChoice): void {
+  const s = { ...readAiStore(), [threadId]: choice }
+  writeFileSync(aiFile() + '.tmp', JSON.stringify(s, null, 2))
+  renameSync(aiFile() + '.tmp', aiFile())
+}
+
+/** Lay lai danh sach model sau bao lau (tai khoan co the doi goi). */
+const MODELS_TTL_MS = 10 * 60_000
+
 /** Doi loi tho cua Codex ra ma loi cho giao dien. */
 export function chatErrorCode(message: string): ChatErrorCode {
   if (/usage limit|rate limit|quota|too many requests|429/i.test(message)) return 'hetLuot'
@@ -118,6 +146,7 @@ export class CodexSession extends EventEmitter {
   private client?: CodexClient
   private chats = new Map<string, Chat>()
   private byThread = new Map<string, Chat>()
+  private modelCache?: { at: number; list: Promise<AiModelOption[]> }
 
   constructor(private readonly projectDir: string) {
     super()
@@ -179,6 +208,7 @@ export class CodexSession extends EventEmitter {
     })
     c.on('exit', () => {
       this.client = undefined
+      this.modelCache = undefined
       for (const chat of this.chats.values()) {
         for (const done of chat.turnWaiters.splice(0)) done()
         if (!chat.busy) continue
@@ -264,7 +294,68 @@ export class CodexSession extends EventEmitter {
   }
 
   state(chat: Chat): ChatState {
-    return { key: chat.key, slug: chat.slug, items: chat.items, busy: chat.busy }
+    return {
+      key: chat.key,
+      slug: chat.slug,
+      items: chat.items,
+      busy: chat.busy,
+      ai: chat.ai ?? getSettings().defaultAi ?? {}
+    }
+  }
+
+  // ---------- model + muc suy nghi ----------
+
+  /** Model tai khoan dang dang nhap dung duoc; [] neu Codex chua san (chua dang nhap, mat mang). */
+  async models(): Promise<AiModelOption[]> {
+    if (this.modelCache && Date.now() - this.modelCache.at < MODELS_TTL_MS)
+      return this.modelCache.list
+    const list = this.fetchModels()
+    this.modelCache = { at: Date.now(), list }
+    const out = await list
+    // Loi thi khong giu ket qua rong, lan sau hoi lai
+    if (!out.length) this.modelCache = undefined
+    return out
+  }
+
+  private async fetchModels(): Promise<AiModelOption[]> {
+    try {
+      const c = await this.ensureClient()
+      const out: AiModelOption[] = []
+      let cursor: string | null = null
+      do {
+        const res = (await c.request('model/list', {
+          cursor,
+          includeHidden: false
+        })) as ModelListResponse
+        for (const m of res.data) {
+          if (m.hidden) continue
+          out.push({
+            id: m.model,
+            name: modelDisplayName(m.displayName),
+            description: m.description,
+            isDefault: m.isDefault,
+            efforts: m.supportedReasoningEfforts.map((e) => ({
+              id: e.reasoningEffort,
+              description: e.description
+            })),
+            defaultEffort: m.defaultReasoningEffort
+          })
+        }
+        cursor = res.nextCursor
+      } while (cursor)
+      return out
+    } catch (e) {
+      log.warn(`[chat] khong lay duoc danh sach model: ${String(e)}`)
+      return []
+    }
+  }
+
+  /** Doi model / muc suy nghi cua cuoc tro chuyen; ap dung tu tin nhan sau. */
+  setAi(key: string, choice: AiChoice): void {
+    const chat = this.getChat(key)
+    chat.ai = { model: choice.model || undefined, effort: choice.effort || undefined }
+    if (chat.threadId) saveAiChoice(chat.threadId, chat.ai)
+    this.emitNow(chat)
   }
 
   /** Mo cuoc tro chuyen cua mot video: noi lai thread cu va doc lai lich su. */
@@ -274,6 +365,7 @@ export class CodexSession extends EventEmitter {
     chat.loaded = true
     const threadId = readStore()[this.projectDir]?.[key]
     if (!threadId) return this.state(chat)
+    chat.ai = readAiStore()[threadId] ?? chat.ai
     try {
       const c = await this.ensureClient()
       await c.request('thread/resume', {
@@ -313,16 +405,23 @@ export class CodexSession extends EventEmitter {
       chat.threadId = res.thread.id
       this.byThread.set(chat.threadId, chat)
       saveThread(this.projectDir, key, chat.threadId)
+      // Bai moi giu lua chon luc tao, doi mac dinh trong Cai dat sau nay khong anh huong
+      chat.ai ??= { ...(getSettings().defaultAi ?? {}) }
+      saveAiChoice(chat.threadId, chat.ai)
     }
     chat.items.push({ kind: 'user', id: `u-${Date.now()}`, text: displayText(text) })
     chat.busy = true
     this.emitNow(chat)
     const threadId = chat.threadId
-    const start = async (): Promise<TurnStartResponse> =>
-      (await c.request('turn/start', {
+    const start = async (): Promise<TurnStartResponse> => {
+      // Luon gui model + muc suy nghi cu the: chon lai "Default" giua chung cung ve dung mac dinh
+      const ai = resolveAi(await this.models(), this.state(chat).ai)
+      return (await c.request('turn/start', {
         threadId,
-        input: this.toInput(text)
+        input: this.toInput(text),
+        ...(ai && { model: ai.model.id, effort: ai.effort })
       })) as TurnStartResponse
+    }
     try {
       let res: TurnStartResponse
       try {

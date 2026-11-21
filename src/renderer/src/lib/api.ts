@@ -5,6 +5,7 @@ import type { LegacyScan } from '../../../shared/legacy'
 import type { AppUpdate, Prefs, PrefsSnapshot, Usage, VersionInfo } from '../../../shared/app'
 import type { FeedbackDirCheck, FeedbackList } from '../../../shared/feedback'
 import type { VivibeUsage } from '../../../shared/vivibe'
+import type { AiModelOption } from '../../../shared/ai-model'
 import { createMockApi } from './mock-api'
 
 // Ngoai Electron (xem giao dien trong trinh duyet khi phat trien) thi dung du lieu gia
@@ -74,6 +75,22 @@ export function useUsage(): Usage | null {
     return off
   }, [])
   return u
+}
+
+/** Model tai khoan dang dang nhap dung duoc (hoi Codex khi mo man); [] neu chua lay duoc. */
+export function useAiModels(): AiModelOption[] {
+  const [m, setM] = useState<AiModelOption[]>([])
+  useEffect(() => {
+    let live = true
+    void api
+      .invoke('ai:models')
+      .then((list) => live && setM(list ?? []))
+      .catch(() => undefined)
+    return () => {
+      live = false
+    }
+  }, [])
+  return m
 }
 
 /** Phien ban bo cong cu (hoi GitHub mot lan khi mo man). */

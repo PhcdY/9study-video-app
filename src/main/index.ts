@@ -106,6 +106,7 @@ function prefsSnapshot(): PrefsSnapshot {
     autoCompact: s.autoCompact,
     autoUpdateApp: s.autoUpdateApp,
     defaultVoices: s.defaultVoices,
+    defaultAi: s.defaultAi,
     plannedVersions: s.plannedVersions,
     feedbackDirInUse: feedbackDir(),
     projectDir: dir,
@@ -205,6 +206,8 @@ function registerIpc(): void {
     void videos.chip(key, chip, slug)
   })
   handle('chat:interrupt', (key) => videos.chat().interrupt(key))
+  handle('chat:setAi', (key, choice) => videos.chat().setAi(key, choice))
+  handle('ai:models', () => (videos.projectDir ? videos.chat().models() : []))
   handle('chat:statuses', () => videos.aiStatuses())
   handle('legacy:scan', async (dir) => {
     const s = getSettings()

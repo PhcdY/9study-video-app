@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AlertCircle, Check, CircleAlert, Loader2, Send, Square, TriangleAlert } from 'lucide-react'
 import type { ApprovalDecision, ChatItem, ChatState, VideoStage } from '../../../../shared/video'
 import { STAGE_CHIPS } from '../../../../shared/prompt'
-import { api } from '@/lib/api'
+import { api, useAiModels } from '@/lib/api'
 import { ErrorSnap } from '@/components/ErrorSnap'
+import { AiPicker } from '@/components/AiPicker'
 import { copy } from '@/lib/copy'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -35,6 +36,7 @@ export function ChatPanel({
   const listRef = useRef<HTMLDivElement>(null)
   const busy = !!chat?.busy
   const items = useMemo(() => chat?.items ?? [], [chat])
+  const models = useAiModels()
 
   // Tro chuyen cu (truoc khi co app) cua video nay: xem lai, hoac mo tiep cuoc Codex
   const [oldChats, setOldChats] = useState<LegacyChat[]>([])
@@ -200,6 +202,15 @@ export function ChatPanel({
             </button>
           )}
         </div>
+        {chat && (
+          <div className="mt-2">
+            <AiPicker
+              models={models}
+              value={chat.ai}
+              onChange={(choice) => void api.invoke('chat:setAi', chatKey, choice)}
+            />
+          </div>
+        )}
       </div>
     </section>
   )

@@ -615,6 +615,30 @@ export const copy = {
     } satisfies Record<ChipId, string>
   },
 
+  // Chon model va muc suy nghi: giu chu tieng Anh nhu app Codex goc
+  ai: {
+    model: 'Model',
+    effort: 'Reasoning effort',
+    defaultModel: 'Default',
+    defaultModelHint: 'Recommended set of models',
+    defaultTag: '(default)',
+    effortName: (id: string): string =>
+      ({
+        none: 'None',
+        minimal: 'Minimal',
+        low: 'Low',
+        medium: 'Medium',
+        high: 'High',
+        xhigh: 'Extra high',
+        max: 'Max',
+        ultra: 'Ultra'
+      })[id] ?? id.charAt(0).toUpperCase() + id.slice(1),
+    settingsTitle: 'AI làm bài',
+    settingsHint: 'Bài mới dùng lựa chọn này. Bài đã chọn riêng trong khung chat thì giữ nguyên.',
+    settingsEmpty:
+      'Chưa lấy được danh sách model. Kiểm tra mạng và đăng nhập ChatGPT rồi mở lại Cài đặt.'
+  },
+
   // ---------- Moc 3 ----------
   usage: {
     title: 'Usage',
