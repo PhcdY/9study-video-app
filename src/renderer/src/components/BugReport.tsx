@@ -16,7 +16,12 @@ const STATUS_TONE: Record<BugStatus, string> = {
 
 export function BugStatusBadge({ status }: { status: BugStatus }): React.JSX.Element {
   return (
-    <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-bold', STATUS_TONE[status])}>
+    <span
+      className={cn(
+        'shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold whitespace-nowrap',
+        STATUS_TONE[status]
+      )}
+    >
       {t.status[status]}
     </span>
   )

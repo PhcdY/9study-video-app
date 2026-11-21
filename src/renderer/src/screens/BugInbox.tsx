@@ -32,7 +32,8 @@ export function BugInbox({ bugs }: { bugs: BugItem[] }): React.JSX.Element {
                 onClick={() => setCurrent(b.id)}
                 className={cn(
                   'flex w-full cursor-pointer flex-col gap-1 px-4 py-3.5 text-left',
-                  on ? 'bg-cham-nhat' : 'hover:bg-nen'
+                  // Giong danh sach gop y: dong dang chon nen nhat + vach cham ben trai
+                  on ? 'bg-nen shadow-[inset_3px_0_0_var(--color-cham)]' : 'hover:bg-nen'
                 )}
               >
                 <span className="flex items-center gap-2">
