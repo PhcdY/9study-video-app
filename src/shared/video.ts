@@ -30,6 +30,9 @@ export interface VideoInfo {
   draft?: boolean
 }
 
+/** Ket qua xoa video: ok; root = khong go duoc khoi danh sach dung video; files = con file chua chuyen vao Thung rac; loi = khong xoa duoc bai nay */
+export type RemoveVideoResult = 'ok' | 'root' | 'files' | 'loi'
+
 export interface VideosSnapshot {
   videos: VideoInfo[]
   /** Ban bo cong cu dang dung (tag so), neu doc duoc */

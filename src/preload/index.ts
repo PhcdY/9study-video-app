@@ -20,6 +20,7 @@ const INVOKE: InvokeChannel[] = [
   'videos:create',
   'videos:resumeDraft',
   'videos:dropDraft',
+  'videos:remove',
   'chat:open',
   'chat:send',
   'chat:chip',

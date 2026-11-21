@@ -388,6 +388,7 @@ Người dùng đổi ý: bản 1 phải đủ như thiết kế, kể cả ph�
 ### Mốc 3c — góp ý của người dùng 21/11/2026 (bản vẽ: https://claude.ai/artifact/5CqRVz5gZJvYPhjZVJDuiE)
 
 - [x] Video bấm làm rồi dừng ngay (AI chưa tạo thư mục) vẫn hiện trong "Bài của bạn" (`drafts.json` + tìm lại từ file ghi cuộc trò chuyện của Codex), nút "Làm tiếp kịch bản", bỏ bằng thùng rác hiện khi rê chuột.
+- [x] **Xoá video** (báo lỗi 22/11 của Minh Trí: "không hiện nút delete video đang làm"): trước đây thùng rác chỉ hiện ở video chưa có thư mục. Giờ mọi bài của bạn (trừ video mẫu) đều có thùng rác. Xoá thì dừng AI nếu đang làm, gỡ bài khỏi `src/Root.tsx` (không gỡ sạch được thì không đụng gì, bảo nhờ AI), chuyển thư mục bài, `public/audio/<slug>`, `out/_lam-viec/<id>`, file thành phẩm `<id>.*` vào Thùng rác, quên cuộc trò chuyện (cả khoá `moi-` lúc tạo bài). Thống kê Vivibe giữ nguyên (`remove-video.ts`).
 - [x] Usage: thanh đầu chỉ hiện hạn mức ngắn nhất (5h), rê chuột / bấm mới hiện đủ. Chữ tài khoản theo chuẩn ChatGPT (ChatGPT Free/Plus/Pro, 5-hour limit, Weekly limit).
 - [x] Phiên bản: danh sách mọi bản, bấm tên xem mô tả (CHANGELOG), đổi sang bản bất kỳ.
 - [x] Credit Vivibe: đọc dòng "tổng N ký tự" mỗi lần `vivibe_tts.py` chạy thật (kể cả lần AI tự chạy), ghi `vivibe-usage.json`; thống kê theo tháng, theo video, chia "đang dùng trong video" / "không dùng" (tạo lại, câu xoá, video bỏ). Số dư tài khoản: Vivibe chưa có cách đọc công khai.

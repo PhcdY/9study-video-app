@@ -199,6 +199,7 @@ function registerIpc(): void {
   handle('videos:create', (input) => videos.create(input))
   handle('videos:resumeDraft', (key) => videos.resumeDraft(key))
   handle('videos:dropDraft', (key) => videos.dropDraft(key))
+  handle('videos:remove', (slug) => videos.removeVideo(slug))
   handle('chat:open', (key) => videos.chat().open(key))
   handle('chat:send', (key, text) => {
     void videos.chat().send(key, text)
