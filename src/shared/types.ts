@@ -29,7 +29,15 @@ import type {
 import type { VivibeUsage } from './vivibe'
 
 export type SetupStepId =
-  'thuMuc' | 'taiDuAn' | 'caiThuVien' | 'dangNhap' | 'keyGiong' | 'noiLuu' | 'kiemTra'
+  | 'thuMuc'
+  | 'taiDuAn'
+  | 'caiThuVien'
+  | 'dangNhap'
+  | 'keyGiong'
+  | 'googleDrive'
+  | 'noiLuu'
+  | 'gopY'
+  | 'kiemTra'
 
 export const SETUP_ORDER: SetupStepId[] = [
   'thuMuc',
@@ -37,12 +45,14 @@ export const SETUP_ORDER: SetupStepId[] = [
   'caiThuVien',
   'dangNhap',
   'keyGiong',
+  'googleDrive',
   'noiLuu',
+  'gopY',
   'kiemTra'
 ]
 
 /** Buoc co the bo qua, lam sau trong Cai dat. */
-export const OPTIONAL_STEPS: SetupStepId[] = ['keyGiong']
+export const OPTIONAL_STEPS: SetupStepId[] = ['keyGiong', 'googleDrive', 'gopY']
 
 export type StepStatus = 'locked' | 'ready' | 'running' | 'done' | 'skipped' | 'error'
 
@@ -62,6 +72,9 @@ export type ErrorCode =
   | 'keySai'
   | 'keyTrong'
   | 'mayChuaSan'
+  | 'taiDriveLoi'
+  | 'driveKhongHopLe'
+  | 'chuaThayGopY'
   | 'khongRo'
 
 /** Tung phan cua mot buoc dai (vd tai bo cong cu, cai thu vien), hien rieng tren giao dien. */
@@ -74,11 +87,15 @@ export type TaskId =
   | 'taiTrinhDuyet'
   | 'dangNhap'
   | 'cheDoAnToan'
+  | 'taiDrive'
+  | 'caiDrive'
+  | 'dangNhapDrive'
 
 export const STEP_TASKS: Partial<Record<SetupStepId, TaskId[]>> = {
   taiDuAn: ['taiBoCongCu', 'layDanhSachBan', 'chuyenBanMoi'],
   caiThuVien: ['taiThuVien', 'caiThuVien', 'taiTrinhDuyet'],
-  dangNhap: ['dangNhap', 'cheDoAnToan']
+  dangNhap: ['dangNhap', 'cheDoAnToan'],
+  googleDrive: ['taiDrive', 'caiDrive', 'dangNhapDrive']
 }
 
 export type TaskStatus = 'waiting' | 'running' | 'done' | 'skipped' | 'error'
@@ -153,6 +170,8 @@ export interface InvokeMap {
   'app:openLoginPage': { args: []; ret: void }
   'app:restartToUpdate': { args: []; ret: void }
   'app:version': { args: []; ret: string }
+  /** Mo thu muc gop y chung cua doi tren trinh duyet (link co dinh trong app) */
+  'app:openTeamFolder': { args: []; ret: void }
   'videos:list': { args: []; ret: VideosSnapshot }
   'videos:script': { args: [slug: string]; ret: ScriptData | null }
   'videos:audio': { args: [slug: string]; ret: AudioLine[] }

@@ -10,6 +10,7 @@ const INVOKE: InvokeChannel[] = [
   'app:openLoginPage',
   'app:restartToUpdate',
   'app:version',
+  'app:openTeamFolder',
   'videos:list',
   'videos:script',
   'videos:audio',

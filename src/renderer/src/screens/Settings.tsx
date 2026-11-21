@@ -587,6 +587,13 @@ export function SettingsScreen({
               descTone={prefs?.feedbackDirInUse ? 'ok' : undefined}
             >
               <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => void api.invoke('app:openTeamFolder')}
+              >
+                {copy.steps.gopY.open}
+              </Button>
+              <Button
                 variant="outline"
                 size="sm"
                 onClick={() => void api.invoke('feedback:pickDir')}

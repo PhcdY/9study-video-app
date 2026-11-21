@@ -149,6 +149,10 @@ function StepBody({ snap, step }: { snap: SetupSnapshot; step: StepState }): Rea
       return <LoginStep step={step} email={snap.account?.email} />
     case 'kiemTra':
       return <CheckStep snap={snap} step={step} />
+    case 'googleDrive':
+      return <DriveStep step={step} />
+    case 'gopY':
+      return <GopYStep step={step} />
     case 'taiDuAn':
       return (
         <div className="flex flex-col gap-4">
@@ -196,6 +200,104 @@ function SimpleStep({ step }: { step: StepState }): React.JSX.Element {
         {step.status === 'error' ? copy.retry : t.primary}
       </Button>
     </Actions>
+  )
+}
+
+/** Buoc Google Drive: app tai va mo bo cai; nguoi dung bam Co va dang nhap; tu tu cai cung duoc. */
+function DriveStep({ step }: { step: StepState }): React.JSX.Element {
+  const t = copy.steps.googleDrive
+  if (step.status === 'done') return <DoneLine text="Đã có Google Drive" />
+  const running = step.status === 'running'
+  return (
+    <div className="flex flex-col gap-3">
+      <Actions>
+        {running ? (
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => void api.invoke('setup:cancel', step.id)}
+          >
+            {copy.cancel}
+          </Button>
+        ) : (
+          <Button onClick={() => run('googleDrive')}>
+            {step.status === 'error' ? copy.retry : t.primary}
+          </Button>
+        )}
+        <a
+          href="https://www.google.com/drive/download/"
+          target="_blank"
+          rel="noreferrer"
+          className="px-2.5 py-3 text-[15px] font-semibold text-cham hover:text-cham-dam"
+        >
+          {t.selfInstall}
+        </a>
+        {!running && step.status !== 'skipped' && (
+          <Button
+            variant="ghost"
+            size="md"
+            onClick={() => void api.invoke('setup:skip', 'googleDrive')}
+          >
+            {copy.skip}
+          </Button>
+        )}
+      </Actions>
+      <p className="m-0 text-[13px] text-phu">{t.waiting}</p>
+    </div>
+  )
+}
+
+/** Buoc thu muc gop y chung: huong dan them loi tat thu muc cua doi vao Drive; app tu tim. */
+function GopYStep({ step }: { step: StepState }): React.JSX.Element {
+  const t = copy.steps.gopY
+  if (step.status === 'done') return <DoneLine text="Đã kết nối thư mục góp ý chung" />
+  const pick = async (): Promise<void> => {
+    const dir = await api.invoke('dialog:pickFolder', 'G:\\My Drive')
+    if (dir) run('gopY', { dir })
+  }
+  const steps = [t.step1, t.step2, t.step3, t.step4]
+  return (
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center gap-2.5 rounded-xl border border-vien bg-nen px-4 py-3.5 text-[15px]">
+        <Loader2 aria-hidden className="size-5 shrink-0 animate-spin text-xanh" />
+        {t.searching}
+      </div>
+      <ol className="m-0 flex list-none flex-col gap-3 p-0">
+        {steps.map((s, i) => (
+          <li key={i} className="flex items-start gap-3.5">
+            <span
+              className={`flex size-[26px] shrink-0 items-center justify-center rounded-full text-[13px] font-bold ${
+                i === 0 ? 'bg-cham text-white' : 'bg-cham-nhat text-cham'
+              }`}
+            >
+              {i + 1}
+            </span>
+            <div className="flex flex-col items-start gap-2">
+              <span className="text-[15px] leading-normal">{s}</span>
+              {i === 0 && (
+                <Button
+                  variant="outline"
+                  size="md"
+                  onClick={() => void api.invoke('app:openTeamFolder')}
+                >
+                  {t.open} <ExternalLink aria-hidden className="size-4" />
+                </Button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ol>
+      <Actions>
+        <Button variant="outline" size="md" onClick={() => void pick()}>
+          {t.pickOther}
+        </Button>
+        {step.status !== 'skipped' && (
+          <Button variant="ghost" size="md" onClick={() => void api.invoke('setup:skip', 'gopY')}>
+            {t.later}
+          </Button>
+        )}
+      </Actions>
+    </div>
   )
 }
 

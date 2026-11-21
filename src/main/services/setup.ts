@@ -1,7 +1,7 @@
-// 7 buoc cai dat lan dau. Moi buoc co check() (da xong chua) va run() (lam), bao tien trinh qua snapshot.
+// 9 buoc cai dat lan dau. Moi buoc co check() (da xong chua) va run() (lam), bao tien trinh qua snapshot.
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
-import { existsSync, readdirSync, readFileSync, statfsSync } from 'node:fs'
+import { existsSync, mkdirSync, readdirSync, readFileSync, statfsSync } from 'node:fs'
 import { canWriteTo, ensureDir } from './fs-util'
 import {
   OPTIONAL_STEPS,
@@ -21,7 +21,6 @@ import { getSettings, updateSettings } from './settings'
 import { childEnv, exe } from './runtime'
 import { run, type RunResult } from './process'
 import {
-  DRIVE_FOLDER_NAMES,
   countLockPackages,
   gitCloneProgress,
   gitTransfer,
@@ -40,6 +39,13 @@ import {
   renderBrowserInstalled
 } from './detect'
 import { loginChatGpt, prepareSandbox, readAccount, sandboxReadiness } from './codex/account'
+import {
+  downloadDriveSetup,
+  findGoogleDrive,
+  isSignedByGoogle,
+  openDriveSetup
+} from './google-drive'
+import { FEEDBACK_FOLDER, feedbackDir } from './feedback'
 import log from '../log'
 
 export const VIDEO_REPO_URL = 'https://github.com/PhcdY/remotion_claudecode.git'
@@ -65,20 +71,6 @@ function freeGb(p: string): number {
   }
 }
 
-function findGoogleDrive(): string | null {
-  for (const letter of 'DEFGHIJKLMNOPQRSTUVWXYZ') {
-    for (const name of DRIVE_FOLDER_NAMES) {
-      const p = `${letter}:\\${name}`
-      try {
-        if (existsSync(p)) return p
-      } catch {
-        // o khong san sang
-      }
-    }
-  }
-  return null
-}
-
 function defaultProjectDir(): string {
   return existsSync('D:\\') ? 'D:\\9Study\\VideoAI' : 'C:\\9Study\\VideoAI'
 }
@@ -95,6 +87,27 @@ export class SetupService extends EventEmitter {
   constructor() {
     super()
     for (const id of SETUP_ORDER) this.states.set(id, { id, status: 'locked' })
+    // Buoc cho nguoi dung lam ngoai app (cai Drive, them loi tat thu muc gop y): tu thay khi xong
+    setInterval(() => this.watchOutside(), 5000).unref()
+  }
+
+  private watchOutside(): void {
+    const waiting = (id: SetupStepId): boolean => {
+      const s = this.states.get(id)!.status
+      return s === 'ready' || s === 'error'
+    }
+    let changed = false
+    if (waiting('googleDrive') && findGoogleDrive()) {
+      this.set('googleDrive', { status: 'done', progress: 100 }, true)
+      changed = true
+    }
+    const fb = feedbackDir()
+    if (waiting('gopY') && fb && existsSync(fb)) {
+      updateSettings({ feedbackDir: fb })
+      this.set('gopY', { status: 'done', progress: 100 }, true)
+      changed = true
+    }
+    if (changed) void this.refresh()
   }
 
   get projectDir(): string {
@@ -207,8 +220,14 @@ export class SetupService extends EventEmitter {
         return !!this.account
       case 'keyGiong':
         return !!dir && !!readEnvFile(this.envFile).get('VIVIBE_API_KEY')
+      case 'googleDrive':
+        return !!findGoogleDrive()
       case 'noiLuu':
         return !!dir && !!readEnvFile(this.envFile).get('OUTPUT_DIR')
+      case 'gopY': {
+        const fb = feedbackDir()
+        return !!fb && existsSync(fb)
+      }
       case 'kiemTra':
         return !!getSettings().machineChecked
     }
@@ -307,11 +326,71 @@ export class SetupService extends EventEmitter {
           input.key ?? readEnvFile(this.envFile).get('VIVIBE_API_KEY') ?? '',
           signal
         )
+      case 'googleDrive':
+        return this.stepGoogleDrive(signal)
       case 'noiLuu':
         return this.stepNoiLuu(input.dir ?? this.snapshot().suggestedOutputDir)
+      case 'gopY':
+        return this.stepGopY(input.dir)
       case 'kiemTra':
         return this.stepKiemTra()
     }
+  }
+
+  /** Tai bo cai Google Drive, kiem chu ky Google, mo bo cai, cho nguoi dung cai va dang nhap. */
+  private async stepGoogleDrive(signal: AbortSignal): Promise<void> {
+    const id = 'googleDrive'
+    if (findGoogleDrive()) {
+      for (const t of ['taiDrive', 'caiDrive', 'dangNhapDrive'] as const)
+        this.task(id, t, { status: 'skipped' })
+      return
+    }
+    this.task(id, 'taiDrive', { status: 'running', progress: 0 })
+    let file: string
+    try {
+      file = await downloadDriveSetup(this.projectDir, signal, (done, total) =>
+        this.task(id, 'taiDrive', {
+          progress: total ? Math.round((done / total) * 100) : undefined,
+          amount: { done: Math.round(done), total: total && Math.round(total), unit: 'mb' }
+        })
+      )
+    } catch (e) {
+      if (signal.aborted) throw e
+      throw new StepError('mang', String(e))
+    }
+    if (!(await isSignedByGoogle(file)))
+      throw new StepError('driveKhongHopLe', 'bo cai khong co chu ky Google LLC')
+    this.task(id, 'taiDrive', { status: 'done' })
+    this.task(id, 'caiDrive', { status: 'running' })
+    const err = await openDriveSetup(file)
+    if (err) throw new StepError('taiDriveLoi', err)
+    this.task(id, 'caiDrive', { status: 'done' })
+    // Drive chi hien o (vd G:\My Drive) sau khi cai xong va dang nhap Google
+    this.task(id, 'dangNhapDrive', { status: 'running' })
+    const until = Date.now() + 30 * 60_000
+    while (!findGoogleDrive()) {
+      if (signal.aborted) throw new Error('huy')
+      if (Date.now() > until) throw new StepError('taiDriveLoi', 'cho Drive qua 30 phut')
+      await new Promise((r) => setTimeout(r, 3000))
+    }
+    this.task(id, 'dangNhapDrive', { status: 'done' })
+  }
+
+  /** Thu muc gop y chung: tu tim trong Drive (sau khi them loi tat), hoac nguoi dung tu chon. */
+  private stepGopY(dir?: string): void {
+    if (dir) {
+      const target = /9Study_GopY$/i.test(dir) ? dir : path.join(dir, FEEDBACK_FOLDER)
+      try {
+        mkdirSync(target, { recursive: true })
+      } catch {
+        throw new StepError('khongGhiDuoc', `khong tao duoc ${target}`)
+      }
+      updateSettings({ feedbackDir: target })
+      return
+    }
+    const found = feedbackDir()
+    if (!found || !existsSync(found)) throw new StepError('chuaThayGopY')
+    updateSettings({ feedbackDir: found })
   }
 
   private stepThuMuc(dir: string): void {

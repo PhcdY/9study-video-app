@@ -43,8 +43,9 @@ export const FEEDBACK_FOLDER = '9Study_GopY'
 
 /** Thu muc gop y: da dat trong Cai dat, khong thi tim "9Study_GopY" trong Google Drive. */
 export function feedbackDir(): string | undefined {
+  // Thu muc da chon con do thi dung; mat (vd doi o Drive) thi tu tim lai trong Drive
   const set = getSettings().feedbackDir
-  if (set) return set
+  if (set && existsSync(set)) return set
   for (const l of 'DEFGHIJKLMNOPQRSTUVWXYZ')
     for (const name of DRIVE_FOLDER_NAMES) {
       const p = `${l}:\\${name}\\${FEEDBACK_FOLDER}`
@@ -54,7 +55,7 @@ export function feedbackDir(): string | undefined {
         // o khong san sang
       }
     }
-  return undefined
+  return set
 }
 
 export function machineId(): string {

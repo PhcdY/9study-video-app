@@ -9,6 +9,7 @@ import { exe } from './services/runtime'
 import { logout, readUsage, reopenLoginPage, stopAccountClient } from './services/codex/account'
 import { VersionService } from './services/version'
 import { vivibeUsage } from './services/vivibe-usage'
+import { TEAM_FEEDBACK_FOLDER_URL } from '../shared/team'
 import { makeBugReport } from './services/report'
 import { getSettings, updateSettings } from './services/settings'
 import {
@@ -151,6 +152,7 @@ function registerIpc(): void {
   handle('app:openLoginPage', () => reopenLoginPage())
   handle('app:restartToUpdate', () => restartToUpdate())
   handle('app:version', () => app.getVersion())
+  handle('app:openTeamFolder', () => shell.openExternal(TEAM_FEEDBACK_FOLDER_URL))
 
   handle('videos:list', () => videos.list())
   handle('videos:script', (slug) => videos.script(slug))

@@ -94,6 +94,39 @@ export const copy = {
       whereToGet: 'Lấy key ở đâu?',
       saved: (masked: string) => `Đã lưu key ${masked}`
     },
+    googleDrive: {
+      nav: 'Google Drive',
+      title: 'Google Drive',
+      desc: 'Video làm xong và góp ý cho đội đều đi qua Google Drive.',
+      appDoes:
+        'Tải bộ cài Google Drive cho máy tính từ trang của Google, kiểm tra đúng file của Google rồi mở bộ cài.',
+      youDo:
+        'Windows hỏi "Cho phép cài?" thì bấm Có. Cửa sổ Drive hiện ra thì đăng nhập Google bằng tài khoản đội đã chia sẻ thư mục cho bạn.',
+      primary: 'Tải và cài Google Drive',
+      running: 'Đang cài Google Drive…',
+      selfInstall: 'Tôi tự cài Drive',
+      waiting: 'App tự thấy khi bạn cài và đăng nhập xong.'
+    },
+    gopY: {
+      nav: 'Thư mục góp ý chung',
+      title: 'Thư mục góp ý chung',
+      desc: 'Khi thấy lỗi lặp lại, bạn gửi góp ý vào thư mục này. Người phụ trách bộ công cụ đọc ở đó rồi sửa cho cả đội.',
+      appDoes: 'Tìm thư mục 9Study_GopY trong Google Drive trên máy, mỗi vài giây một lần.',
+      youDo: 'Làm theo 4 bước bên dưới để thư mục của đội hiện trong Drive của bạn.',
+      primary: 'Tìm lại',
+      running: 'Đang tìm…',
+      searching:
+        'Chưa thấy thư mục 9Study_GopY trong Drive của bạn. App đang tìm lại mỗi vài giây.',
+      found: (dir: string) => `Đã kết nối: ${dir}`,
+      open: 'Mở thư mục của đội',
+      step1: 'Mở thư mục góp ý của đội trên trình duyệt.',
+      step2: 'Drive báo chưa có quyền thì bấm "Yêu cầu quyền truy cập", chờ người phụ trách duyệt.',
+      step3:
+        'Vào được thư mục rồi thì bấm chuột phải vào tên thư mục › Sắp xếp › Thêm lối tắt › Drive của tôi.',
+      step4: 'Quay lại app. Khoảng nửa phút sau app tự thấy thư mục.',
+      pickOther: 'Chọn thư mục khác',
+      later: 'Bỏ qua, làm sau'
+    },
     noiLuu: {
       nav: 'Nơi lưu video',
       title: 'Nơi lưu video',
@@ -125,7 +158,10 @@ export const copy = {
     caiThuVien: { label: 'Cài thư viện vào máy', hint: 'khoảng 1 phút' },
     taiTrinhDuyet: { label: 'Tải trình duyệt dùng để xuất video', hint: 'khoảng 280 MB trên ổ' },
     dangNhap: { label: 'Đăng nhập tài khoản ChatGPT', hint: 'bạn đăng nhập trên trình duyệt' },
-    cheDoAnToan: { label: 'Bật chế độ an toàn cho trợ lý AI', hint: 'vài giây' }
+    cheDoAnToan: { label: 'Bật chế độ an toàn cho trợ lý AI', hint: 'vài giây' },
+    taiDrive: { label: 'Tải bộ cài Google Drive', hint: 'khoảng 300 MB' },
+    caiDrive: { label: 'Cài Google Drive', hint: 'bấm Có khi Windows hỏi' },
+    dangNhapDrive: { label: 'Đăng nhập Google trên cửa sổ Drive', hint: 'bạn làm' }
   } satisfies Record<TaskId, { label: string; hint: string }>,
   taskStatus: {
     waiting: 'Chờ',
@@ -183,6 +219,11 @@ export const copy = {
     keySai: 'Key này không dùng được. Kiểm tra lại đã chép đủ key chưa.',
     keyTrong: 'Bạn chưa dán key.',
     mayChuaSan: 'Máy còn thiếu vài thứ, xem danh sách bên dưới.',
+    taiDriveLoi:
+      'Chưa thấy Google Drive trên máy. Cài và đăng nhập xong thì bấm Thử lại, hoặc bấm "Tôi tự cài Drive".',
+    driveKhongHopLe:
+      'File tải về không phải bộ cài của Google nên app không mở. Bấm "Tôi tự cài Drive" để tải từ trang Google.',
+    chuaThayGopY: 'Chưa thấy thư mục góp ý trong Drive. Làm theo các bước bên dưới.',
     khongRo: 'Có lỗi ngoài dự kiến. Bấm Thử lại; nếu vẫn lỗi, hãy báo cho người phụ trách.'
   } satisfies Record<ErrorCode, string>,
 
@@ -741,7 +782,8 @@ export const copy = {
     feedback: 'Góp ý cho đội',
     feedbackDir: 'Thư mục góp ý chung',
     feedbackDirOk: 'Đã kết nối · thư mục do đội chia sẻ',
-    feedbackDirNone: 'Chưa chọn. Chọn thư mục 9Study_GopY trong Google Drive.',
+    feedbackDirNone:
+      'Chưa thấy. Bấm "Mở thư mục của đội", rồi chuột phải vào thư mục › Sắp xếp › Thêm lối tắt › Drive của tôi.',
     pick: 'Chọn',
     authorName: 'Tên của bạn',
     authorNameDesc: 'Hiện trong góp ý để đội biết ai gửi.',
