@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { existsSync, mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:fs'
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  rmSync,
+  statSync,
+  utimesSync,
+  writeFileSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
 import {
@@ -11,6 +19,7 @@ import {
   compositionIdFrom,
   listLessons,
   newestMtime,
+  newVideoDirSince,
   sampleSlugsFrom,
   scanVideos,
   stageFrom
@@ -112,6 +121,31 @@ describe('video', () => {
     }
   })
 
+  it('video moi khong gan vao video co san bi AI viet de (bao loi 22/11/2026)', async () => {
+    const dir = mkdtempSync(path.join(tmpdir(), 'moi-'))
+    try {
+      const root = path.join(dir, 'src', 'videos')
+      const mk = (slug: string): void => {
+        mkdirSync(path.join(root, slug), { recursive: true })
+        writeFileSync(path.join(root, slug, 'script.json'), '{"title":"x","beats":[]}')
+      }
+      mk('cuc-tri-gtln-gtnn')
+      const born = statSync(path.join(root, 'cuc-tri-gtln-gtnn')).birthtimeMs
+      const since = born + 5100
+      // AI viet de script.json cua video co san: thu muc van cu nen khong tinh
+      rmSync(path.join(root, 'cuc-tri-gtln-gtnn', 'script.json'))
+      writeFileSync(path.join(root, 'cuc-tri-gtln-gtnn', 'script.json'), '{"beats":[]}')
+      expect(newVideoDirSince(dir, since, () => false)).toBeUndefined()
+      await new Promise((r) => setTimeout(r, 200))
+      mk('cuc-tri-moi')
+      expect(newVideoDirSince(dir, since, () => false)).toBe('cuc-tri-moi')
+      // Video mau hoac bai da co tro chuyen thi bo qua
+      expect(newVideoDirSince(dir, since, (s) => s === 'cuc-tri-moi')).toBeUndefined()
+    } finally {
+      rmSync(dir, { recursive: true, force: true })
+    }
+  })
+
   const repo = 'D:\\9study-video-app\\spikes\\output\\video-repo'
   it.skipIf(!existsSync(repo))('doc that repo video thu cua Moc 0', () => {
     const vids = scanVideos(repo, new Set(['tiem-can']), new Set())
@@ -144,6 +178,7 @@ describe('cau lenh gui AI', () => {
     expect(p).toContain('thẻ bài học: `references/toan/lop-12/tap-1/bai-01')
     expect(p).toContain('đề xuất 2–3 góc nhìn')
     expect(p).toContain('THPTQG, TSA')
+    expect(p).toContain('không sửa hay viết đè video có sẵn')
     expect(p).not.toContain('Học sinh đã học')
     expect(p).not.toContain('undefined')
   })

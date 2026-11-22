@@ -6,6 +6,7 @@ import {
   readFileSync,
   readdirSync,
   rmdirSync,
+  statSync,
   watch,
   writeFileSync,
   type FSWatcher
@@ -43,6 +44,7 @@ import {
   boundThreads,
   forgetThread,
   keysOfVideo,
+  slugsFromNewChats,
   slugsWithChat,
   threadOf,
   unboundNewChats
@@ -95,11 +97,15 @@ export class VideosService extends EventEmitter {
     if (!dir) return { videos: [], outputDir: '' }
     await this.loadRepoFacts().catch((e) => log.warn(`[videos] doc git loi: ${String(e)}`))
     this.ensureWatch()
+    const fromNew = slugsFromNewChats(dir)
     const videos = [
-      ...scanVideos(dir, this.samples ?? new Set(), slugsWithChat(dir)),
+      ...scanVideos(dir, this.samples ?? new Set(), slugsWithChat(dir)).map((v) =>
+        v.sample && fromNew.has(v.slug) ? { ...v, mine: true } : v
+      ),
       ...this.drafts()
     ]
-    videos.sort((a, b) => Number(a.sample) - Number(b.sample) || b.updatedAt - a.updatedAt)
+    const own = (v: VideoInfo): number => Number(v.sample && !v.mine)
+    videos.sort((a, b) => own(a) - own(b) || b.updatedAt - a.updatedAt)
     return {
       videos,
       toolkitVersion: this.version,
@@ -158,9 +164,20 @@ export class VideosService extends EventEmitter {
     const s = this.chat()
     await s.open(key)
     if (!threadOf(this.projectDir, key)) return d ? s.send(key, d.prompt) : undefined
+    // Khong noi ro thi AI coi video mau trung bai la "thu muc da tao do" va viet de len (bao loi 22/11/2026)
+    const since = d?.createdAt ?? (Number(key.slice(4)) || Date.now())
+    const before = foldersBefore(this.projectDir, since)
     return s.send(
       key,
-      'Làm tiếp việc đang dở: viết kịch bản cho bài này theo yêu cầu ở đầu cuộc trò chuyện. Nếu đã tạo thư mục video thì làm tiếp trên đó.'
+      [
+        'Làm tiếp việc đang dở: viết kịch bản cho bài này theo yêu cầu ở đầu cuộc trò chuyện.',
+        'Chỉ làm tiếp trên thư mục video do chính cuộc trò chuyện này tạo ra; chưa tạo thì tạo thư mục mới trong `src/videos/` với tên chưa có.',
+        before.length
+          ? `Các thư mục này có từ trước, không phải bài này, không được sửa hay viết đè (kể cả khi trùng tên bài): ${before.map((x) => `\`${x}\``).join(', ')}.`
+          : ''
+      ]
+        .filter(Boolean)
+        .join('\n')
     )
   }
 
@@ -342,6 +359,7 @@ export class VideosService extends EventEmitter {
     if (!this.session || this.dirOfSession !== dir) {
       this.session?.stop()
       this.session = new CodexSession(dir)
+      this.session.isSample = (slug) => this.samples?.has(slug) ?? false
       this.dirOfSession = dir
       this.session.on('changed', (s) => this.emit('chat', s))
       this.session.on('voiceRun', (run: VoiceRunInfo) => {
@@ -408,5 +426,26 @@ Cập nhật bộ công cụ lên bản ${target}. Giữ nguyên bài và các g
     this.session?.stop()
     this.studio?.stop()
     this.watcher?.close()
+  }
+}
+
+/** Thu muc video da co truoc luc bam "Lam video moi" (thu muc sinh ra truoc moc thoi gian). */
+function foldersBefore(projectDir: string, since: number): string[] {
+  const root = path.join(projectDir, 'src', 'videos')
+  try {
+    return readdirSync(root, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+      .filter((slug) => {
+        try {
+          const st = statSync(path.join(root, slug))
+          return (st.birthtimeMs || st.mtimeMs) < since - 5000
+        } catch {
+          return false
+        }
+      })
+      .sort()
+  } catch {
+    return []
   }
 }

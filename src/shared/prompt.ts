@@ -108,6 +108,9 @@ export function composeNewVideoPrompt(v: NewVideoInput): string {
   if (v.attachments?.length)
     add('Tài liệu đính kèm (xem kèm khi viết)', v.attachments.map((a) => `\`${a}\``).join(', '))
   add('Ghi chú khác', v.ghiChu)
+  out.push(
+    '- Thư mục video: tạo thư mục mới trong `src/videos/` với tên chưa có; không sửa hay viết đè video có sẵn (kể cả video mẫu trùng bài).'
+  )
   out.push('', 'Bắt đầu bằng Bảng nội dung để tôi duyệt trước khi viết kịch bản.')
   return out.join('\n')
 }

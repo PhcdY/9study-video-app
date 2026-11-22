@@ -28,8 +28,8 @@ export function HomeScreen({
   const ai = useAiStatuses()
   const [q, setQ] = useState('')
   const [mon, setMon] = useState('')
-  const own = useMemo(() => snap?.videos.filter((v) => !v.sample) ?? [], [snap])
-  const samples = useMemo(() => snap?.videos.filter((v) => v.sample) ?? [], [snap])
+  const own = useMemo(() => snap?.videos.filter((v) => !v.sample || v.mine) ?? [], [snap])
+  const samples = useMemo(() => snap?.videos.filter((v) => v.sample && !v.mine) ?? [], [snap])
   const shown = own.filter(
     (v) =>
       (!mon || v.subject === mon) &&

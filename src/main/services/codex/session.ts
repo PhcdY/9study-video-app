@@ -2,7 +2,7 @@
 // Giu trang thai chat o phan loi, day ban moi nhat sang giao dien (co dieu tiet).
 import { EventEmitter } from 'node:events'
 import path from 'node:path'
-import { existsSync, readFileSync, writeFileSync, renameSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, writeFileSync, renameSync } from 'node:fs'
 import { app } from 'electron'
 import {
   aiStatusOf,
@@ -28,6 +28,7 @@ import {
 } from '../../../shared/ai-model'
 import { CodexClient } from './client'
 import { trustProject } from '../runtime'
+import { newVideoDirSince } from '../project'
 import { approvalKey, describeApproval, estimateVoice, statusLabelFor } from './approvals'
 import { parseVoiceRun } from '../../../shared/vivibe'
 import { splitPicks, type PickTag } from '../../../shared/picks'
@@ -116,6 +117,20 @@ export function keysOfVideo(projectDir: string, slug: string): string[] {
   const thread = all[slug]
   return Object.keys(all).filter((k) => k === slug || (!!thread && all[k] === thread))
 }
+/** Video co cuoc tro chuyen bat dau tu "Lam video moi" (khoa moi- cung thread). */
+export function slugsFromNewChats(projectDir: string): Set<string> {
+  const all = readStore()[projectDir] ?? {}
+  const fresh = new Set(
+    Object.entries(all)
+      .filter(([k]) => k.startsWith('moi-'))
+      .map(([, v]) => v)
+  )
+  return new Set(
+    Object.entries(all)
+      .filter(([k, v]) => !k.startsWith('moi-') && !k.startsWith('he-') && fresh.has(v))
+      .map(([k]) => k)
+  )
+}
 /** Thread da gan vao mot video (de biet video moi nao da co thu muc). */
 export function boundThreads(projectDir: string): Set<string> {
   return new Set(
@@ -157,6 +172,8 @@ export class CodexSession extends EventEmitter {
   private chats = new Map<string, Chat>()
   private byThread = new Map<string, Chat>()
   private modelCache?: { at: number; list: Promise<AiModelOption[]> }
+  /** Video mau cua bo cong cu (VideosService gan vao): video moi khong bao gio gan vao do */
+  isSample: (slug: string) => boolean = () => false
 
   constructor(private readonly projectDir: string) {
     super()
@@ -659,22 +676,15 @@ export class CodexSession extends EventEmitter {
   /** Video moi: sau moi luot, tim thu muc video vua tao de gan cuoc tro chuyen vao slug. */
   private bindSlug(chat: Chat): void {
     if (chat.slug || !chat.threadId || !chat.key.startsWith('moi-')) return
-    const root = path.join(this.projectDir, 'src', 'videos')
-    if (!existsSync(root)) return
     const taken = slugsWithChat(this.projectDir)
-    let best: { slug: string; t: number } | undefined
-    for (const d of readdirSync(root, { withFileTypes: true })) {
-      if (!d.isDirectory() || taken.has(d.name)) continue
-      const f = path.join(root, d.name, 'script.json')
-      if (!existsSync(f)) continue
-      const t = statSync(f).birthtimeMs || statSync(f).mtimeMs
-      if (t >= chat.createdAt - 5000 && (!best || t > best.t)) best = { slug: d.name, t }
-    }
-    if (!best) return
-    chat.slug = best.slug
-    this.chats.set(best.slug, chat)
-    saveThread(this.projectDir, best.slug, chat.threadId)
-    log.info(`[chat] video moi gan vao ${best.slug}`)
+    // Tinh tu luc bam "Lam video moi" (khoa moi-<ms>), khong phai luc mo lai sau khi khoi dong app
+    const since = Math.min(Number(chat.key.slice(4)) || chat.createdAt, chat.createdAt)
+    const slug = newVideoDirSince(this.projectDir, since, (s) => taken.has(s) || this.isSample(s))
+    if (!slug) return
+    chat.slug = slug
+    this.chats.set(slug, chat)
+    saveThread(this.projectDir, slug, chat.threadId)
+    log.info(`[chat] video moi gan vao ${slug}`)
   }
 
   private emitSoon(chat: Chat): void {
