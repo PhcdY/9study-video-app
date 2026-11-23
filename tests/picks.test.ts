@@ -31,17 +31,17 @@ describe('ten cau', () => {
 })
 
 describe('togglePick', () => {
-  it('bam thuong chi chon mot, bam lai thi bo', () => {
-    expect(togglePick([], a, false)).toEqual([a])
-    expect(togglePick([a], b, false)).toEqual([b])
-    expect(togglePick([a], a, false)).toEqual([])
+  it('bam them cau moi thi giu cac cau da chon', () => {
+    expect(togglePick([], a)).toEqual([a])
+    expect(togglePick([a], b)).toEqual([a, b])
   })
-  it('bam kem Ctrl thi them / bot', () => {
-    expect(togglePick([a], b, true)).toEqual([a, b])
-    expect(togglePick([a, b], a, true)).toEqual([b])
+  it('bam lai cau dang chon thi chi bo cau do', () => {
+    expect(togglePick([a], a)).toEqual([])
+    expect(togglePick([a, b], a)).toEqual([b])
   })
-  it('bam thuong vao cau dang chon trong nhieu cau: chi giu cau do', () => {
-    expect(togglePick([a, b], a, false)).toEqual([a])
+  it('cung ma nhung khac loai (hinh / giong) la hai cau khac nhau', () => {
+    const giong: Pick = { ...a, kind: 'giong' }
+    expect(togglePick([a], giong)).toEqual([a, giong])
   })
 })
 
@@ -63,6 +63,10 @@ describe('withPicks / splitPicks', () => {
         { kind: 'giong', label: 'Cảnh 1 · câu 2' }
       ]
     })
+  })
+  it('chon nhieu cau thi dan AI sua dung loi tung cau, chon mot cau thi khong', () => {
+    expect(withPicks('sửa', [a, b])).toContain('lỗi riêng cho từng câu')
+    expect(withPicks('sửa', [a])).not.toContain('lỗi riêng cho từng câu')
   })
   it('chi co hinh thi khong nhac tao giong', () => {
     const msg = withPicks('to hơn', [{ ...a, image: 'D:\\out\\b02-l01.png' }])
