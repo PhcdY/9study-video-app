@@ -17,6 +17,11 @@ export interface VideoInfo {
   stage: VideoStage
   /** Video mau di kem bo cong cu (khong phai bai cua nguoi dung) */
   sample: boolean
+  /**
+   * Video mau ma cuoc tro chuyen "Lam video moi" da lo viet de len (ban app cu): van la bai cua
+   * nguoi dung, hien trong "Video cua toi" (nhung khong xoa duoc vi thu muc thuoc bo cong cu).
+   */
+  mine?: boolean
   /** Lan sua cuoi (ms) */
   updatedAt: number
   storyboardHtml?: string

@@ -173,6 +173,41 @@ export function pickThumb(storyboardDir: string): string | undefined {
   }
 }
 
+/**
+ * Thu muc video ma cuoc tro chuyen "Lam video moi" vua tao: thu muc (khong chi script.json) moi
+ * sinh ra tu luc bat dau, co script.json, khong phai video mau, chua gan cuoc tro chuyen khac.
+ * Xet ngay sinh cua thu muc vi AI co the viet de script.json cua video co san (bao loi 22/11/2026:
+ * AI viet de video mau trung bai, app gan bai moi vao video mau nen bai bien mat khoi danh sach).
+ */
+export function newVideoDirSince(
+  projectDir: string,
+  since: number,
+  skip: (slug: string) => boolean
+): string | undefined {
+  const root = path.join(projectDir, 'src', 'videos')
+  let best: { slug: string; t: number } | undefined
+  let dirs: string[]
+  try {
+    dirs = readdirSync(root, { withFileTypes: true })
+      .filter((d) => d.isDirectory())
+      .map((d) => d.name)
+  } catch {
+    return undefined
+  }
+  for (const slug of dirs) {
+    if (skip(slug)) continue
+    const f = path.join(root, slug, 'script.json')
+    try {
+      const fs = statSync(f)
+      const born = statSync(path.join(root, slug)).birthtimeMs || fs.birthtimeMs || fs.mtimeMs
+      if (born >= since - 5000 && (!best || born > best.t)) best = { slug, t: born }
+    } catch {
+      // chua co script.json
+    }
+  }
+  return best?.slug
+}
+
 /** Slug video mau: thu muc co script.json da nam trong ban phat hanh (git ls-files). */
 export function sampleSlugsFrom(lsFiles: string[]): Set<string> {
   const set = new Set<string>()
