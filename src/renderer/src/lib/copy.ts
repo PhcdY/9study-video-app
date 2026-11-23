@@ -535,8 +535,9 @@ export const copy = {
   workspace: {
     readWrong: 'Góp ý cho đội',
     pickHintStoryboard:
-      'Bấm vào ảnh để nhờ AI sửa đúng câu đó. Giữ Ctrl rồi bấm để chọn nhiều ảnh.',
-    pickHintAudio: 'Bấm vào câu để nhờ AI sửa giọng câu đó. Giữ Ctrl rồi bấm để chọn nhiều câu.',
+      'Bấm vào các ảnh cần sửa, chọn bao nhiêu cũng được, rồi nhắn lỗi cho AI một lượt. Bấm lại để bỏ chọn.',
+    pickHintAudio:
+      'Bấm vào các câu cần sửa giọng, chọn bao nhiêu cũng được, rồi nhắn cho AI một lượt. Bấm lại để bỏ chọn.',
     picked: 'Đang chọn',
     frameCount: (n: number) => `${n} ảnh`,
     feedbackFrame: (label: string) => `Góp ý cho đội về ảnh ${label}`,
@@ -575,11 +576,12 @@ export const copy = {
     placeholder: 'Nhắn cho AI, ví dụ: cảnh 3 đổi màu đường cong sang chàm',
     picking: 'Đang sửa:',
     unpick: (label: string) => `Bỏ chọn ${label}`,
+    unpickAll: 'Bỏ chọn hết',
     pickKind: { hinh: 'Ảnh', giong: 'Giọng đọc' },
     pickPlaceholder: (hinh: number, giong: number) =>
       giong === 0
         ? hinh > 1
-          ? `Muốn sửa gì ở ${hinh} ảnh này? Ví dụ: cùng đổi màu đường cong sang chàm`
+          ? `Ghi lỗi của ${hinh} ảnh này. Ví dụ: câu 1 đẩy nhãn ra xa, câu 3 đổi màu đường cong`
           : 'Muốn sửa gì ở ảnh này? Ví dụ: đẩy nhãn ra xa đồ thị'
         : hinh === 0
           ? giong > 1
@@ -1134,7 +1136,7 @@ export const copy = {
           },
           {
             t: 'Nhắn AI sửa hình',
-            d: 'Bấm vào ảnh cần sửa rồi nhắn, ví dụ "đổi màu đường cong sang chàm". Giữ Ctrl để chọn nhiều ảnh. Không chọn ảnh thì nói rõ cảnh nào.'
+            d: 'Bấm vào các ảnh cần sửa rồi nhắn một lượt, ví dụ "câu 1 đẩy nhãn ra xa, câu 3 đổi màu đường cong sang chàm". Bấm lại ảnh để bỏ chọn. Không chọn ảnh thì nói rõ cảnh nào.'
           },
           {
             t: 'Xem chuyển động',

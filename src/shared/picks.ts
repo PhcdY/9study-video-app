@@ -47,15 +47,10 @@ export function lineLabels(
   return out
 }
 
-/**
- * Bam thuong: chi chon cau nay (bam lai cau dang chon duy nhat thi bo chon).
- * Bam kem Ctrl: them / bot cau nay, giu cac cau khac.
- */
-export function togglePick(list: Pick[], p: Pick, many: boolean): Pick[] {
+/** Bam vao cau: chua chon thi them, dang chon thi bo; cac cau khac giu nguyen. */
+export function togglePick(list: Pick[], p: Pick): Pick[] {
   const same = (x: Pick): boolean => x.kind === p.kind && x.id === p.id
-  const has = list.some(same)
-  if (many) return has ? list.filter((x) => !same(x)) : [...list, p]
-  return has && list.length === 1 ? [] : [p]
+  return list.some(same) ? list.filter((x) => !same(x)) : [...list, p]
 }
 
 export function isPicked(list: Pick[], kind: PickKind, id: string): boolean {
@@ -79,6 +74,10 @@ export function withPicks(text: string, picks: Pick[]): string {
   })
   const kinds = new Set(picks.map((p) => p.kind))
   const how: string[] = ['Yêu cầu bên dưới chỉ áp dụng cho những câu trên, không sửa câu khác.']
+  if (picks.length > 1)
+    how.push(
+      'Người dùng ghi lỗi riêng cho từng câu thì sửa đúng lỗi đó ở đúng câu đó; ghi một yêu cầu chung thì áp dụng cho tất cả.'
+    )
   if (kinds.has('hinh'))
     how.push(
       'Câu "hình": sửa hình của câu đó trong video, xong xuất lại storyboard cho beat đó để người dùng xem ảnh mới.'

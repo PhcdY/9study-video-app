@@ -311,6 +311,15 @@ export function ChatPanel({
                   </button>
                 </span>
               ))}
+              {picks.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => onPicksChange?.([])}
+                  className="h-[30px] cursor-pointer rounded-full px-2.5 text-[13px] font-semibold text-phu hover:bg-nen hover:text-navy"
+                >
+                  {c.unpickAll}
+                </button>
+              )}
             </div>
           )}
           <div className="flex items-end gap-2">

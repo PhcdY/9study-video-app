@@ -89,9 +89,8 @@ export function ScriptTab({
   )
 }
 
-/** Bam anh / cau: bam thuong chon mot, giu Ctrl (Shift) de chon nhieu. */
-export type OnPick = (p: Pick, many: boolean) => void
-const manyKey = (e: React.MouseEvent): boolean => e.ctrlKey || e.metaKey || e.shiftKey
+/** Bam anh / cau: them vao danh sach dang chon, bam lai thi bo. */
+export type OnPick = (p: Pick) => void
 const plainSpeak = (s?: string): string => (s ?? '').replace(/<\/?en>/g, '')
 
 function PickHint({ children }: { children: React.ReactNode }): React.JSX.Element {
@@ -217,9 +216,7 @@ function FrameCard({
         type="button"
         aria-pressed={selected}
         aria-label={`${f.label}: ${speak}`}
-        onClick={(e) =>
-          onPick({ kind: 'hinh', id: f.id, label: f.label, speak, image: f.file }, manyKey(e))
-        }
+        onClick={() => onPick({ kind: 'hinh', id: f.id, label: f.label, speak, image: f.file })}
         className={cn(
           'flex w-full cursor-pointer flex-col overflow-hidden rounded-xl border-2 bg-white p-0 text-left',
           selected
@@ -344,7 +341,7 @@ export function AudioTab({
               <button
                 type="button"
                 aria-pressed={selected}
-                onClick={(e) => onPick({ kind: 'giong', id: l.id, label, speak }, manyKey(e))}
+                onClick={() => onPick({ kind: 'giong', id: l.id, label, speak })}
                 className="flex min-h-12 min-w-[240px] flex-1 cursor-pointer flex-col gap-0.5 rounded-lg border-none bg-transparent px-2 py-1.5 text-left hover:bg-nen"
               >
                 <span className="flex items-center gap-2">

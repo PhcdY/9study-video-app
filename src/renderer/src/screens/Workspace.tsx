@@ -52,7 +52,7 @@ export function WorkspaceScreen({
   const [chosen, setChosen] = useState<{ key: string; list: Pick[] }>({ key: chatKey, list: [] })
   const picks = chosen.key === chatKey ? chosen.list : []
   const setPicks = (list: Pick[]): void => setChosen({ key: chatKey, list })
-  const onPick = (p: Pick, many: boolean): void => setPicks(togglePick(picks, p, many))
+  const onPick = (p: Pick): void => setPicks(togglePick(picks, p))
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
